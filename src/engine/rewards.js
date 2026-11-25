@@ -34,6 +34,13 @@ const pinHash = (name, pin) => { let h = 2166136261; for (const c of `chemicolor
 const isReg = n => !!(S.players[n] && S.players[n].pin);
 // クラス全体のランキングの送り先（未設定）。サーバーを決めたら submit / fetch を実装する
 const CLASS_RANK = null;
+// 合言葉を忘れたとき：先生用コード（build.py の TEACHER_CODE_SHA256）を入れると、合言葉を決め直せる
+const TEACHER_HASH = "/*TEACHER_HASH*/";
+async function sha256(t) {
+  if (!(window.crypto && crypto.subtle)) return "";
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 const lvOfXp = xp => Math.floor(Math.sqrt(xp / 300)) + 1;
 const xpFor = lv => (lv - 1) * (lv - 1) * 300;
@@ -272,8 +279,10 @@ function pinEntry(n) {
       : `<div class="flab">合言葉（4けたの数字）を決めよう<br><small>登録するとランキングにのります</small></div>${pinInput("pin1")}${pinInput("pin2", "もう一度")}`}
     <div class="lmsg" id="rmsg"></div>
     <button class="btn" id="ok">${reg ? "はじめる" : "登録してはじめる"}</button>
+    ${reg ? `<button class="hbtn" id="forgot" style="margin-top:10px">🔑 合言葉をわすれた</button>` : ""}
     <button class="btn sub" id="bk">もどる</button></div>`;
   $("pin1").focus();
+  if (reg) $("forgot").onclick = () => pinReset(n);
   $("bk").onclick = () => nameEntry();
   const go = () => {
     const a = $("pin1").value;
@@ -289,6 +298,37 @@ function pinEntry(n) {
   };
   $("ok").onclick = go;
   stage.querySelectorAll(".pin").forEach(i => i.onkeydown = e => { if (e.key === "Enter") go(); });
+}
+
+// 合言葉のリセット：先生に先生用コードを入れてもらい、新しい合言葉を決める（記録はそのまま）
+let resetMiss = 0, resetLock = 0;
+function pinReset(n) {
+  stage.innerHTML = `<div class="panel" style="text-align:center">
+    <h2>🔑 合言葉のリセット</h2>
+    <div style="font-weight:900">${esc(n)}</div>
+    <div style="font-size:13px;color:var(--sub);margin:6px 0">先生に「先生用コード」を入れてもらおう。<br>記録（コイン・図鑑・バッジ）はそのまま残ります。</div>
+    <div class="flab">先生用コード</div>
+    <input class="inp" id="tc" type="password" autocomplete="off" autocapitalize="characters" placeholder="先生が入力">
+    <div class="flab">新しい合言葉 <small>（4けたの数字）</small></div>
+    ${pinInput("pin1")}${pinInput("pin2", "もう一度")}
+    <div class="lmsg" id="rmsg"></div>
+    <button class="btn" id="ok">リセットしてはじめる</button>
+    <button class="btn sub" id="bk">もどる</button></div>`;
+  $("tc").focus();
+  $("bk").onclick = () => pinEntry(n);
+  $("ok").onclick = async () => {
+    if (Date.now() < resetLock) { $("rmsg").textContent = "しばらく待ってからもう一度"; return; }
+    const code = $("tc").value.trim().toUpperCase(), a = $("pin1").value, b = $("pin2").value;
+    const h = await sha256("chemicolor-teacher|" + code);
+    if (!h) { $("rmsg").textContent = "この画面ではリセットできません（https のページで開いてください）"; return; }
+    if (h !== TEACHER_HASH) {
+      if (++resetMiss >= 5) { resetLock = Date.now() + 60000; resetMiss = 0; }
+      $("rmsg").textContent = "先生用コードがちがいます"; SE.ng(); $("tc").value = ""; return;
+    }
+    const err = !pinOk(a) ? "合言葉は4けたの数字にしてね" : a !== b ? "合言葉が一致しません" : "";
+    if (err) { $("rmsg").textContent = err; SE.ng(); return; }
+    S.players[n].pin = pinHash(n, a); newPlayer(n); bell([1046, 1318, 1568]); menu();
+  };
 }
 
 function dailyBonus() {

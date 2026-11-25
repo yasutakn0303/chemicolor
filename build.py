@@ -19,6 +19,9 @@ FIELDS = [
     ("poly",  "高分子", "🧬", "polymer.js",   "polymer-lab.js"),
 ]
 SAVE_KEY = "chemicolor-rank-v1"   # 変えない（生徒の記録が消える）
+# 合言葉を忘れたときに使う「先生用コード」のハッシュ（SHA-256。コードそのものはここに書かない）
+#   変えるとき： python3 -c "import hashlib;print(hashlib.sha256(('chemicolor-teacher|'+'新しいコード').encode()).hexdigest())"
+TEACHER_CODE_SHA256 = "f390e3d6bb1b409a2afa9eef9f670a141c64094c068030ae7edf4d17422a6c00"
 
 EDITIONS = [
     # 出力ファイル名,     タイトル,                                種類
@@ -64,6 +67,7 @@ def build(out, title, kind):
         s = must_replace(s, "</style>", read("engine/rewards.css") + "</style>")
         s = must_replace(s, "\nmenu();\n</script>", "\n" + read("engine/rewards.js") + "\n" + read("engine/lab-fx.js") + "\nmenu();\n</script>")
         s = must_replace(s, '$("homeBtn").onclick = menu;', '$("homeBtn").onclick = () => menu();')
+        s = must_replace(s, "/*TEACHER_HASH*/", TEACHER_CODE_SHA256)
     DIST.mkdir(exist_ok=True)
     (DIST / out).write_text(s, encoding="utf-8")
     print(f"✔ dist/{out}  ({len(s)//1024} KB)")

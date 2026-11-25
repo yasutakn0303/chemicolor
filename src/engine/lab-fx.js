@@ -29,9 +29,10 @@ function sceneOf(r) {
   conds.forEach(t => t.startsWith("-") ? tags.delete(t.slice(1)) : t.startsWith("cat:") ? (tags.add("cat"), catNames.push(t.slice(4))) : tags.add(t));
   const poly = /重合|つながる/.test(h) && Object.values(r.inp).some(n => n >= 5);
   const st = new Set(reac.map(x => x.st));
-  const wet = st.has("液体") || st.has("水溶液");
+  const wet = st.has("液体") || st.has("水溶液") || tags.has("aq");   // aq：水溶液中の反応（素材が固体・気体でも）
   // 生成物の気体が出る（気体どうしの反応は除く）／ 色の変化
   if (!poly && prods.some(x => x.st === "気体") && !(st.size === 1 && st.has("気体"))) tags.add("gas");
+  conds.filter(t => t.startsWith("-")).forEach(t => tags.delete(t.slice(1)));   // 打ち消し（-gas など）は最後にもう一度
   const vessel = poly ? "chain" : tags.has("fire") ? "burn" : wet ? "beaker"
     : st.size === 1 && st.has("気体") ? "jar" : st.has("固体") && (tags.has("heat") || !st.has("気体")) ? (tags.has("heat") ? "tube" : "mortar") : "jar";
   return {tags, catNames: [...new Set(catNames)], vessel, main, prods, reac, poly};
