@@ -62,7 +62,7 @@ def build(out, title, kind):
         s = must_replace(s, "got.push(ok); if (ok) { score++; combo++; } else combo = 0;",
                          "got.push(ok); if (ok) { score++; combo++; addPts(lv, LIMIT, t0); } else combo = 0;", 2)
         s = must_replace(s, "</style>", read("engine/rewards.css") + "</style>")
-        s = must_replace(s, "\nmenu();\n</script>", "\n" + read("engine/rewards.js") + "\nmenu();\n</script>")
+        s = must_replace(s, "\nmenu();\n</script>", "\n" + read("engine/rewards.js") + "\n" + read("engine/lab-fx.js") + "\nmenu();\n</script>")
         s = must_replace(s, '$("homeBtn").onclick = menu;', '$("homeBtn").onclick = () => menu();')
     DIST.mkdir(exist_ok=True)
     (DIST / out).write_text(s, encoding="utf-8")

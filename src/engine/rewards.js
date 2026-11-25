@@ -64,24 +64,74 @@ function hudOn() {
 }
 
 // --- バッジ
+// --- バッジ（cat：マイページでの見出し）。test があるものは、記録を見て自動で判定する（autoBadges）
+//     test がないものは、クリアした瞬間の出来事で判定する（finishRun など）
+const madeN = p => Object.keys(p.made || {}).length;
+const fieldUnits = id => p => FIELD_OF[id].CH.every(c => p.best[c.id]);
+const fieldComp = id => p => FIELD_OF[id].RECIPES.every(r => p.recipes && p.recipes[r.id]);
 const BADGES = [
-  {id:"first",   e:"🌱", nm:"はじめの一歩",   tx:"初めてクリア"},
-  {id:"perfect", e:"👑", nm:"パーフェクト",   tx:"全問正解する"},
-  {id:"combo5",  e:"⚡", nm:"5コンボ",        tx:"5問連続正解"},
-  {id:"combo10", e:"🔥", nm:"コンボマスター", tx:"10問連続正解"},
-  {id:"score2k", e:"💯", nm:"2000点突破",     tx:"1回で2000点以上"},
-  {id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"どれかの分野の全単元をクリア"},
-  {id:"plays10", e:"🎮", nm:"常連さん",       tx:"10回プレイ"},
-  {id:"streak3", e:"📅", nm:"3日連続",        tx:"3日連続ログイン"},
-  {id:"craft1",  e:"⚗️", nm:"はじめての合成", tx:"物質を1つ合成"},
-  {id:"craft10", e:"🧪", nm:"合成マスター",   tx:"10種類の物質を合成"},
-  {id:"craftAll",e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見"},
-  {id:"compAll", e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見"},
-  {id:"top1",    e:"🥇", nm:"ランキング1位",  tx:"どれかの単元で1位"},
-  {id:"lv5",     e:"⭐", nm:"Lv.5到達",       tx:"レベル5になる"},
-  {id:"rich",    e:"🪙", nm:"コイン長者",     tx:"合計1000コイン獲得"},
-  ...FIELDS.flatMap(f => f.LAB_BADGES),
+  // プレイ
+  {cat:"プレイ", id:"first",   e:"🌱", nm:"はじめの一歩",   tx:"初めてクリア"},
+  {cat:"プレイ", id:"plays10", e:"🎮", nm:"常連さん",       tx:"10回プレイ",   test:p => p.plays >= 10},
+  {cat:"プレイ", id:"plays30", e:"🕹️", nm:"化学好き",       tx:"30回プレイ",   test:p => p.plays >= 30},
+  {cat:"プレイ", id:"plays100",e:"👹", nm:"化学の鬼",       tx:"100回プレイ",  test:p => p.plays >= 100},
+  {cat:"プレイ", id:"lv5",     e:"⭐", nm:"Lv.5到達",       tx:"レベル5になる",  test:p => lvOfXp(p.xp) >= 5},
+  {cat:"プレイ", id:"lv10",    e:"🌟", nm:"Lv.10到達",      tx:"レベル10になる", test:p => lvOfXp(p.xp) >= 10},
+  {cat:"プレイ", id:"lv20",    e:"💫", nm:"Lv.20到達",      tx:"レベル20になる", test:p => lvOfXp(p.xp) >= 20},
+  {cat:"プレイ", id:"streak3", e:"📅", nm:"3日連続",        tx:"3日連続ログイン",  test:p => p.streak >= 3},
+  {cat:"プレイ", id:"streak7", e:"🗓️", nm:"1週間皆勤",      tx:"7日連続ログイン",  test:p => p.streak >= 7},
+  {cat:"プレイ", id:"streak14",e:"📆", nm:"2週間皆勤",      tx:"14日連続ログイン", test:p => p.streak >= 14},
+  {cat:"プレイ", id:"streak30",e:"🏆", nm:"30日皆勤",       tx:"30日連続ログイン", test:p => p.streak >= 30},
+  // 記録
+  {cat:"記録", id:"perfect", e:"👑", nm:"パーフェクト",   tx:"全問正解する"},
+  {cat:"記録", id:"combo5",  e:"⚡", nm:"5コンボ",        tx:"5問連続正解"},
+  {cat:"記録", id:"combo10", e:"🔥", nm:"コンボマスター", tx:"10問連続正解"},
+  {cat:"記録", id:"score2k", e:"💯", nm:"2000点突破",     tx:"1回で2000点以上"},
+  {cat:"記録", id:"score25", e:"🚀", nm:"2500点突破",     tx:"1回で2500点以上"},
+  {cat:"記録", id:"sRank10", e:"🎯", nm:"Sランク10回",    tx:"Sランクを10回とる", test:p => (p.sCount || 0) >= 10},
+  {cat:"記録", id:"sRank50", e:"🏹", nm:"Sランク50回",    tx:"Sランクを50回とる", test:p => (p.sCount || 0) >= 50},
+  {cat:"記録", id:"sUnits8", e:"🎖️", nm:"Sランクコレクター", tx:"8つの単元でSランク", test:p => Object.keys(p.sUnits || {}).length >= 8},
+  {cat:"記録", id:"top1",    e:"🥇", nm:"ランキング1位",  tx:"どれかの単元で1位"},
+  {cat:"記録", id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"どれかの分野の全単元をクリア", test:p => FIELDS.some(f => fieldUnits(f.id)(p))},
+  {cat:"記録", id:"allInorg",e:"🧪", nm:"無機の旅人",     tx:"無機の全単元をクリア",   test:fieldUnits("inorg")},
+  {cat:"記録", id:"allOrg",  e:"⚗️", nm:"有機の旅人",     tx:"有機の全単元をクリア",   test:fieldUnits("org")},
+  {cat:"記録", id:"allPoly", e:"🧬", nm:"高分子の旅人",   tx:"高分子の全単元をクリア", test:fieldUnits("poly")},
+  {cat:"記録", id:"allField",e:"🌍", nm:"3分野制覇",      tx:"無機・有機・高分子の全単元をクリア", test:p => FIELDS.every(f => fieldUnits(f.id)(p))},
+  // コイン・ガチャ
+  {cat:"コイン・ガチャ", id:"rich",    e:"🪙", nm:"コイン長者",   tx:"合計1000コイン獲得",  test:p => p.earned >= 1000},
+  {cat:"コイン・ガチャ", id:"rich5k",  e:"💰", nm:"大金持ち",     tx:"合計5000コイン獲得",  test:p => p.earned >= 5000},
+  {cat:"コイン・ガチャ", id:"rich20k", e:"🤑", nm:"コイン王",     tx:"合計20000コイン獲得", test:p => p.earned >= 20000},
+  {cat:"コイン・ガチャ", id:"gacha1",  e:"🎁", nm:"はじめてのガチャ", tx:"ガチャを1回引く",  test:p => (p.pulls || 0) >= 1},
+  {cat:"コイン・ガチャ", id:"gacha30", e:"🎰", nm:"ガチャ好き",   tx:"ガチャを30回引く",   test:p => (p.pulls || 0) >= 30},
+  {cat:"コイン・ガチャ", id:"gacha100",e:"🎡", nm:"ガチャマスター", tx:"ガチャを100回引く", test:p => (p.pulls || 0) >= 100},
+  {cat:"コイン・ガチャ", id:"sr1",     e:"✨", nm:"はじめてのSR", tx:"SR素材を引く",       test:p => (p.srGot || 0) >= 1},
+  {cat:"コイン・ガチャ", id:"sr20",    e:"💎", nm:"SRコレクター", tx:"SR素材を20枚引く",   test:p => (p.srGot || 0) >= 20},
+  {cat:"コイン・ガチャ", id:"hint1",   e:"🔍", nm:"ヒントで一歩", tx:"レシピのヒントを見る", test:p => (p.hintUsed || 0) >= 1},
+  // 合成
+  {cat:"合成", id:"craft1",   e:"⚗️", nm:"はじめての合成", tx:"物質を1つ合成"},
+  {cat:"合成", id:"craft10",  e:"🧪", nm:"合成マスター",   tx:"10種類の物質を合成",  test:p => madeN(p) >= 10},
+  {cat:"合成", id:"craft30",  e:"🔬", nm:"物質ハンター",   tx:"30種類の物質を合成",  test:p => madeN(p) >= 30},
+  {cat:"合成", id:"craft80",  e:"📚", nm:"物質博士",       tx:"80種類の物質を合成",  test:p => madeN(p) >= 80},
+  {cat:"合成", id:"crafts50", e:"🔁", nm:"合成50回",       tx:"合成を50回する",      test:p => (p.crafts || 0) >= 50},
+  {cat:"合成", id:"crafts200",e:"🏭", nm:"合成工場",       tx:"合成を200回する",     test:p => (p.crafts || 0) >= 200},
+  {cat:"合成", id:"self10",   e:"💡", nm:"ひらめき",       tx:"ヒントなしで10レシピ発見", test:p => (p.selfFound || 0) >= 10},
+  {cat:"合成", id:"self50",   e:"🧠", nm:"ひらめきの天才", tx:"ヒントなしで50レシピ発見", test:p => (p.selfFound || 0) >= 50},
+  {cat:"合成", id:"craftAll", e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見", test:p => FIELDS.some(f => fieldComp(f.id)(p))},
+  {cat:"合成", id:"compInorg",e:"🥉", nm:"無機コンプリート",   tx:"無機の全レシピを発見",   test:fieldComp("inorg")},
+  {cat:"合成", id:"compOrg",  e:"🥈", nm:"有機コンプリート",   tx:"有機の全レシピを発見",   test:fieldComp("org")},
+  {cat:"合成", id:"compPoly", e:"🥇", nm:"高分子コンプリート", tx:"高分子の全レシピを発見", test:fieldComp("poly")},
+  {cat:"合成", id:"compAll",  e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見", test:p => FIELDS.every(f => fieldComp(f.id)(p))},
+  // 分野ごとの物質（src/data/*-lab.js の LAB_BADGES）
+  ...FIELDS.flatMap(f => f.LAB_BADGES.map(b => ({cat:f.name, ...b}))),
 ];
+// 記録から判定できるバッジをまとめてチェック（test(p, r) のように合成したレシピを使うものは合成のときだけ）
+function autoBadges() { const p = P(); return unlock(BADGES.filter(b => b.test && b.test.length < 2 && !p.badges[b.id] && b.test(p)).map(b => b.id)); }
+function badgeToast(list) {
+  if (!list || !list.length) return;
+  const d = document.createElement("div"); d.className = "btoast pop";
+  d.innerHTML = `🎖️ バッジゲット！<br>${list.map(b => `${b.e} ${b.nm}`).join("<br>")}`;
+  document.body.appendChild(d); bell([1318, 1568, 2093], .08); setTimeout(() => d.remove(), 2800);
+}
 function unlock(ids) { const p = P(), got = []; ids.forEach(id => { if (!p.badges[id]) { p.badges[id] = today(); got.push(BADGES.find(b => b.id === id)); } }); return got; }
 
 // --- ランキング（この端末内）
@@ -107,11 +157,11 @@ function finishRun() {
   const ids = ["first"];
   if (r === "S") ids.push("perfect");
   if (runMax >= 5) ids.push("combo5"); if (runMax >= 10) ids.push("combo10");
-  if (pts >= 2000) ids.push("score2k"); if (p.plays >= 10) ids.push("plays10");
-  if (CH.every(c => p.best[c.id])) ids.push("all");
-  if (pos === 1) ids.push("top1"); if (lvOfXp(p.xp) >= 5) ids.push("lv5"); if (p.earned >= 1000) ids.push("rich");
-  const badges = unlock(ids);
+  if (pts >= 2000) ids.push("score2k"); if (pts >= 2500) ids.push("score25");
+  if (r === "S") { p.sCount = (p.sCount || 0) + 1; p.sUnits = {...p.sUnits, [cur.id]: 1}; }
+  if (pos === 1) ids.push("top1");
   const mats = dropMats(r);
+  const badges = [...unlock(ids), ...autoBadges()];
   saveS();
   return {r, pos, coins, newRec, prevBest, badges, mats, lvUp: lvOfXp(p.xp) > lv0 ? lvOfXp(p.xp) : 0};
 }
@@ -253,7 +303,7 @@ function dailyBonus() {
   const F = [...FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
   const help = giveNeeded(p, F, loginHelp());
   const gift = p.streak % 7 === 0 ? pull("SR", F) : pull("R", F); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
-  const b = p.streak >= 3 ? unlock(["streak3"]) : [];
+  const b = autoBadges();
   saveS();
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box"><div style="font-size:48px">🎁</div><h2 class="pop" style="margin:4px 0">ログインボーナス</h2>
@@ -262,7 +312,7 @@ function dailyBonus() {
     <div style="font-weight:900;margin-top:4px">おまけ素材（${F.name}）：${gift.nm}（${gift.r}）</div>
     ${help.length ? `<div style="font-weight:900;margin-top:4px">🤝 おたすけ素材（${F.name}）：${help.map(x => x.nm).join("・")}</div>` : ""}
     <div style="font-size:12px;color:var(--sub)">毎日ログインすると素材が集まる！（7日ごとにSR素材）</div>
-    ${b.length ? `<div style="margin-top:6px;font-weight:900">🎖️ バッジ「${b[0].nm}」ゲット！</div>` : ""}
+    ${b.length ? `<div style="margin-top:6px;font-weight:900">🎖️ バッジ「${b.map(x => x.nm).join("」「")}」ゲット！</div>` : ""}
     <button class="btn" id="mOk">うけとる</button></div>`;
   document.body.appendChild(m); bell([1046, 1318, 1568]);
   m.querySelector("#mOk").onclick = () => { m.remove(); menu(); };
@@ -311,8 +361,10 @@ function gacha() {
     const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
     if (n >= 10 && !got.some(m => m.r === "SR")) got[got.length - 1] = pull("SR");
     got.sort((a, b) => "NRS".indexOf(b.r[0]) - "NRS".indexOf(a.r[0]));   // レアの高い順（SR → R → N）に出す
-    got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1); saveS();
-    await gachaFx(got); upd();
+    got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1);
+    p.pulls = (p.pulls || 0) + n; p.srGot = (p.srGot || 0) + got.filter(m => m.r === "SR").length;
+    const b = autoBadges(); saveS();
+    await gachaFx(got); upd(); badgeToast(b);
   };
   $("p1").onclick = () => go(1); $("p10").onclick = () => go(10);
 }
@@ -355,8 +407,11 @@ function lab(msg = "") {
     <div class="sec">レシピ帳　${found}/${RECIPES.length}</div>
     <div class="tabs">${LAB_TABS.map(t => `<button data-rt="${t}" class="${recTab === t ? "on" : ""}">${t} ${RECIPES.filter(r => recCat(r) === t && p.recipes[r.id]).length}/${RECIPES.filter(r => recCat(r) === t).length}</button>`).join("")}</div>
     <div class="recipes">${list.map(r => p.recipes[r.id]
-      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<small>${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
-      : `<div class="rc">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${Object.keys(r.out).filter(k => !ITEM[k].mat || Object.keys(r.out).length === 1).map(k => ITEM[k].nm).join(" ＋ ")}<small>💡 ${r.hint}（材料${Object.keys(r.inp).length}種類）</small></div>`).join("")}</div>
+      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<div>${condIcons(r)}</div><small>${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
+      : p.hints && p.hints[r.id]
+      ? `<button class="rc hinted ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${sideHTML(r.inp)} → ${outNames(r)}<div>${condIcons(r)}</div><small>💡 ${r.hint}　${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
+      : `<div class="rc">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${outNames(r)}<small>💡 ${r.hint}（材料${Object.keys(r.inp).length}種類）</small>
+          <button class="hbtn" data-h="${r.id}">🔍 材料と係数を見る（🪙${HINT_COST}）</button></div>`).join("")}</div>
     <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
   stage.querySelectorAll(".stk .st[data-k]").forEach(c => {
@@ -369,9 +424,28 @@ function lab(msg = "") {
   stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { const k = b.dataset.k; if (--slot[k] <= 0) delete slot[k]; lab(); });
   stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; lab(); });
   stage.querySelectorAll(".rc[data-r]").forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.r); if (!canMake(p, r)) return; slot = {...r.inp}; lab(); stage.scrollTop = 0; });
+  stage.querySelectorAll(".hbtn").forEach(b => b.onclick = () => buyHint(RECIPES.find(x => x.id === b.dataset.h)));
   $("clr").onclick = () => { slot = {}; lab(); };
   $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
   $("mix").onclick = mix;
+}
+const HINT_COST = 50;
+const outNames = r => Object.keys(r.out).filter(k => !ITEM[k].mat || Object.keys(r.out).length === 1).map(k => ITEM[k].nm).join(" ＋ ");
+// ヒント：コイン50で、未発見レシピの材料と係数を見せる（ほぼ答え）
+function buyHint(r) {
+  const p = P(), ok = p.coins >= HINT_COST;
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="box"><div style="font-size:40px">🔍</div>
+    <div style="font-weight:900">「${outNames(r)}」の材料と係数を見る？</div>
+    <div style="font-size:13px;color:var(--sub);margin-top:4px">🪙${HINT_COST} 使います（所持 🪙${p.coins}）</div>
+    ${ok ? `<button class="btn" id="hOk">見る（🪙${HINT_COST}）</button>` : `<div class="lmsg">コインが足りません。クイズで集めよう</div>`}
+    <button class="btn sub" id="hNo">やめる</button></div>`;
+  document.body.appendChild(m);
+  m.querySelector("#hNo").onclick = () => m.remove();
+  if (ok) m.querySelector("#hOk").onclick = () => {
+    p.coins -= HINT_COST; p.hints = p.hints || {}; p.hints[r.id] = today(); p.hintUsed = (p.hintUsed || 0) + 1;
+    const b = autoBadges(); saveS(); m.remove(); bell([880, 1175]); lab(`🔍 ヒント：${sideHTML(r.inp)} → ${outNames(r)}`); badgeToast(b);
+  };
 }
 function sameBag(a, b) { const ka = Object.keys(a), kb = Object.keys(b); return ka.length === kb.length && ka.every(k => a[k] === b[k]); }
 
@@ -386,12 +460,13 @@ async function mix() {
   Object.entries(r.inp).forEach(([k, n]) => p.inv[k] -= n);
   Object.entries(r.out).forEach(([k, n]) => { p.inv[k] = (p.inv[k] || 0) + n; p.made[k] = (p.made[k] || 0) + n; });
   const first = !p.recipes[r.id]; p.recipes[r.id] = today();
+  p.crafts = (p.crafts || 0) + 1; if (first && !(p.hints && p.hints[r.id])) p.selfFound = (p.selfFound || 0) + 1;
   if (first) { p.coins += 50; p.earned += 50; }
   const ids = ["craft1"]; if (PROD.filter(x => p.made[x.k]).length >= 10) ids.push("craft10");
   if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
   if (FIELDS.every(f => f.RECIPES.every(x => p.recipes[x.id]))) ids.push("compAll");
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
-  const b = unlock(ids); saveS(); slot = {};
+  const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
   await mixFx(r, used, first);
   // 結果
   const prods = Object.keys(r.out).filter(k => !ITEM[k].mat), main = prods[0] || Object.keys(r.out)[0];
@@ -410,32 +485,6 @@ async function mix() {
   if (again) m.querySelector("#mAgain").onclick = () => { m.remove(); slot = {...r.inp}; mix(); };
 }
 
-async function mixFx(r, used, first) {
-  const outKeys = Object.keys(r.out), main = outKeys.find(k => !ITEM[k].mat) || outKeys[0], it = ITEM[main];
-  const col = it.c === "無色" ? "#cfe6ff" : it.c === "白" ? "#f4f6fb" : HEX[it.c];
-  const fx = document.createElement("div"); fx.className = "fx" + (first ? " gold" : "");
-  fx.innerHTML = `
-    <div class="ings">${Object.entries(used).map(([k, n], i) => `<div class="ing" style="--i:${i}">${n > 1 ? `<b>${n}</b>` : ""}${itemCard(k)}</div>`).join("")}</div>
-    <svg class="flaskfx" viewBox="0 0 120 150" width="150" height="188">
-      <defs><clipPath id="fc"><path d="M48 8 H72 V52 L108 128 Q112 140 100 140 H20 Q8 140 12 128 L48 52 Z"/></clipPath></defs>
-      <g clip-path="url(#fc)"><rect id="liq" x="0" y="96" width="120" height="60" fill="#b9c6dc"/>
-        <g id="bub">${Array.from({length: 9}, (_, i) => `<circle cx="${25 + i * 9}" cy="140" r="${2 + (i % 3)}" fill="#fff" opacity=".8" style="animation-delay:${i * .17}s"/>`).join("")}</g></g>
-      <path d="M48 8 H72 V52 L108 128 Q112 140 100 140 H20 Q8 140 12 128 L48 52 Z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
-      <rect x="44" y="2" width="32" height="9" rx="4" fill="#fff"/></svg>
-    <div class="fxt" id="fxt">まぜまぜ…</div><div class="fx-skip">タップでスキップ</div>`;
-  document.body.appendChild(fx);
-  let skip = false; fx.onclick = () => skip = true;
-  const wait = async ms => { const t = performance.now(); while (!skip && performance.now() - t < ms) await sleep(30); };
-  await wait(150); fx.classList.add("drop"); bell([660, 880], .08, .04);          // 材料がフラスコへ
-  await wait(700); fx.classList.add("boil"); bell([392, 440, 494, 523, 587], .09, .03); // ぐつぐつ
-  $("liq").style.fill = col; $("fxt").textContent = first ? "反応が…はじまった！" : "反応中…";
-  await wait(first ? 1400 : 900);
-  fx.insertAdjacentHTML("beforeend", `<div class="flashw"></div>`); bell(first ? [1046, 1318, 1568, 2093, 2637] : [1046, 1318, 1568], .07);
-  await sleep(260); burst(fx.querySelector(".flaskfx"));
-  if (first) for (let i = 1; i < 3; i++) setTimeout(() => burst(fx.querySelector(".flaskfx")), i * 220);
-  await sleep(first ? 500 : 250); fx.remove();
-}
-
 // ================= マイページ（バッジ・図鑑） =================
 function mypage(tab = "badge") {
   run++; $("hdr").style.display = "none";
@@ -447,7 +496,8 @@ function mypage(tab = "badge") {
     <div class="tabs"><button data-t="badge" class="${tab === "badge" ? "on" : ""}">バッジ ${bn}/${BADGES.length}</button>
       ${LAB_TABS.map(t => `<button data-t="${t}" class="${tab === t ? "on" : ""}">${t} ${cnt(t)}/${book(t).length}</button>`).join("")}
       <button data-t="mat" class="${tab === "mat" ? "on" : ""}">素材</button></div>
-    ${tab === "badge" ? `<div class="bgs">${BADGES.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`
+    ${tab === "badge" ? [...new Set(BADGES.map(b => b.cat))].map(c => { const L = BADGES.filter(b => b.cat === c);
+        return `<div class="sec">${c}　${L.filter(b => p.badges[b.id]).length}/${L.length}</div><div class="bgs">${L.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`; }).join("")
       : tab === "mat" ? `<div class="stk">${POOL.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
       : `<div class="stk">${book(tab).map(x => p.made[x.k] ? itemCard(x.k, null, `data-d="${x.k}" role="button"`) : `<div class="st no">?</div>`).join("")}</div>`}
     ${tab !== "badge" ? `<div style="font-size:11px;color:var(--sub);margin-top:6px">カードをタップすると解説が見られます</div>` : ""}

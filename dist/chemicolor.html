@@ -280,6 +280,53 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .plist .pl{border:2px solid #c9d6ea;background:#fff;border-radius:999px;font:inherit;font-weight:900;font-size:15px;padding:8px 14px;cursor:pointer;color:var(--ink)}
 .flab{font-weight:900;font-size:14px;margin-top:10px}.flab small{font-size:11px;color:var(--sub)}
 .inp.pin{letter-spacing:.4em;margin:6px 0}
+/* ===== 合成の演出（lab-fx.js） ===== */
+.conds{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:340px;opacity:0;transform:scale(.6);transition:.35s}
+.fx.on .conds{opacity:1;transform:none}
+.conds span{background:#fff;color:var(--ink);font-weight:900;font-size:13px;border-radius:999px;padding:3px 10px;box-shadow:0 3px 0 #0003}
+.cnd{display:inline-block;background:#eef3fb;border-radius:999px;font-size:10px;font-weight:900;padding:1px 7px;margin:3px 3px 0 0;color:var(--ink)}
+.flaskfx .bb,.flaskfx .pp,.flaskfx .gu{opacity:0}
+.fx.on .bb{animation:bub 1s ease-in infinite}
+.fx.react .pp{animation:ppt 1s ease-in forwards}
+@keyframes ppt{0%{opacity:0;transform:translateY(-20px)}20%{opacity:1}100%{opacity:1;transform:translateY(42px)}}
+.flaskfx .sed{opacity:0;transition:opacity .8s .7s}.fx.react .sed{opacity:1}
+.fx.react .gu{animation:gasup 1.4s ease-out infinite}
+@keyframes gasup{0%{opacity:.8;transform:translateY(0) scale(.6)}100%{opacity:0;transform:translateY(-70px) scale(1.6)}}
+.flaskfx .burner,.flaskfx .lamp,.flaskfx .spark,.flaskfx .gauge,.flaskfx .catg,.flaskfx .ice{opacity:0;transition:opacity .3s}
+.fx.on .burner,.fx.on .lamp,.fx.on .gauge,.fx.on .catg,.fx.on .ice{opacity:1}
+.fx.on .flm{animation:flm .18s ease-in-out infinite alternate;transform-origin:100px 196px}
+@keyframes flm{to{transform:scaleY(1.25) scaleX(.85)}}
+.fx.on .ray{animation:ray .5s ease-in-out infinite alternate}
+@keyframes ray{from{opacity:.3}to{opacity:1}}
+.fx.on .spark{animation:spark .22s steps(2) infinite}
+@keyframes spark{0%{opacity:1}50%{opacity:0}100%{opacity:1}}
+.fx.on .ndl{animation:ndl .6s ease-in-out infinite alternate;transform-origin:166px 40px}
+@keyframes ndl{from{transform:rotate(-40deg)}to{transform:rotate(30deg)}}
+.fx.on .catg{animation:catg .7s ease-in-out infinite alternate;transform-origin:170px 120px}
+@keyframes catg{from{transform:scale(.9)}to{transform:scale(1.12)}}
+.fx.on .catg circle{filter:drop-shadow(0 0 8px #8ff5e4)}
+.fx.on .pestle{animation:pestle .3s ease-in-out infinite alternate;transform-origin:120px 120px}
+@keyframes pestle{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+.sc-jar .cloud{transform-origin:100px 125px}
+.fx.on .cloud{animation:cloud 1.6s linear infinite}
+@keyframes cloud{to{transform:rotate(360deg)}}
+#gasC{transition:r .8s ease-out}
+.flaskfx .fireS{opacity:0;transform-origin:100px 120px}
+.fx.on .fireS{opacity:1;animation:fireS .15s ease-in-out infinite alternate}
+@keyframes fireS{from{transform:scale(.9)}to{transform:scale(1.25)}}
+.fx.react .fireS path:first-child{fill:#ff6b5b}
+.sc-chain .bead{transition:transform .8s cubic-bezier(.3,1.4,.5,1)}
+.sc-chain .bead{transform:translate(calc((var(--i) - 2.5) * 14px),calc((var(--i) % 2 - .5) * 70px))}
+.fx.react .sc-chain .bead{transform:none}
+.sc-chain .link{stroke-dasharray:140;stroke-dashoffset:140;transition:stroke-dashoffset .6s .1s}
+.fx.react .sc-chain .link{stroke-dashoffset:0}
+.sc-chain .link{order:-1}
+.fx.shake .flaskfx{animation:wob .12s infinite}
+/* ヒント */
+.hbtn{display:inline-block;margin-top:4px;border:2px solid var(--sun);background:#fff9e6;color:var(--ink);border-radius:999px;font:inherit;font-weight:900;font-size:12px;padding:3px 10px;cursor:pointer}
+.rc.hinted{background:#fff9e6}
+.btoast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 16px);transform:translateX(-50%);z-index:60;background:var(--ink);color:#fff;
+  border:3px solid var(--sun);border-radius:18px;padding:10px 18px;font-size:16px;text-align:center;line-height:1.5;box-shadow:0 6px 0 #0004;animation:bounce .6s cubic-bezier(.2,1.8,.4,1)}
 </style>
 </head>
 <body>
@@ -785,34 +832,44 @@ const PROD = [
 // [材料, できるもの, ヒント]（係数＝必要なカードの枚数）
 const RECIPES = [
  [{C:1,O2:1},{CO2:1},"炭素が燃える"], [{S:1,O2:1},{SO2:1},"硫黄が燃える"], [{H2:1,Cl2:1},{HCl:2},"光を当てると爆発的に反応"],
- [{N2:1,H2:3},{NH3:2},"ハーバー・ボッシュ法"], [{H2:1,S:1},{H2S:1},"加熱して直接反応"], [{H2:2,O2:1},{H2O:2},"水素が燃える"],
+ [{N2:1,H2:3},{NH3:2},"ハーバー・ボッシュ法","heat,press,cat:Fe₃O₄"], [{H2:1,S:1},{H2S:1},"加熱して直接反応"], [{H2:2,O2:1},{H2O:2},"水素が燃える"],
  [{Cu:2,O2:1},{CuO:2},"銅を空気中で加熱"], [{Fe:4,O2:3},{Fe2O3:2},"鉄がさびる"], [{N2:1,O2:1},{NO:2},"高温（エンジン内など）で反応"],
  [{NO:2,O2:1},{NO2:2},"無色の気体が空気中で赤褐色に"], [{O2:3},{O3:2},"放電や紫外線で"], [{Ag:2,Cl2:1},{AgCl:2},"銀とハロゲン①"],
- [{Ag:2,Br2:1},{AgBr:2},"銀とハロゲン②"], [{Ag:2,I2:1},{AgI:2},"銀とハロゲン③"], [{Zn:1,S:1},{ZnS:1},"亜鉛と硫黄"],
+ [{Ag:2,Br2:1},{AgBr:2},"銀とハロゲン②"], [{Ag:2,I2:1},{AgI:2},"銀とハロゲン③"], [{Zn:1,S:1},{ZnS:1},"亜鉛と硫黄","heat"],
  [{Fe:1,S:1},{FeS:1},"鉄粉と硫黄を加熱"], [{Na:2,Cl2:1},{NaCl:2},"激しく反応して食塩に"], [{Ca:2,O2:1},{CaO:2},"カルシウムが燃える"],
  [{CaO:1,CO2:1},{CaCO3:1},"生石灰が CO₂ を吸収"], [{NH3:1,HCl:1},{NH4Cl:1},"出会うと白煙"], [{CO2:1,C:1},{CO:2},"高温の炭素で還元"],
  [{C:1,H2:2},{CH4:1},"炭素と水素だけの気体"], [{Ca:1,H2O:2},{CaOH2:1,H2:1},"カルシウムは水と反応"],
  [{CaOH2:1,CO2:1},{CaCO3:1,H2O:1},"石灰水が白くにごる！"], [{Zn:1,HCl:2},{ZnCl2:1,H2:1},"水素の発生（亜鉛）"],
  [{Na:2,H2O:2},{NaOH:2,H2:1},"ナトリウムは水と激しく反応"], [{Fe:1,HCl:2},{FeCl2:1,H2:1},"水素の発生（鉄）"],
- [{Fe:2,Cl2:3},{FeCl3:2},"鉄を塩素中で加熱"], [{FeCl3:1,NaOH:3},{FeOH3:1,NaCl:3},"Fe³⁺ に塩基を加える"],
- [{SO2:2,O2:1},{SO3:2},"接触法①（V₂O₅ 触媒）"], [{SO3:1,H2O:1},{H2SO4:1},"接触法②"], [{NO2:3,H2O:1},{HNO3:2,NO:1},"オストワルト法"],
+ [{Fe:2,Cl2:3},{FeCl3:2},"鉄を塩素中で加熱"], [{FeCl3:1,NaOH:3},{FeOH3:1,NaCl:3},"Fe³⁺ に塩基を加える","ppt"],
+ [{SO2:2,O2:1},{SO3:2},"接触法①（V₂O₅ 触媒）","heat,cat:V₂O₅"], [{SO3:1,H2O:1},{H2SO4:1},"接触法②"], [{NO2:3,H2O:1},{HNO3:2,NO:1},"オストワルト法"],
  [{NaOH:1,CO2:1},{NaHCO3:1},"塩基が CO₂ を吸収"], [{NaHCO3:2},{Na2CO3:1,H2O:1,CO2:1},"重曹を加熱"],
  [{CuO:1,H2SO4:1},{CuSO4:1,H2O:1},"塩基性酸化物 ＋ 酸"], [{CuSO4:1,H2O:5},{CuSO45:1},"白い粉が水で青くなる"],
- [{CuSO4:1,NaOH:2},{CuOH2:1,Na2SO4:1},"Cu²⁺ に塩基を加える"], [{CuOH2:1,NH3:4},{CuNH3:1},"沈殿が過剰のアンモニア水に溶ける"],
+ [{CuSO4:1,NaOH:2},{CuOH2:1,Na2SO4:1},"Cu²⁺ に塩基を加える","ppt"], [{CuOH2:1,NH3:4},{CuNH3:1},"沈殿が過剰のアンモニア水に溶ける","-ppt"],
  [{CaO:1,C:3},{CaC2:1,CO:1},"電気炉で強熱"],
  // 有機
- [{CaC2:1,H2O:2},{C2H2:1,CaOH2:1},"カーバイドに水"], [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加"],
- [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加"], [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"お酒がすっぱくなる"],
- [{CH3COOH:1,C2H5OH:1},{EtOAc:1,H2O:1},"エステル化"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加"],
- [{C2H2:3},{C6H6:1},"3分子が環状につながる"], [{C6H6:1,HNO3:1},{PhNO2:1,H2O:1},"ニトロ化"], [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化"],
- [{CO:1,H2:2},{CH3OH:1},"触媒を使って合成"], [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化"], [{CH4:1,Cl2:1},{CH3Cl:1,HCl:1},"光による置換反応"],
- [{C2H4:1,Cl2:1},{C2H4Cl2:1},"二重結合に Cl₂ が付加"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加"],
+ [{CaC2:1,H2O:2},{C2H2:1,CaOH2:1},"カーバイドに水"], [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加","cat:Pt・Ni"],
+ [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加","heat,press,cat"], [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"お酒がすっぱくなる"],
+ [{CH3COOH:1,C2H5OH:1},{EtOAc:1,H2O:1},"エステル化","heat,cat:濃硫酸"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加","cat:HgSO₄"],
+ [{C2H2:3},{C6H6:1},"3分子が環状につながる","heat,cat:Fe"], [{C6H6:1,HNO3:1},{PhNO2:1,H2O:1},"ニトロ化","heat,cat:濃硫酸"], [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化","heat"],
+ [{CO:1,H2:2},{CH3OH:1},"触媒を使って合成","heat,press,cat"], [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化","heat,cat"], [{CH4:1,Cl2:1},{CH3Cl:1,HCl:1},"光による置換反応"],
+ [{C2H4:1,Cl2:1},{C2H4Cl2:1},"二重結合に Cl₂ が付加"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加","cat"],
  [{C2H4:5},{PE:1},"たくさんつながる（付加重合）"], [{C2H3Cl:5},{PVC:1},"たくさんつながる（付加重合）"],
-].map(([inp, out, hint], i) => ({id:"r" + (i + 1), inp, out, hint}));
+].map(([inp, out, hint, cond], i) => ({cond, id:"r" + (i + 1), inp, out, hint}));
 // ラボ専用バッジ（この版だけの目標）
 const LAB_BADGES = [
   {id:"lime",    e:"🫧", nm:"石灰水マスター", tx:"CaCO₃ を合成", test:p => p.made.CaCO3},
   {id:"organic", e:"🧬", nm:"有機デビュー",   tx:"有機物質を合成", test:(p, r) => recCat(r) === "有機"},
+  {id:"haber",   e:"🏭", nm:"ハーバー・ボッシュ", tx:"アンモニアを合成",   test:p => p.made.NH3},
+  {id:"contact", e:"🟡", nm:"接触法マスター", tx:"硫酸を合成",         test:p => p.made.H2SO4},
+  {id:"ostwald", e:"🟠", nm:"オストワルト法", tx:"硝酸を合成",         test:p => p.made.HNO3},
+  {id:"agx",     e:"📷", nm:"ハロゲン化銀",   tx:"AgCl・AgBr・AgI を合成", test:p => p.made.AgCl && p.made.AgBr && p.made.AgI},
+  {id:"iron",    e:"🔩", nm:"鉄の化学",       tx:"FeCl₂・FeCl₃・Fe(OH)₃ を合成", test:p => p.made.FeCl2 && p.made.FeCl3 && p.made.FeOH3},
+  {id:"copper",  e:"🔵", nm:"銅の七変化",     tx:"CuO・CuSO₄・五水和物・Cu(OH)₂・深青色の錯イオンを合成",
+   test:p => p.made.CuO && p.made.CuSO4 && p.made.CuSO45 && p.made.CuOH2 && p.made.CuNH3},
+  {id:"soda",    e:"🧂", nm:"ソーダの化学",   tx:"NaHCO₃ と Na₂CO₃ を合成", test:p => p.made.NaHCO3 && p.made.Na2CO3},
+  {id:"nox",     e:"🟤", nm:"窒素酸化物",     tx:"NO と NO₂ を合成",   test:p => p.made.NO && p.made.NO2},
+  {id:"carbide", e:"⚡", nm:"電気炉の主",     tx:"炭化カルシウムを合成", test:p => p.made.CaC2},
 ];
 const LAB_TABS = ["無機", "有機"];
 const STARTER = {H2:6, O2:6, C:4, N2:2, S:2, Cl2:2, Fe:2, Cu:2, H2O:4};
@@ -994,30 +1051,30 @@ const PROD = [
 // [材料, できるもの（主生成物を先に）, ヒント]　触媒は「入れて出てくる」ので変化しないことがわかる
 const RECIPES = [
  // 脂肪族
- [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加"],
+ [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加","heat,press,cat"],
  [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"お酒がすっぱくなる"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
- [{CH3COOH:1,C2H5OH:1,H2SO4:1},{EtOAc:1,H2O:1,H2SO4:1},"エステル化（濃硫酸は触媒）"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加"],
- [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加"],
+ [{CH3COOH:1,C2H5OH:1,H2SO4:1},{EtOAc:1,H2O:1,H2SO4:1},"エステル化（濃硫酸は触媒）","heat"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加","cat:HgSO₄"],
+ [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化","heat,cat"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加","cat"],
  [{C2H4:1,Br2:1},{C2H4Br2:1},"臭素水の脱色"], [{C2H5OH:2,Na:2},{C2H5ONa:2,H2:1},"アルコールとナトリウム"],
  [{C2H5OH:2,H2SO4:1},{Et2O:1,H2O:1,H2SO4:1},"130℃：分子間で脱水"], [{C2H5OH:1,H2SO4:1},{C2H4:1,H2O:1,H2SO4:1},"170℃：分子内で脱水"],
  [{C2H4:5},{PE:1},"たくさんつながる（付加重合）"], [{C2H3Cl:5},{PVC:1},"たくさんつながる（付加重合）"],
  [{C6H6:1,H2:3,Ni:1},{C6H12:1,Ni:1},"ベンゼン環に水素付加（高温高圧）"], [{C6H6:1,Cl2:3},{BHC:1},"光でベンゼン環に付加"],
  // 芳香族
- [{C2H2:3},{C6H6:1},"3分子が環状につながる"], [{C6H6:1,HNO3:1,H2SO4:1},{PhNO2:1,H2O:1,H2SO4:1},"ニトロ化（混酸）"],
- [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化"], [{C6H6:1,Cl2:1,Fe:1},{PhCl:1,HCl:1,Fe:1},"Fe 触媒で置換"],
+ [{C2H2:3},{C6H6:1},"3分子が環状につながる","heat,cat:Fe"], [{C6H6:1,HNO3:1,H2SO4:1},{PhNO2:1,H2O:1,H2SO4:1},"ニトロ化（混酸）","heat"],
+ [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化","heat"], [{C6H6:1,Cl2:1,Fe:1},{PhCl:1,HCl:1,Fe:1},"Fe 触媒で置換"],
  [{PhNO2:1,H2:3},{PhNH2:1,H2O:2},"ニトロ基の還元"], [{PhNH2:1,HCl:1},{PhNH3Cl:1},"弱塩基 ＋ 強酸"],
  [{PhNH3Cl:1,NaOH:1},{PhNH2:1,NaCl:1,H2O:1},"弱塩基の遊離"], [{PhNH2:1,NaNO2:1,HCl:2},{PhN2Cl:1,NaCl:1,H2O:2},"ジアゾ化（5℃以下）"],
  [{PhN2Cl:1,PhONa:1},{Azo:1,NaCl:1},"ジアゾカップリング"], [{PhN2Cl:1,H2O:1},{PhOH:1,N2:1,HCl:1},"ジアゾニウム塩を温める"],
  [{PhSO3H:1,NaOH:1},{PhSO3Na:1,H2O:1},"スルホン酸の中和"], [{PhSO3Na:1,NaOH:2},{PhONa:1,Na2SO3:1,H2O:1},"アルカリ融解"],
  [{PhCl:1,NaOH:2},{PhONa:1,NaCl:1,H2O:1},"高温高圧で NaOH と"], [{PhONa:1,CO2:1,H2O:1},{PhOH:1,NaHCO3:1},"弱酸の遊離"],
- [{PhOH:1,NaOH:1},{PhONa:1,H2O:1},"フェノールの中和"], [{C6H6:1,C3H6:1},{Cumene:1},"クメン法①"],
+ [{PhOH:1,NaOH:1},{PhONa:1,H2O:1},"フェノールの中和"], [{C6H6:1,C3H6:1},{Cumene:1},"クメン法①","cat"],
  [{Cumene:1,O2:1},{CHP:1},"クメン法②（酸化）"], [{CHP:1,H2SO4:1},{PhOH:1,Acetone:1,H2SO4:1},"クメン法③（分解）"],
  [{PhONa:1,CO2:1},{SalNa:1},"高温高圧（コルベ・シュミット反応）"], [{SalNa:1,HCl:1},{Sal:1,NaCl:1},"弱酸の遊離"],
- [{Sal:1,Ac2O:1},{Aspirin:1,CH3COOH:1},"アセチル化 → 解熱鎮痛剤"], [{Sal:1,CH3OH:1,H2SO4:1},{MeSal:1,H2O:1,H2SO4:1},"エステル化 → 湿布薬"],
+ [{Sal:1,Ac2O:1},{Aspirin:1,CH3COOH:1},"アセチル化 → 解熱鎮痛剤"], [{Sal:1,CH3OH:1,H2SO4:1},{MeSal:1,H2O:1,H2SO4:1},"エステル化 → 湿布薬","heat"],
  [{Tol:2,O2:3},{BzOH:2,H2O:2},"側鎖の酸化（実際は KMnO₄）"], [{BzOH:1,NaHCO3:1},{BzONa:1,H2O:1,CO2:1},"炭酸より強い酸"],
- [{BzOH:1,CH3OH:1,H2SO4:1},{MeBz:1,H2O:1,H2SO4:1},"エステル化"], [{PhNH2:1,Ac2O:1},{Acetanilide:1,CH3COOH:1},"アミノ基のアセチル化"],
- [{PhOH:1,Br2:3},{TBP:1,HBr:3},"臭素水で白色沈殿"], [{PhOH:1,HNO3:3},{Picric:1,H2O:3},"フェノールのニトロ化"],
-].map(([inp, out, hint], i) => ({id:"o" + (i + 1), inp, out, hint}));
+ [{BzOH:1,CH3OH:1,H2SO4:1},{MeBz:1,H2O:1,H2SO4:1},"エステル化","heat"], [{PhNH2:1,Ac2O:1},{Acetanilide:1,CH3COOH:1},"アミノ基のアセチル化"],
+ [{PhOH:1,Br2:3},{TBP:1,HBr:3},"臭素水で白色沈殿"], [{PhOH:1,HNO3:3},{Picric:1,H2O:3},"フェノールのニトロ化","heat,cat:濃硫酸"],
+].map(([inp, out, hint, cond], i) => ({cond, id:"o" + (i + 1), inp, out, hint}));
 
 const LAB_TABS = ["脂肪族", "芳香族"];
 const STARTER = {C2H2:6, H2:6, O2:4, H2O:4, HNO3:2, H2SO4:3, Cl2:2, HCl:3, NaOH:3, CO2:2};
@@ -1026,6 +1083,13 @@ const LAB_BADGES = [
   {id:"aspirin", e:"💊", nm:"薬学への一歩",   tx:"アセチルサリチル酸を合成", test:p => p.made.Aspirin},
   {id:"azo",     e:"🎨", nm:"染料職人",       tx:"アゾ化合物を合成",         test:p => p.made.Azo},
   {id:"cumene",  e:"🏭", nm:"クメン法マスター", tx:"フェノールとアセトンを合成", test:p => p.made.Acetone},
+  {id:"ester",   e:"🍎", nm:"エステル職人",   tx:"酢酸エチル・サリチル酸メチル・安息香酸メチルを合成", test:p => p.made.EtOAc && p.made.MeSal && p.made.MeBz},
+  {id:"aniline", e:"🟣", nm:"アニリン合成",   tx:"アニリンを合成",       test:p => p.made.PhNH2},
+  {id:"phenol",  e:"🧴", nm:"フェノール合成", tx:"フェノールを合成",     test:p => p.made.PhOH},
+  {id:"salicyl", e:"🌿", nm:"サリチル酸ファミリー", tx:"サリチル酸・アスピリン・サリチル酸メチルを合成", test:p => p.made.Sal && p.made.Aspirin && p.made.MeSal},
+  {id:"ether",   e:"💨", nm:"脱水の達人",     tx:"ジエチルエーテルとエチレンを合成", test:p => p.made.Et2O && p.made.C2H4},
+  {id:"picric",  e:"💛", nm:"ピクリン酸",     tx:"ピクリン酸を合成",     test:p => p.made.Picric},
+  {id:"addBz",   e:"⬢",  nm:"ベンゼンへの付加", tx:"シクロヘキサンと BHC を合成", test:p => p.made.C6H12 && p.made.BHC},
 ];
 
 return {id:"org", name:"有機", em:"⚗️", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
@@ -1235,20 +1299,20 @@ const PROD = [
 const RECIPES = [
  // 樹脂
  [{C2H4:5},{PE:1},"エチレンの付加重合"], [{C3H6:5},{PP:1},"プロペンの付加重合"],
- [{C2H2:1,HCl:1},{C2H3Cl:1},"アセチレンに HCl を付加"], [{C2H3Cl:5},{PVC:1},"塩化ビニルの付加重合"],
+ [{C2H2:1,HCl:1},{C2H3Cl:1},"アセチレンに HCl を付加","cat"], [{C2H3Cl:5},{PVC:1},"塩化ビニルの付加重合"],
  [{Sty:5},{PS:1},"ベンゼン環をもつ単量体の付加重合"], [{MMA:5},{PMMA:1},"アクリル樹脂をつくる"],
  [{C2F4:5},{PTFE:1},"フッ素をふくむ単量体の付加重合"], [{VAc:5},{PVAc:1},"接着剤になる高分子"],
- [{TPA:5,EG:5},{PET:1,H2O:10},"ペットボトルの縮合重合"], [{Lac:5},{PLA:1,H2O:5},"生分解性プラスチック"],
- [{PhOH:5,HCHO:5},{PF:1,H2O:5},"付加縮合でできる熱硬化性樹脂"],
+ [{TPA:5,EG:5},{PET:1,H2O:10},"ペットボトルの縮合重合","heat"], [{Lac:5},{PLA:1,H2O:5},"生分解性プラスチック","heat"],
+ [{PhOH:5,HCHO:5},{PF:1,H2O:5},"付加縮合でできる熱硬化性樹脂","heat"],
  // 繊維・ゴム
- [{AdA:5,HMDA:5},{N66:1,H2O:10},"ジカルボン酸とジアミンの縮合重合"], [{Capro:5},{N6:1},"環が開いてつながる（開環重合）"],
- [{AN:5},{PAN:1},"アクリル繊維をつくる"], [{PVAc:1,NaOH:5},{PVA:1,CH3COONa:5},"ポリ酢酸ビニルのけん化"],
+ [{AdA:5,HMDA:5},{N66:1,H2O:10},"ジカルボン酸とジアミンの縮合重合","heat"], [{Capro:5},{N6:1},"環が開いてつながる（開環重合）","heat"],
+ [{AN:5},{PAN:1},"アクリル繊維をつくる"], [{PVAc:1,NaOH:5},{PVA:1,CH3COONa:5},"ポリ酢酸ビニルのけん化","heat"],
  [{Bd:5},{BR:1},"二重結合が2つの単量体の付加重合"], [{CP:5},{CR:1},"Cl をもつ合成ゴム"],
  [{Bd:5,Sty:5},{SBR:1},"2種類の単量体の共重合"],
  // 天然高分子
  [{Iso:5},{NR:1},"ゴムの木がつくる高分子"], [{aGlc:5},{Starch:1,H2O:5},"α-グルコースがつながる"],
  [{bGlc:5},{Cell:1,H2O:5},"β-グルコースがつながる"], [{Gly:5},{Pep:1,H2O:5},"ペプチド結合でつながる"],
-].map(([inp, out, hint], i) => ({id:"p" + (i + 1), inp, out, hint}));
+].map(([inp, out, hint, cond], i) => ({cond, id:"p" + (i + 1), inp, out, hint}));
 
 const LAB_TABS = ["樹脂", "繊維・ゴム", "天然高分子"];
 const STARTER = {C2H4:5, aGlc:5, C2H2:2, HCl:2};
@@ -1257,6 +1321,13 @@ const LAB_BADGES = [
   {id:"nylon",   e:"🧵", nm:"ナイロン職人",   tx:"ナイロン66 を合成",   test:p => p.made.N66},
   {id:"rubber",  e:"🛞", nm:"ゴム博士",       tx:"SBR を合成",          test:p => p.made.SBR},
   {id:"natural", e:"🌾", nm:"天然高分子マスター", tx:"デンプン・セルロース・ポリペプチドを合成", test:p => p.made.Starch && p.made.Cell && p.made.Pep},
+  {id:"pet",     e:"🍶", nm:"ペットボトル職人", tx:"PET を合成",          test:p => p.made.PET},
+  {id:"teflon",  e:"🍳", nm:"テフロン加工",     tx:"PTFE を合成",         test:p => p.made.PTFE},
+  {id:"nylon2",  e:"🪢", nm:"ナイロン兄弟",     tx:"ナイロン66 とナイロン6 を合成", test:p => p.made.N66 && p.made.N6},
+  {id:"rubber3", e:"🎈", nm:"合成ゴム3種",      tx:"BR・CR・SBR を合成",  test:p => p.made.BR && p.made.CR && p.made.SBR},
+  {id:"vinylon", e:"🧶", nm:"ビニロンへの道",   tx:"ポリビニルアルコールを合成", test:p => p.made.PVA},
+  {id:"eco",     e:"♻️", nm:"エコ素材",         tx:"ポリ乳酸を合成",      test:p => p.made.PLA},
+  {id:"resin",   e:"🔌", nm:"熱硬化性樹脂",     tx:"フェノール樹脂を合成", test:p => p.made.PF},
 ];
 
 return {id:"poly", name:"高分子", em:"🧬", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
@@ -1826,24 +1897,74 @@ function hudOn() {
 }
 
 // --- バッジ
+// --- バッジ（cat：マイページでの見出し）。test があるものは、記録を見て自動で判定する（autoBadges）
+//     test がないものは、クリアした瞬間の出来事で判定する（finishRun など）
+const madeN = p => Object.keys(p.made || {}).length;
+const fieldUnits = id => p => FIELD_OF[id].CH.every(c => p.best[c.id]);
+const fieldComp = id => p => FIELD_OF[id].RECIPES.every(r => p.recipes && p.recipes[r.id]);
 const BADGES = [
-  {id:"first",   e:"🌱", nm:"はじめの一歩",   tx:"初めてクリア"},
-  {id:"perfect", e:"👑", nm:"パーフェクト",   tx:"全問正解する"},
-  {id:"combo5",  e:"⚡", nm:"5コンボ",        tx:"5問連続正解"},
-  {id:"combo10", e:"🔥", nm:"コンボマスター", tx:"10問連続正解"},
-  {id:"score2k", e:"💯", nm:"2000点突破",     tx:"1回で2000点以上"},
-  {id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"どれかの分野の全単元をクリア"},
-  {id:"plays10", e:"🎮", nm:"常連さん",       tx:"10回プレイ"},
-  {id:"streak3", e:"📅", nm:"3日連続",        tx:"3日連続ログイン"},
-  {id:"craft1",  e:"⚗️", nm:"はじめての合成", tx:"物質を1つ合成"},
-  {id:"craft10", e:"🧪", nm:"合成マスター",   tx:"10種類の物質を合成"},
-  {id:"craftAll",e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見"},
-  {id:"compAll", e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見"},
-  {id:"top1",    e:"🥇", nm:"ランキング1位",  tx:"どれかの単元で1位"},
-  {id:"lv5",     e:"⭐", nm:"Lv.5到達",       tx:"レベル5になる"},
-  {id:"rich",    e:"🪙", nm:"コイン長者",     tx:"合計1000コイン獲得"},
-  ...FIELDS.flatMap(f => f.LAB_BADGES),
+  // プレイ
+  {cat:"プレイ", id:"first",   e:"🌱", nm:"はじめの一歩",   tx:"初めてクリア"},
+  {cat:"プレイ", id:"plays10", e:"🎮", nm:"常連さん",       tx:"10回プレイ",   test:p => p.plays >= 10},
+  {cat:"プレイ", id:"plays30", e:"🕹️", nm:"化学好き",       tx:"30回プレイ",   test:p => p.plays >= 30},
+  {cat:"プレイ", id:"plays100",e:"👹", nm:"化学の鬼",       tx:"100回プレイ",  test:p => p.plays >= 100},
+  {cat:"プレイ", id:"lv5",     e:"⭐", nm:"Lv.5到達",       tx:"レベル5になる",  test:p => lvOfXp(p.xp) >= 5},
+  {cat:"プレイ", id:"lv10",    e:"🌟", nm:"Lv.10到達",      tx:"レベル10になる", test:p => lvOfXp(p.xp) >= 10},
+  {cat:"プレイ", id:"lv20",    e:"💫", nm:"Lv.20到達",      tx:"レベル20になる", test:p => lvOfXp(p.xp) >= 20},
+  {cat:"プレイ", id:"streak3", e:"📅", nm:"3日連続",        tx:"3日連続ログイン",  test:p => p.streak >= 3},
+  {cat:"プレイ", id:"streak7", e:"🗓️", nm:"1週間皆勤",      tx:"7日連続ログイン",  test:p => p.streak >= 7},
+  {cat:"プレイ", id:"streak14",e:"📆", nm:"2週間皆勤",      tx:"14日連続ログイン", test:p => p.streak >= 14},
+  {cat:"プレイ", id:"streak30",e:"🏆", nm:"30日皆勤",       tx:"30日連続ログイン", test:p => p.streak >= 30},
+  // 記録
+  {cat:"記録", id:"perfect", e:"👑", nm:"パーフェクト",   tx:"全問正解する"},
+  {cat:"記録", id:"combo5",  e:"⚡", nm:"5コンボ",        tx:"5問連続正解"},
+  {cat:"記録", id:"combo10", e:"🔥", nm:"コンボマスター", tx:"10問連続正解"},
+  {cat:"記録", id:"score2k", e:"💯", nm:"2000点突破",     tx:"1回で2000点以上"},
+  {cat:"記録", id:"score25", e:"🚀", nm:"2500点突破",     tx:"1回で2500点以上"},
+  {cat:"記録", id:"sRank10", e:"🎯", nm:"Sランク10回",    tx:"Sランクを10回とる", test:p => (p.sCount || 0) >= 10},
+  {cat:"記録", id:"sRank50", e:"🏹", nm:"Sランク50回",    tx:"Sランクを50回とる", test:p => (p.sCount || 0) >= 50},
+  {cat:"記録", id:"sUnits8", e:"🎖️", nm:"Sランクコレクター", tx:"8つの単元でSランク", test:p => Object.keys(p.sUnits || {}).length >= 8},
+  {cat:"記録", id:"top1",    e:"🥇", nm:"ランキング1位",  tx:"どれかの単元で1位"},
+  {cat:"記録", id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"どれかの分野の全単元をクリア", test:p => FIELDS.some(f => fieldUnits(f.id)(p))},
+  {cat:"記録", id:"allInorg",e:"🧪", nm:"無機の旅人",     tx:"無機の全単元をクリア",   test:fieldUnits("inorg")},
+  {cat:"記録", id:"allOrg",  e:"⚗️", nm:"有機の旅人",     tx:"有機の全単元をクリア",   test:fieldUnits("org")},
+  {cat:"記録", id:"allPoly", e:"🧬", nm:"高分子の旅人",   tx:"高分子の全単元をクリア", test:fieldUnits("poly")},
+  {cat:"記録", id:"allField",e:"🌍", nm:"3分野制覇",      tx:"無機・有機・高分子の全単元をクリア", test:p => FIELDS.every(f => fieldUnits(f.id)(p))},
+  // コイン・ガチャ
+  {cat:"コイン・ガチャ", id:"rich",    e:"🪙", nm:"コイン長者",   tx:"合計1000コイン獲得",  test:p => p.earned >= 1000},
+  {cat:"コイン・ガチャ", id:"rich5k",  e:"💰", nm:"大金持ち",     tx:"合計5000コイン獲得",  test:p => p.earned >= 5000},
+  {cat:"コイン・ガチャ", id:"rich20k", e:"🤑", nm:"コイン王",     tx:"合計20000コイン獲得", test:p => p.earned >= 20000},
+  {cat:"コイン・ガチャ", id:"gacha1",  e:"🎁", nm:"はじめてのガチャ", tx:"ガチャを1回引く",  test:p => (p.pulls || 0) >= 1},
+  {cat:"コイン・ガチャ", id:"gacha30", e:"🎰", nm:"ガチャ好き",   tx:"ガチャを30回引く",   test:p => (p.pulls || 0) >= 30},
+  {cat:"コイン・ガチャ", id:"gacha100",e:"🎡", nm:"ガチャマスター", tx:"ガチャを100回引く", test:p => (p.pulls || 0) >= 100},
+  {cat:"コイン・ガチャ", id:"sr1",     e:"✨", nm:"はじめてのSR", tx:"SR素材を引く",       test:p => (p.srGot || 0) >= 1},
+  {cat:"コイン・ガチャ", id:"sr20",    e:"💎", nm:"SRコレクター", tx:"SR素材を20枚引く",   test:p => (p.srGot || 0) >= 20},
+  {cat:"コイン・ガチャ", id:"hint1",   e:"🔍", nm:"ヒントで一歩", tx:"レシピのヒントを見る", test:p => (p.hintUsed || 0) >= 1},
+  // 合成
+  {cat:"合成", id:"craft1",   e:"⚗️", nm:"はじめての合成", tx:"物質を1つ合成"},
+  {cat:"合成", id:"craft10",  e:"🧪", nm:"合成マスター",   tx:"10種類の物質を合成",  test:p => madeN(p) >= 10},
+  {cat:"合成", id:"craft30",  e:"🔬", nm:"物質ハンター",   tx:"30種類の物質を合成",  test:p => madeN(p) >= 30},
+  {cat:"合成", id:"craft80",  e:"📚", nm:"物質博士",       tx:"80種類の物質を合成",  test:p => madeN(p) >= 80},
+  {cat:"合成", id:"crafts50", e:"🔁", nm:"合成50回",       tx:"合成を50回する",      test:p => (p.crafts || 0) >= 50},
+  {cat:"合成", id:"crafts200",e:"🏭", nm:"合成工場",       tx:"合成を200回する",     test:p => (p.crafts || 0) >= 200},
+  {cat:"合成", id:"self10",   e:"💡", nm:"ひらめき",       tx:"ヒントなしで10レシピ発見", test:p => (p.selfFound || 0) >= 10},
+  {cat:"合成", id:"self50",   e:"🧠", nm:"ひらめきの天才", tx:"ヒントなしで50レシピ発見", test:p => (p.selfFound || 0) >= 50},
+  {cat:"合成", id:"craftAll", e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見", test:p => FIELDS.some(f => fieldComp(f.id)(p))},
+  {cat:"合成", id:"compInorg",e:"🥉", nm:"無機コンプリート",   tx:"無機の全レシピを発見",   test:fieldComp("inorg")},
+  {cat:"合成", id:"compOrg",  e:"🥈", nm:"有機コンプリート",   tx:"有機の全レシピを発見",   test:fieldComp("org")},
+  {cat:"合成", id:"compPoly", e:"🥇", nm:"高分子コンプリート", tx:"高分子の全レシピを発見", test:fieldComp("poly")},
+  {cat:"合成", id:"compAll",  e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見", test:p => FIELDS.every(f => fieldComp(f.id)(p))},
+  // 分野ごとの物質（src/data/*-lab.js の LAB_BADGES）
+  ...FIELDS.flatMap(f => f.LAB_BADGES.map(b => ({cat:f.name, ...b}))),
 ];
+// 記録から判定できるバッジをまとめてチェック（test(p, r) のように合成したレシピを使うものは合成のときだけ）
+function autoBadges() { const p = P(); return unlock(BADGES.filter(b => b.test && b.test.length < 2 && !p.badges[b.id] && b.test(p)).map(b => b.id)); }
+function badgeToast(list) {
+  if (!list || !list.length) return;
+  const d = document.createElement("div"); d.className = "btoast pop";
+  d.innerHTML = `🎖️ バッジゲット！<br>${list.map(b => `${b.e} ${b.nm}`).join("<br>")}`;
+  document.body.appendChild(d); bell([1318, 1568, 2093], .08); setTimeout(() => d.remove(), 2800);
+}
 function unlock(ids) { const p = P(), got = []; ids.forEach(id => { if (!p.badges[id]) { p.badges[id] = today(); got.push(BADGES.find(b => b.id === id)); } }); return got; }
 
 // --- ランキング（この端末内）
@@ -1869,11 +1990,11 @@ function finishRun() {
   const ids = ["first"];
   if (r === "S") ids.push("perfect");
   if (runMax >= 5) ids.push("combo5"); if (runMax >= 10) ids.push("combo10");
-  if (pts >= 2000) ids.push("score2k"); if (p.plays >= 10) ids.push("plays10");
-  if (CH.every(c => p.best[c.id])) ids.push("all");
-  if (pos === 1) ids.push("top1"); if (lvOfXp(p.xp) >= 5) ids.push("lv5"); if (p.earned >= 1000) ids.push("rich");
-  const badges = unlock(ids);
+  if (pts >= 2000) ids.push("score2k"); if (pts >= 2500) ids.push("score25");
+  if (r === "S") { p.sCount = (p.sCount || 0) + 1; p.sUnits = {...p.sUnits, [cur.id]: 1}; }
+  if (pos === 1) ids.push("top1");
   const mats = dropMats(r);
+  const badges = [...unlock(ids), ...autoBadges()];
   saveS();
   return {r, pos, coins, newRec, prevBest, badges, mats, lvUp: lvOfXp(p.xp) > lv0 ? lvOfXp(p.xp) : 0};
 }
@@ -2015,7 +2136,7 @@ function dailyBonus() {
   const F = [...FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
   const help = giveNeeded(p, F, loginHelp());
   const gift = p.streak % 7 === 0 ? pull("SR", F) : pull("R", F); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
-  const b = p.streak >= 3 ? unlock(["streak3"]) : [];
+  const b = autoBadges();
   saveS();
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box"><div style="font-size:48px">🎁</div><h2 class="pop" style="margin:4px 0">ログインボーナス</h2>
@@ -2024,7 +2145,7 @@ function dailyBonus() {
     <div style="font-weight:900;margin-top:4px">おまけ素材（${F.name}）：${gift.nm}（${gift.r}）</div>
     ${help.length ? `<div style="font-weight:900;margin-top:4px">🤝 おたすけ素材（${F.name}）：${help.map(x => x.nm).join("・")}</div>` : ""}
     <div style="font-size:12px;color:var(--sub)">毎日ログインすると素材が集まる！（7日ごとにSR素材）</div>
-    ${b.length ? `<div style="margin-top:6px;font-weight:900">🎖️ バッジ「${b[0].nm}」ゲット！</div>` : ""}
+    ${b.length ? `<div style="margin-top:6px;font-weight:900">🎖️ バッジ「${b.map(x => x.nm).join("」「")}」ゲット！</div>` : ""}
     <button class="btn" id="mOk">うけとる</button></div>`;
   document.body.appendChild(m); bell([1046, 1318, 1568]);
   m.querySelector("#mOk").onclick = () => { m.remove(); menu(); };
@@ -2073,8 +2194,10 @@ function gacha() {
     const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
     if (n >= 10 && !got.some(m => m.r === "SR")) got[got.length - 1] = pull("SR");
     got.sort((a, b) => "NRS".indexOf(b.r[0]) - "NRS".indexOf(a.r[0]));   // レアの高い順（SR → R → N）に出す
-    got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1); saveS();
-    await gachaFx(got); upd();
+    got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1);
+    p.pulls = (p.pulls || 0) + n; p.srGot = (p.srGot || 0) + got.filter(m => m.r === "SR").length;
+    const b = autoBadges(); saveS();
+    await gachaFx(got); upd(); badgeToast(b);
   };
   $("p1").onclick = () => go(1); $("p10").onclick = () => go(10);
 }
@@ -2117,8 +2240,11 @@ function lab(msg = "") {
     <div class="sec">レシピ帳　${found}/${RECIPES.length}</div>
     <div class="tabs">${LAB_TABS.map(t => `<button data-rt="${t}" class="${recTab === t ? "on" : ""}">${t} ${RECIPES.filter(r => recCat(r) === t && p.recipes[r.id]).length}/${RECIPES.filter(r => recCat(r) === t).length}</button>`).join("")}</div>
     <div class="recipes">${list.map(r => p.recipes[r.id]
-      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<small>${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
-      : `<div class="rc">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${Object.keys(r.out).filter(k => !ITEM[k].mat || Object.keys(r.out).length === 1).map(k => ITEM[k].nm).join(" ＋ ")}<small>💡 ${r.hint}（材料${Object.keys(r.inp).length}種類）</small></div>`).join("")}</div>
+      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<div>${condIcons(r)}</div><small>${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
+      : p.hints && p.hints[r.id]
+      ? `<button class="rc hinted ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${sideHTML(r.inp)} → ${outNames(r)}<div>${condIcons(r)}</div><small>💡 ${r.hint}　${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
+      : `<div class="rc">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${outNames(r)}<small>💡 ${r.hint}（材料${Object.keys(r.inp).length}種類）</small>
+          <button class="hbtn" data-h="${r.id}">🔍 材料と係数を見る（🪙${HINT_COST}）</button></div>`).join("")}</div>
     <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
   stage.querySelectorAll(".stk .st[data-k]").forEach(c => {
@@ -2131,9 +2257,28 @@ function lab(msg = "") {
   stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { const k = b.dataset.k; if (--slot[k] <= 0) delete slot[k]; lab(); });
   stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; lab(); });
   stage.querySelectorAll(".rc[data-r]").forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.r); if (!canMake(p, r)) return; slot = {...r.inp}; lab(); stage.scrollTop = 0; });
+  stage.querySelectorAll(".hbtn").forEach(b => b.onclick = () => buyHint(RECIPES.find(x => x.id === b.dataset.h)));
   $("clr").onclick = () => { slot = {}; lab(); };
   $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
   $("mix").onclick = mix;
+}
+const HINT_COST = 50;
+const outNames = r => Object.keys(r.out).filter(k => !ITEM[k].mat || Object.keys(r.out).length === 1).map(k => ITEM[k].nm).join(" ＋ ");
+// ヒント：コイン50で、未発見レシピの材料と係数を見せる（ほぼ答え）
+function buyHint(r) {
+  const p = P(), ok = p.coins >= HINT_COST;
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="box"><div style="font-size:40px">🔍</div>
+    <div style="font-weight:900">「${outNames(r)}」の材料と係数を見る？</div>
+    <div style="font-size:13px;color:var(--sub);margin-top:4px">🪙${HINT_COST} 使います（所持 🪙${p.coins}）</div>
+    ${ok ? `<button class="btn" id="hOk">見る（🪙${HINT_COST}）</button>` : `<div class="lmsg">コインが足りません。クイズで集めよう</div>`}
+    <button class="btn sub" id="hNo">やめる</button></div>`;
+  document.body.appendChild(m);
+  m.querySelector("#hNo").onclick = () => m.remove();
+  if (ok) m.querySelector("#hOk").onclick = () => {
+    p.coins -= HINT_COST; p.hints = p.hints || {}; p.hints[r.id] = today(); p.hintUsed = (p.hintUsed || 0) + 1;
+    const b = autoBadges(); saveS(); m.remove(); bell([880, 1175]); lab(`🔍 ヒント：${sideHTML(r.inp)} → ${outNames(r)}`); badgeToast(b);
+  };
 }
 function sameBag(a, b) { const ka = Object.keys(a), kb = Object.keys(b); return ka.length === kb.length && ka.every(k => a[k] === b[k]); }
 
@@ -2148,12 +2293,13 @@ async function mix() {
   Object.entries(r.inp).forEach(([k, n]) => p.inv[k] -= n);
   Object.entries(r.out).forEach(([k, n]) => { p.inv[k] = (p.inv[k] || 0) + n; p.made[k] = (p.made[k] || 0) + n; });
   const first = !p.recipes[r.id]; p.recipes[r.id] = today();
+  p.crafts = (p.crafts || 0) + 1; if (first && !(p.hints && p.hints[r.id])) p.selfFound = (p.selfFound || 0) + 1;
   if (first) { p.coins += 50; p.earned += 50; }
   const ids = ["craft1"]; if (PROD.filter(x => p.made[x.k]).length >= 10) ids.push("craft10");
   if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
   if (FIELDS.every(f => f.RECIPES.every(x => p.recipes[x.id]))) ids.push("compAll");
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
-  const b = unlock(ids); saveS(); slot = {};
+  const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
   await mixFx(r, used, first);
   // 結果
   const prods = Object.keys(r.out).filter(k => !ITEM[k].mat), main = prods[0] || Object.keys(r.out)[0];
@@ -2172,32 +2318,6 @@ async function mix() {
   if (again) m.querySelector("#mAgain").onclick = () => { m.remove(); slot = {...r.inp}; mix(); };
 }
 
-async function mixFx(r, used, first) {
-  const outKeys = Object.keys(r.out), main = outKeys.find(k => !ITEM[k].mat) || outKeys[0], it = ITEM[main];
-  const col = it.c === "無色" ? "#cfe6ff" : it.c === "白" ? "#f4f6fb" : HEX[it.c];
-  const fx = document.createElement("div"); fx.className = "fx" + (first ? " gold" : "");
-  fx.innerHTML = `
-    <div class="ings">${Object.entries(used).map(([k, n], i) => `<div class="ing" style="--i:${i}">${n > 1 ? `<b>${n}</b>` : ""}${itemCard(k)}</div>`).join("")}</div>
-    <svg class="flaskfx" viewBox="0 0 120 150" width="150" height="188">
-      <defs><clipPath id="fc"><path d="M48 8 H72 V52 L108 128 Q112 140 100 140 H20 Q8 140 12 128 L48 52 Z"/></clipPath></defs>
-      <g clip-path="url(#fc)"><rect id="liq" x="0" y="96" width="120" height="60" fill="#b9c6dc"/>
-        <g id="bub">${Array.from({length: 9}, (_, i) => `<circle cx="${25 + i * 9}" cy="140" r="${2 + (i % 3)}" fill="#fff" opacity=".8" style="animation-delay:${i * .17}s"/>`).join("")}</g></g>
-      <path d="M48 8 H72 V52 L108 128 Q112 140 100 140 H20 Q8 140 12 128 L48 52 Z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
-      <rect x="44" y="2" width="32" height="9" rx="4" fill="#fff"/></svg>
-    <div class="fxt" id="fxt">まぜまぜ…</div><div class="fx-skip">タップでスキップ</div>`;
-  document.body.appendChild(fx);
-  let skip = false; fx.onclick = () => skip = true;
-  const wait = async ms => { const t = performance.now(); while (!skip && performance.now() - t < ms) await sleep(30); };
-  await wait(150); fx.classList.add("drop"); bell([660, 880], .08, .04);          // 材料がフラスコへ
-  await wait(700); fx.classList.add("boil"); bell([392, 440, 494, 523, 587], .09, .03); // ぐつぐつ
-  $("liq").style.fill = col; $("fxt").textContent = first ? "反応が…はじまった！" : "反応中…";
-  await wait(first ? 1400 : 900);
-  fx.insertAdjacentHTML("beforeend", `<div class="flashw"></div>`); bell(first ? [1046, 1318, 1568, 2093, 2637] : [1046, 1318, 1568], .07);
-  await sleep(260); burst(fx.querySelector(".flaskfx"));
-  if (first) for (let i = 1; i < 3; i++) setTimeout(() => burst(fx.querySelector(".flaskfx")), i * 220);
-  await sleep(first ? 500 : 250); fx.remove();
-}
-
 // ================= マイページ（バッジ・図鑑） =================
 function mypage(tab = "badge") {
   run++; $("hdr").style.display = "none";
@@ -2209,7 +2329,8 @@ function mypage(tab = "badge") {
     <div class="tabs"><button data-t="badge" class="${tab === "badge" ? "on" : ""}">バッジ ${bn}/${BADGES.length}</button>
       ${LAB_TABS.map(t => `<button data-t="${t}" class="${tab === t ? "on" : ""}">${t} ${cnt(t)}/${book(t).length}</button>`).join("")}
       <button data-t="mat" class="${tab === "mat" ? "on" : ""}">素材</button></div>
-    ${tab === "badge" ? `<div class="bgs">${BADGES.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`
+    ${tab === "badge" ? [...new Set(BADGES.map(b => b.cat))].map(c => { const L = BADGES.filter(b => b.cat === c);
+        return `<div class="sec">${c}　${L.filter(b => p.badges[b.id]).length}/${L.length}</div><div class="bgs">${L.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`; }).join("")
       : tab === "mat" ? `<div class="stk">${POOL.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
       : `<div class="stk">${book(tab).map(x => p.made[x.k] ? itemCard(x.k, null, `data-d="${x.k}" role="button"`) : `<div class="st no">?</div>`).join("")}</div>`}
     ${tab !== "badge" ? `<div style="font-size:11px;color:var(--sub);margin-top:6px">カードをタップすると解説が見られます</div>` : ""}
@@ -2217,6 +2338,134 @@ function mypage(tab = "badge") {
   stage.querySelectorAll(".tabs button").forEach(b => b.onclick = () => mypage(b.dataset.t));
   stage.querySelectorAll("[data-d]").forEach(c => c.onclick = () => showDetail(c.dataset.d));
   $("bk").onclick = menu; $("sw").onclick = () => { S.cur = null; saveS(); nameEntry(); };
+}
+
+// ================= 合成の演出（反応の条件ごとに変える） =================
+// レシピのヒント文・物質の状態（気体・液体・固体・水溶液）・レシピの条件タグ（cond）から、
+// 「容器」と「効果」を決めて組み合わせる。
+//   容器：beaker（液体・水溶液）／ tube（固体を試験管で加熱）／ mortar（固体をすりまぜる）／ jar（気体どうし）
+//         burn（集気びんの中で燃焼）／ chain（重合：ビーズがつながる）
+//   効果：heat 加熱・press 高圧・cool 冷却・light 光・spark 放電・cat 触媒・fire 燃焼・boom 激しい反応
+//         ppt 沈殿・gas 気体の発生・smoke 白煙・color 色の変化
+// cond（レシピの4つ目）は "heat,press,cat:Fe₃O₄" のようにカンマ区切りで書く。
+
+function sceneOf(r) {
+  const h = r.hint || "", tags = new Set(), catNames = [];
+  const conds = (r.cond || "").split(",").map(t => t.trim()).filter(Boolean);
+  const catKeys = Object.keys(r.inp).filter(k => r.out[k]);       // 両辺にある＝触媒
+  catKeys.forEach(k => { tags.add("cat"); catNames.push(ITEM[k].fm); });
+  if (/触媒/.test(h)) tags.add("cat");
+  const reac = Object.keys(r.inp).filter(k => !r.out[k]).map(k => ITEM[k]);
+  const prods = Object.keys(r.out).filter(k => !r.inp[k]).map(k => ITEM[k]);
+  const main = prods.find(x => !x.mat) || prods[0] || ITEM[Object.keys(r.out)[0]];
+  if (/以下|冷や/.test(h)) tags.add("cool");
+  else if (/加熱|強熱|高温|電気炉|℃|温める|融解|熱分解/.test(h)) tags.add("heat");
+  if (/高圧/.test(h)) tags.add("press");
+  if (/燃え|燃焼/.test(h)) tags.add("fire");
+  if (/放電/.test(h)) tags.add("spark");
+  else if (/光|紫外線/.test(h)) tags.add("light");
+  if (/爆発|激しく/.test(h)) tags.add("boom");
+  if (/白煙/.test(h)) tags.add("smoke");
+  if (/沈殿|にごる/.test(h)) tags.add("ppt");
+  // レシピの条件タグ（cond）：cat:名前 ／ -ppt のように「-」で打ち消し
+  conds.forEach(t => t.startsWith("-") ? tags.delete(t.slice(1)) : t.startsWith("cat:") ? (tags.add("cat"), catNames.push(t.slice(4))) : tags.add(t));
+  const poly = /重合|つながる/.test(h) && Object.values(r.inp).some(n => n >= 5);
+  const st = new Set(reac.map(x => x.st));
+  const wet = st.has("液体") || st.has("水溶液");
+  // 生成物の気体が出る（気体どうしの反応は除く）／ 色の変化
+  if (!poly && prods.some(x => x.st === "気体") && !(st.size === 1 && st.has("気体"))) tags.add("gas");
+  const vessel = poly ? "chain" : tags.has("fire") ? "burn" : wet ? "beaker"
+    : st.size === 1 && st.has("気体") ? "jar" : st.has("固体") && (tags.has("heat") || !st.has("気体")) ? (tags.has("heat") ? "tube" : "mortar") : "jar";
+  return {tags, catNames: [...new Set(catNames)], vessel, main, prods, reac, poly};
+}
+
+const COND_LABEL = {heat:"🔥 加熱", press:"🔩 高圧", cool:"❄️ 冷却", light:"💡 光", spark:"⚡ 放電", cat:"⚗️ 触媒", fire:"🔥 燃焼", boom:"💥 激しい"};
+function condIcons(r) {
+  const sc = sceneOf(r);
+  return ["fire", "heat", "press", "cool", "light", "spark", "cat"].filter(t => sc.tags.has(t) && !(t === "heat" && sc.tags.has("fire")))
+    .map(t => `<span class="cnd">${COND_LABEL[t]}${t === "cat" && sc.catNames.length ? ` ${sc.catNames.join("・")}` : ""}</span>`).join("") + (sc.poly ? `<span class="cnd">🔗 重合</span>` : "");
+}
+
+const colOf = it => !it || it.c === "無色" ? "#cfe6ff" : it.c === "白" ? "#f4f6fb" : HEX[it.c] || "#cfe6ff";
+function sceneSVG(sc) {
+  const T = sc.tags, pc = colOf(sc.main), start = T.has("cat") || sc.vessel === "chain" ? "#e6f0ff" : "#b9c6dc";
+  const bubbles = n => Array.from({length: n}, (_, i) => `<circle class="bb" cx="${70 + (i * 13) % 60}" cy="168" r="${2 + i % 3}" fill="#fff" style="animation-delay:${i * .15}s"/>`).join("");
+  const ppt = Array.from({length: 22}, (_, i) => `<circle class="pp" cx="${64 + (i * 11) % 72}" cy="${120 + (i * 7) % 22}" r="${3.5 + i % 3}" fill="${pc}" stroke="#0003" style="animation-delay:${.05 + (i % 6) * .1}s"/>`).join("")
+    + `<rect class="sed" x="58" y="166" width="84" height="16" fill="${pc}"/>`;
+  const gasUp = Array.from({length: 6}, (_, i) => `<circle class="gu" cx="${82 + i * 7}" cy="70" r="${5 + i % 3}" fill="${T.has("smoke") ? "#fff" : pc}" opacity=".7" style="animation-delay:${i * .2}s"/>`).join("");
+  let v = "";
+  if (sc.vessel === "beaker") v = `
+    <defs><clipPath id="vc"><path d="M58 60 V170 Q58 180 68 180 H132 Q142 180 142 170 V60 Z"/></clipPath></defs>
+    <g clip-path="url(#vc)"><rect id="liq" x="50" y="112" width="100" height="80" fill="${start}"/>${T.has("ppt") ? `<g class="ppts">${ppt}</g>` : ""}<g class="bub">${bubbles(9)}</g></g>
+    <path d="M54 56 H146 M58 56 V170 Q58 180 68 180 H132 Q142 180 142 170 V56" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>`;
+  else if (sc.vessel === "tube") v = `
+    <g transform="rotate(-25 100 120)"><defs><clipPath id="vc"><path d="M88 40 V160 A12 12 0 0 0 112 160 V40 Z"/></clipPath></defs>
+    <g clip-path="url(#vc)"><rect id="liq" x="80" y="140" width="40" height="40" fill="${start}"/></g>
+    <path d="M88 36 V160 A12 12 0 0 0 112 160 V36" fill="none" stroke="#fff" stroke-width="5"/><rect x="84" y="30" width="32" height="8" rx="3" fill="#fff"/></g>`;
+  else if (sc.vessel === "mortar") v = `
+    <path d="M44 120 Q100 210 156 120 Z" fill="#f4f6fb" stroke="#fff" stroke-width="5"/>
+    <ellipse id="liqE" cx="100" cy="132" rx="40" ry="8" fill="${start}"/>
+    <g class="pestle"><rect x="112" y="60" width="14" height="80" rx="7" fill="#e6ecf5" stroke="#fff" stroke-width="3" transform="rotate(25 119 100)"/></g>`;
+  else if (sc.vessel === "jar") v = `
+    <path d="M86 40 H114 V78 A44 44 0 1 1 86 78 Z" fill="#ffffff18" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+    <g class="cloud">${[0, 1, 2, 3, 4].map(i => `<circle cx="${82 + (i * 11) % 40}" cy="${118 + (i * 9) % 26}" r="${14 + i % 3 * 3}" fill="${start}" opacity=".55"/>`).join("")}</g>
+    <circle id="gasC" cx="100" cy="122" r="0" fill="${pc}" opacity=".7"/>
+    <rect x="82" y="32" width="36" height="10" rx="3" fill="#fff"/>`;
+  else if (sc.vessel === "burn") v = `
+    <path d="M60 50 H140 V172 Q140 182 130 182 H70 Q60 182 60 172 Z" fill="#ffffff14" stroke="#fff" stroke-width="5"/>
+    <path d="M100 20 V120 M88 120 H112" stroke="#c9d6ea" stroke-width="4"/><rect x="74" y="44" width="52" height="8" rx="3" fill="#fff"/>
+    <g class="fireS"><path d="M100 86 C112 100 114 112 100 122 C86 112 88 100 100 86Z" fill="#ffc93c"/><path d="M100 98 C106 106 106 114 100 120 C94 114 94 106 100 98Z" fill="#fff"/></g>`;
+  else if (sc.vessel === "chain") v = `<g class="chain"><path class="link" d="M30 110 H170" stroke="#ffc93c" stroke-width="7" stroke-linecap="round"/>${Array.from({length: 6}, (_, i) => `<g class="bead" style="--i:${i}"><circle cx="${30 + i * 28}" cy="110" r="11" fill="#fff" stroke="${pc === "#cfe6ff" ? "#3d7cff" : "#3d7cff"}" stroke-width="4"/></g>`).join("")}
+    </g>`;
+  const fx = [
+    T.has("heat") && sc.vessel !== "burn" ? `<g class="burner"><rect x="84" y="196" width="32" height="18" rx="4" fill="#c9d6ea"/><path class="flm" d="M100 168 C110 180 110 190 100 196 C90 190 90 180 100 168Z" fill="#3d7cff"/><path class="flm" d="M100 178 C104 184 104 190 100 194 C96 190 96 184 100 178Z" fill="#9cc6ff"/></g>` : "",
+    T.has("cool") ? `<g class="ice"><rect x="30" y="160" width="20" height="20" rx="4" fill="#d9ecff" stroke="#fff"/><rect x="150" y="164" width="18" height="18" rx="4" fill="#d9ecff" stroke="#fff"/><text x="100" y="212" text-anchor="middle" font-size="18">❄️</text></g>` : "",
+    T.has("light") ? `<g class="lamp"><circle cx="34" cy="34" r="14" fill="#ffe28a"/><path class="ray" d="M48 44 L72 66 M40 52 L54 80 M54 36 L84 48" stroke="#ffe28a" stroke-width="4" stroke-linecap="round"/></g>` : "",
+    T.has("spark") ? `<g class="spark"><path d="M70 100 L92 112 L84 120 L108 132 L100 140 L126 150" fill="none" stroke="#fff6a8" stroke-width="4" stroke-linejoin="round"/></g>` : "",
+    T.has("press") ? `<g class="gauge"><circle cx="166" cy="40" r="18" fill="#fff" stroke="#22314f" stroke-width="3"/><path class="ndl" d="M166 40 L176 30" stroke="#ff6b5b" stroke-width="3" stroke-linecap="round"/><text x="166" y="72" text-anchor="middle" font-size="11" fill="#fff" font-weight="900">高圧</text></g>` : "",
+    T.has("cat") ? `<g class="catg"><circle cx="170" cy="120" r="21" fill="#18b6a4" stroke="#fff" stroke-width="3"/><text x="170" y="125" text-anchor="middle" font-size="13" fill="#fff" font-weight="900">触媒</text><path d="M150 120 H142" stroke="#8ff5e4" stroke-width="3" stroke-dasharray="3 3"/></g>` : "",
+    T.has("gas") || T.has("smoke") ? `<g class="gasup">${gasUp}</g>` : "",
+  ].join("");
+  return `<svg class="flaskfx sc-${sc.vessel}" viewBox="0 0 200 220" width="270" height="297" style="max-height:40vh">${v}${fx}</svg>`;
+}
+
+async function mixFx(r, used, first) {
+  const sc = sceneOf(r), T = sc.tags;
+  const fx = document.createElement("div"); fx.className = "fx" + (first ? " gold" : "");
+  const chips = Object.keys(COND_LABEL).filter(t => T.has(t)).map(t => `<span>${COND_LABEL[t]}${t === "cat" && sc.catNames.length ? ` ${sc.catNames.join("・")}` : ""}</span>`).join("");
+  fx.innerHTML = `
+    <div class="ings">${Object.entries(used).map(([k, n], i) => `<div class="ing" style="--i:${i}">${n > 1 ? `<b>${n}</b>` : ""}${itemCard(k)}</div>`).join("")}</div>
+    ${chips ? `<div class="conds">${chips}</div>` : ""}
+    ${sceneSVG(sc)}
+    <div class="fxt" id="fxt">まぜまぜ…</div><div class="fx-skip">タップでスキップ</div>`;
+  document.body.appendChild(fx);
+  let skip = false; fx.onclick = () => skip = true;
+  const wait = async ms => { const t = performance.now(); while (!skip && performance.now() - t < ms) await sleep(30); };
+  const say = t => { const e = $("fxt"); if (e) e.innerHTML = t; };
+  await wait(150); fx.classList.add("drop"); bell([660, 880], .08, .04);                  // 材料が容器へ
+  await wait(650);
+  // 反応の条件（はじめの演出）
+  fx.classList.add("on");
+  say(T.has("boom") ? "💥 激しく反応！" : T.has("fire") ? "🔥 燃焼！" : T.has("spark") ? "⚡ 放電！" : T.has("light") ? "💡 光を当てると…"
+    : T.has("heat") && T.has("press") ? "🔥 高温・高圧で…" : T.has("heat") ? "🔥 加熱中…" : T.has("cool") ? "❄️ 冷やしながら…"
+    : sc.poly ? "🔗 単量体がつながっていく…" : T.has("cat") ? `⚗️ 触媒${sc.catNames.length ? ` ${sc.catNames.join("・")}` : ""} がはたらく…` : "まぜまぜ…");
+  bell(T.has("boom") || T.has("fire") ? [196, 247, 294, 392] : T.has("spark") ? [1568, 1046, 1568] : [392, 440, 494, 523, 587], .08, .035);
+  if (T.has("boom")) fx.classList.add("shake");
+  await wait(first ? 1100 : 750);
+  // 変化（色・沈殿・気体・重合）
+  fx.classList.add("react");
+  const liq = $("liq"), liqE = $("liqE"), gasC = $("gasC");
+  const pc = colOf(sc.main);
+  if (liq) liq.style.fill = T.has("ppt") ? "#dfeaf8" : pc; if (liqE) liqE.style.fill = pc;
+  if (gasC) gasC.setAttribute("r", "34");
+  say(sc.poly ? "⛓️ 高分子ができた！" : T.has("ppt") ? "⬇️ 沈殿ができた！" : T.has("smoke") ? "💨 白煙が出た！" : T.has("gas") ? "🫧 気体が発生！"
+    : sc.main && !["無色", "白"].includes(sc.main.c) ? `🎨 ${sc.main.c}色の物質ができた！` : first ? "反応が…はじまった！" : "反応した！");
+  await wait(first ? 1100 : 800);
+  if (T.has("cat")) { say("⚗️ 触媒は反応の前後で変化しない"); await wait(700); }
+  fx.insertAdjacentHTML("beforeend", `<div class="flashw"></div>`); bell(first ? [1046, 1318, 1568, 2093, 2637] : [1046, 1318, 1568], .07);
+  await sleep(260); burst(fx.querySelector(".flaskfx"));
+  if (first) for (let i = 1; i < 3; i++) setTimeout(() => burst(fx.querySelector(".flaskfx")), i * 220);
+  await sleep(first ? 500 : 250); fx.remove();
 }
 
 menu();
