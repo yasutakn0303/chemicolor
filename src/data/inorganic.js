@@ -193,7 +193,7 @@ function smellArt(c) {
 }
 CH.push({id:"smell", no:"♯7", title:"気体・物質のにおい", em:"👃", kind:"smell", isNew:1, prompt:"どんなにおい？", prompts:["どんなにおい？","においは？","においを答えよ！"],
   bg:"#efe3ff", allow:Object.keys(SMELL), cap:{"刺激臭":3, "無臭":3}, noSim:1,
-  icon:o => `<span style="font-size:18px">${SMELL[o].e}</span>`, tints:Object.fromEntries(Object.entries(SMELL).map(([k, v]) => [k, v.t])),
+  icon:o => `<span style="font-size:18px">${SMELL[o].e}</span>`, art:smellArt, tints:Object.fromEntries(Object.entries(SMELL).map(([k, v]) => [k, v.t])),
   q:[
   {fm:"NH<sub>3</sub>",nm:"アンモニア",c:"刺激臭",d:1,hint:"鼻をつく刺激臭。水によく溶ける"},
   {fm:"H<sub>2</sub>S",nm:"硫化水素",c:"腐卵臭",d:1,hint:"卵が腐ったようなにおい（有毒）"},
@@ -254,3 +254,27 @@ CH.push({id:"store", no:"♯8", title:"試薬の保存方法：どっち？", em
   {nm:"臭素",fm:"Br<sub>2</sub>",gc:"赤褐",pair:["ゴム栓","ガラス栓"],ans:"ガラス栓",d:3,trap:1,prop:"反応性が高くゴムを侵す",why2:"ゴムを侵す"},
   {nm:"フッ化水素酸",fm:"HF aq",gc:"無色",pair:["ガラスびん","ポリ容器"],ans:"ポリ容器",d:3,boss:1,prop:"ガラス（SiO₂）を溶かす",why2:"ガラスを溶かす"},
  ].map(q => ({...q, at:1, desc:"どうやって保存する？"}))});
+
+// ================= ♯9 工業的製法と触媒（4択） =================
+// 答えは触媒の化学式。色は粉末の見た目（Fe₃O₄・MnO₂ は黒、V₂O₅ は橙黄、Pt・Ni は銀色）
+const CATCOL = {"Fe₃O₄":"黒", "V₂O₅":"橙黄", "Pt":"銀", "MnO₂":"黒", "Ni":"銀"};
+CH.push({id:"cat", no:"♯9", title:"工業的製法と触媒", em:"🏭", kind:"cat", isNew:1, prompt:"触媒は？", prompts:["触媒は？","使う触媒は？","触媒を答えよ！"],
+  bg:"#e6ecf5", allow:Object.keys(CATCOL), cap:{}, capAll:3, noSim:1,
+  icon:o => drop(CATCOL[o], 20), art:c => illust("solid", CATCOL[c]),
+  tints:{"Fe₃O₄":"#dfe3ea", "V₂O₅":"#ffe7c2", "Pt":"#eef1f6", "MnO₂":"#dfe3ea", "Ni":"#eef1f6"},
+  q:[
+  {fm:"ハーバー・ボッシュ法",nm:"アンモニアの工業的製法",c:"Fe₃O₄",d:1,sz:"w",hint:"四酸化三鉄 Fe₃O₄ を主成分とする鉄触媒"},
+  {fm:"接触法",nm:"硫酸の工業的製法",c:"V₂O₅",d:1,sz:"w",hint:"SO₂ → SO₃ の酸化に酸化バナジウム(Ⅴ)"},
+  {fm:"オストワルト法",nm:"硝酸の工業的製法",c:"Pt",d:1,sz:"w",hint:"NH₃ → NO の酸化に白金"},
+  {fm:"過酸化水素の分解",nm:"実験室での酸素の発生",c:"MnO₂",d:1,sz:"w",hint:"酸化マンガン(Ⅳ)。反応の前後で変化しない"},
+  {fm:"N<sub>2</sub> ＋ 3H<sub>2</sub> ⇄ 2NH<sub>3</sub>",nm:"ハーバー・ボッシュ法",c:"Fe₃O₄",d:2,sz:"l",trap:"Pt",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
+  {fm:"2SO<sub>2</sub> ＋ O<sub>2</sub> ⇄ 2SO<sub>3</sub>",nm:"接触法（硫酸の製造）",c:"V₂O₅",d:2,sz:"l",trap:"Pt"},
+  {fm:"4NH<sub>3</sub> ＋ 5O<sub>2</sub> → 4NO ＋ 6H<sub>2</sub>O",nm:"オストワルト法（硝酸の製造）",c:"Pt",d:2,sz:"w",trap:"V₂O₅",hint:"接触法 → V₂O₅ ／ オストワルト法 → Pt"},
+  {fm:"2KClO<sub>3</sub> → 2KCl ＋ 3O<sub>2</sub>",nm:"塩素酸カリウムの分解",c:"MnO₂",d:2,sz:"l",hint:"酸素の発生。H₂O₂ の分解と同じ MnO₂"},
+  {fm:"2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O ＋ O<sub>2</sub>",nm:"過酸化水素の分解",c:"MnO₂",d:2,sz:"l",hint:"濃塩酸と MnO₂ で Cl₂ を出すときは、MnO₂ は触媒ではなく酸化剤"},
+  {fm:"アンモニアの工業的製法",nm:"N₂ と H₂ から直接合成",c:"Fe₃O₄",d:3,sz:"w",trap:"Pt",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
+  {fm:"硫酸の工業的製法",nm:"SO₂ を酸化して SO₃ に",c:"V₂O₅",d:3,sz:"w",trap:"Pt",hint:"接触法 → V₂O₅"},
+  {fm:"硝酸の工業的製法",nm:"NH₃ を酸化して NO に",c:"Pt",d:3,sz:"w",trap:"Fe₃O₄",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
+  {fm:"硬化油の製造",nm:"油脂の二重結合に H₂ を付加",c:"Ni",d:3,sz:"w",trap:"Pt",hint:"ニッケル触媒で水素を付加（マーガリンなど）"},
+  {fm:"C<sub>6</sub>H<sub>6</sub> ＋ 3H<sub>2</sub> → C<sub>6</sub>H<sub>12</sub>",nm:"ベンゼン → シクロヘキサン",c:"Ni",d:3,sz:"l",hint:"Ni 触媒・高温高圧で付加"},
+ ]});

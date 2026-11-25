@@ -57,7 +57,7 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .small-n{font-size:12px;color:var(--sub);font-weight:700;margin-top:2px}
 .ansrow{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;width:100%}
 .cw{font-size:56px;line-height:1.1;white-space:nowrap;position:relative;padding:0 4px}
-.cw.s{font-size:42px}.cw.xs{font-size:30px}
+.cw.s{font-size:42px}.cw.xs{font-size:30px}.cw.xxs{font-size:22px;white-space:normal;text-align:center}
 .cw::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:16px;border-radius:8px;background:var(--hl);opacity:.75;z-index:-1}
 .cw span{position:relative;z-index:1}
 .hint{margin-top:16px;background:#fff3cf;color:#22314f;border-radius:14px;font-size:12.5px;font-weight:900;padding:7px 12px;text-align:center;line-height:1.5}
@@ -69,6 +69,7 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .ch svg{flex:none}
 .ch.right{background:#d8f7ec;box-shadow:0 5px 0 #8fdcc3}.ch.wrong{background:#ffe1dd;color:#c9483a;box-shadow:0 5px 0 #f5b8b0}
 .ch:disabled{cursor:default}
+.ch.lg{font-size:15px}.ch.xl{font-size:12.5px;line-height:1.2;padding:13px 8px}
 /* fx */
 .splash{position:fixed;width:30px;height:30px;border-radius:50%;z-index:0;transform:translate(-50%,-50%) scale(0);transition:transform .6s ease-out,opacity .6s}
 .pt{position:fixed;z-index:8;pointer-events:none;font-size:20px;animation:burst .9s ease-out forwards}
@@ -228,7 +229,7 @@ function drawDrops() {
 
 // ================= イラスト =================
 function illust(kind, c) {
-  if (kind === "smell") return smellArt(c);
+  if (cur && cur.art && kind === cur.kind) return cur.art(c);   // 色以外の答え（触媒・単量体など）は単元ごとの絵
   const col = HEX[c], none = c === "無色", white = c === "白";
   if (kind === "solid") return `<svg width="110" height="96" viewBox="0 0 110 96">
     <ellipse cx="55" cy="80" rx="48" ry="11" fill="#eef3fb" stroke="#c9d6ea" stroke-width="2"/>
@@ -351,7 +352,7 @@ function ask(q, lv, my) {
         <div class="qm pop">?</div>
         <div class="timer"><i id="tb"></i></div>
       </div>
-      ${AUTO ? "" : `<div class="choices">${opts.map(o => `<button class="ch" data-c="${o}">${cur.icon ? cur.icon(o) : drop(o, 20)}${o}</button>`).join("")}</div>`}`;
+      ${AUTO ? "" : `<div class="choices">${opts.map(o => `<button class="ch ${o.length > 9 ? "xl" : o.length > 5 ? "lg" : ""}" data-c="${o}">${cur.icon ? cur.icon(o) : drop(o, 20)}${o}</button>`).join("")}</div>`}`;
     $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIMIT, fill:"forwards"});
     let done = false, tid;
     const finish = async (pick, el) => {
@@ -408,7 +409,7 @@ function reveal(q, ok) {
   card.innerHTML = `
     <div class="res pop ${ok ? "ok" : "ng"}">${AUTO ? "正解！" : ok ? "せいかい！" : "おしい…！"}</div>
     <div class="small-f">${q.fm}</div><div class="small-n">${q.nm}</div>
-    <div class="ansrow">${illust(q.k || cur.kind, q.c)}<div class="cw pop ${q.c.length >= 4 ? "xs" : q.c.length >= 2 ? "s" : ""}" style="--hl:${HEX[q.c] || !(q.c in HEX) ? pastel(q.c) : "#e9eef7"}"><span>${q.c}</span></div></div>
+    <div class="ansrow">${illust(q.k || cur.kind, q.c)}<div class="cw pop ${q.c.length >= 8 ? "xxs" : q.c.length >= 4 ? "xs" : q.c.length >= 2 ? "s" : ""}" style="--hl:${HEX[q.c] || !(q.c in HEX) ? pastel(q.c) : "#e9eef7"}"><span>${q.c}</span></div></div>
     ${q.hint ? `<div class="hint">💡 ${q.hint}</div>` : ""}`;
 }
 
