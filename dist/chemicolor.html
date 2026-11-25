@@ -811,6 +811,7 @@ const PROD = [
  ["CaC2","CaC<sub>2</sub>","炭化カルシウム","灰","無機","固体",["カーバイド。灰色の固体","CaO と C を強熱してつくる","水を加えるとアセチレンが発生"]],
  // ---- 有機
  ["CH4","CH<sub>4</sub>","メタン","無色","有機","気体",["天然ガスの主成分。最も簡単なアルカン","正四面体形の分子","光の下で Cl₂ と置換反応する"]],
+ ["CH3COONa","CH<sub>3</sub>COONa","酢酸ナトリウム","白","有機","固体",["酢酸を NaOH で中和してできる塩","水溶液は弱い塩基性","NaOH と加熱するとメタンが発生"]],
  ["C2H6","C<sub>2</sub>H<sub>6</sub>","エタン","無色","有機","気体",["アルカン（単結合のみ）","置換反応はするが付加反応はしない","天然ガスにふくまれる"]],
  ["C2H4","C<sub>2</sub>H<sub>4</sub>","エチレン","無色","有機","気体",["二重結合をもつアルケン → 付加反応","臭素水を脱色する（不飽和結合の検出）","植物ホルモン。ポリエチレンの原料"]],
  ["C2H2","C<sub>2</sub>H<sub>2</sub>","アセチレン","無色","有機","気体",["三重結合をもつアルキン（直線形）","CaC₂ ＋ 水 で発生","酸素アセチレン炎（約3000℃）で溶接"]],
@@ -838,7 +839,7 @@ const RECIPES = [
  [{Ag:2,Br2:1},{AgBr:2},"銀とハロゲン②"], [{Ag:2,I2:1},{AgI:2},"銀とハロゲン③"], [{Zn:1,S:1},{ZnS:1},"亜鉛と硫黄","heat"],
  [{Fe:1,S:1},{FeS:1},"鉄粉と硫黄を加熱"], [{Na:2,Cl2:1},{NaCl:2},"激しく反応して食塩に"], [{Ca:2,O2:1},{CaO:2},"カルシウムが燃える"],
  [{CaO:1,CO2:1},{CaCO3:1},"生石灰が CO₂ を吸収"], [{NH3:1,HCl:1},{NH4Cl:1},"出会うと白煙"], [{CO2:1,C:1},{CO:2},"高温の炭素で還元"],
- [{C:1,H2:2},{CH4:1},"炭素と水素だけの気体"], [{Ca:1,H2O:2},{CaOH2:1,H2:1},"カルシウムは水と反応"],
+ [{CH3COONa:1,NaOH:1},{CH4:1,Na2CO3:1},"酢酸ナトリウムと NaOH を加熱","heat"], [{Ca:1,H2O:2},{CaOH2:1,H2:1},"カルシウムは水と反応"],
  [{CaOH2:1,CO2:1},{CaCO3:1,H2O:1},"石灰水が白くにごる！"], [{Zn:1,HCl:2},{ZnCl2:1,H2:1},"水素の発生（亜鉛）"],
  [{Na:2,H2O:2},{NaOH:2,H2:1},"ナトリウムは水と激しく反応"], [{Fe:1,HCl:2},{FeCl2:1,H2:1},"水素の発生（鉄）"],
  [{Fe:2,Cl2:3},{FeCl3:2},"鉄を塩素中で加熱"], [{FeCl3:1,NaOH:3},{FeOH3:1,NaCl:3},"Fe³⁺ に塩基を加える","ppt"],
@@ -855,6 +856,8 @@ const RECIPES = [
  [{CO:1,H2:2},{CH3OH:1},"触媒を使って合成","heat,press,cat"], [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化","heat,cat"], [{CH4:1,Cl2:1},{CH3Cl:1,HCl:1},"光による置換反応"],
  [{C2H4:1,Cl2:1},{C2H4Cl2:1},"二重結合に Cl₂ が付加"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加","cat"],
  [{C2H4:5},{PE:1},"たくさんつながる（付加重合）"], [{C2H3Cl:5},{PVC:1},"たくさんつながる（付加重合）"],
+ // ---- 追加（id を変えないよう末尾に）
+ [{CH3COOH:1,NaOH:1},{CH3COONa:1,H2O:1},"酢酸の中和"],
 ].map(([inp, out, hint, cond], i) => ({cond, id:"r" + (i + 1), inp, out, hint}));
 // ラボ専用バッジ（この版だけの目標）
 const LAB_BADGES = [
@@ -1867,6 +1870,13 @@ const pinHash = (name, pin) => { let h = 2166136261; for (const c of `chemicolor
 const isReg = n => !!(S.players[n] && S.players[n].pin);
 // クラス全体のランキングの送り先（未設定）。サーバーを決めたら submit / fetch を実装する
 const CLASS_RANK = null;
+// 合言葉を忘れたとき：先生用コード（build.py の TEACHER_CODE_SHA256）を入れると、合言葉を決め直せる
+const TEACHER_HASH = "f390e3d6bb1b409a2afa9eef9f670a141c64094c068030ae7edf4d17422a6c00";
+async function sha256(t) {
+  if (!(window.crypto && crypto.subtle)) return "";
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 const lvOfXp = xp => Math.floor(Math.sqrt(xp / 300)) + 1;
 const xpFor = lv => (lv - 1) * (lv - 1) * 300;
@@ -2105,8 +2115,10 @@ function pinEntry(n) {
       : `<div class="flab">合言葉（4けたの数字）を決めよう<br><small>登録するとランキングにのります</small></div>${pinInput("pin1")}${pinInput("pin2", "もう一度")}`}
     <div class="lmsg" id="rmsg"></div>
     <button class="btn" id="ok">${reg ? "はじめる" : "登録してはじめる"}</button>
+    ${reg ? `<button class="hbtn" id="forgot" style="margin-top:10px">🔑 合言葉をわすれた</button>` : ""}
     <button class="btn sub" id="bk">もどる</button></div>`;
   $("pin1").focus();
+  if (reg) $("forgot").onclick = () => pinReset(n);
   $("bk").onclick = () => nameEntry();
   const go = () => {
     const a = $("pin1").value;
@@ -2122,6 +2134,37 @@ function pinEntry(n) {
   };
   $("ok").onclick = go;
   stage.querySelectorAll(".pin").forEach(i => i.onkeydown = e => { if (e.key === "Enter") go(); });
+}
+
+// 合言葉のリセット：先生に先生用コードを入れてもらい、新しい合言葉を決める（記録はそのまま）
+let resetMiss = 0, resetLock = 0;
+function pinReset(n) {
+  stage.innerHTML = `<div class="panel" style="text-align:center">
+    <h2>🔑 合言葉のリセット</h2>
+    <div style="font-weight:900">${esc(n)}</div>
+    <div style="font-size:13px;color:var(--sub);margin:6px 0">先生に「先生用コード」を入れてもらおう。<br>記録（コイン・図鑑・バッジ）はそのまま残ります。</div>
+    <div class="flab">先生用コード</div>
+    <input class="inp" id="tc" type="password" autocomplete="off" autocapitalize="characters" placeholder="先生が入力">
+    <div class="flab">新しい合言葉 <small>（4けたの数字）</small></div>
+    ${pinInput("pin1")}${pinInput("pin2", "もう一度")}
+    <div class="lmsg" id="rmsg"></div>
+    <button class="btn" id="ok">リセットしてはじめる</button>
+    <button class="btn sub" id="bk">もどる</button></div>`;
+  $("tc").focus();
+  $("bk").onclick = () => pinEntry(n);
+  $("ok").onclick = async () => {
+    if (Date.now() < resetLock) { $("rmsg").textContent = "しばらく待ってからもう一度"; return; }
+    const code = $("tc").value.trim().toUpperCase(), a = $("pin1").value, b = $("pin2").value;
+    const h = await sha256("chemicolor-teacher|" + code);
+    if (!h) { $("rmsg").textContent = "この画面ではリセットできません（https のページで開いてください）"; return; }
+    if (h !== TEACHER_HASH) {
+      if (++resetMiss >= 5) { resetLock = Date.now() + 60000; resetMiss = 0; }
+      $("rmsg").textContent = "先生用コードがちがいます"; SE.ng(); $("tc").value = ""; return;
+    }
+    const err = !pinOk(a) ? "合言葉は4けたの数字にしてね" : a !== b ? "合言葉が一致しません" : "";
+    if (err) { $("rmsg").textContent = err; SE.ng(); return; }
+    S.players[n].pin = pinHash(n, a); newPlayer(n); bell([1046, 1318, 1568]); menu();
+  };
 }
 
 function dailyBonus() {
