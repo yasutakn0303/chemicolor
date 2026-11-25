@@ -9,18 +9,18 @@
 const fs = require("fs"), path = require("path");
 const SRC = path.join(__dirname, "..", "src");
 const read = p => fs.readFileSync(path.join(SRC, p), "utf8");
-const FIELDS_SRC = [["inorg", "inorganic"], ["org", "organic"], ["poly", "polymer"]];
+const FIELDS_SRC = [["inorg", "inorganic", 1], ["org", "organic", 1], ["poly", "polymer", 0]];   // 3つ目：合成ラボがあるか
 
 // build.py と同じ形で分野のデータを組み立てる（画面用の関数はダミー）
 const code = `
 const drop = () => "", illust = () => "", molecules = () => "", $ = () => null;
 ${read("data/common.js")}
 const FIELDS = [];
-${FIELDS_SRC.map(([id, f]) => `FIELDS.push((() => {\n${read(`data/${f}.js`)}\n${read(`data/${f}-lab.js`)}
+${FIELDS_SRC.map(([id, f, lab]) => `FIELDS.push((() => {\n${read(`data/${f}.js`)}\n${lab ? read(`data/${f}-lab.js`) : "const MATS = [], PROD = [], RECIPES = [], LAB_TABS = [], STARTER = {}, LAB_BADGES = [];"}
 return {id:"${id}", name:"${id}", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES, POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};})());`).join("\n")}
 let APP = {...FIELDS[0].APP, saveKey:"x"}, CH, METH;
 ${read("engine/lab-core.js")}
-return {FIELDS, planNeed, needNow, totalNeed, dropHelp, loginHelp, pull, ensureInv, giveNeeded, setField, GACHA_COST, PER_PULL, GOAL_LAPS, GOAL_DAYS, loginCoins};`;
+return {FIELDS, planNeed, needNow, totalNeed, dropHelp, loginHelp, pull, ensureInv, giveNeeded, setField, GACHA_COST, PER_PULL, GOAL_LAPS, GOAL_DAYS, loginCoins, helpField, LAB_FIELDS};`;
 const L = new Function(code)();
 const {FIELDS} = L;
 
@@ -56,12 +56,12 @@ function playRun(p, F) {
   const x = Math.random(), r = x < .3 ? "S" : x < .8 ? "A" : "B";
   p.coins += Math.round(1800 / 4) + {S:150, A:80, B:30}[r];
   for (let i = 0; i < {S:8, A:5, B:3}[r]; i++) { const m = L.pull(null, F); p.inv[m.k] = (p.inv[m.k] || 0) + 1; }
-  const h = L.dropHelp(F); L.giveNeeded(p, F, r === "B" ? Math.ceil(h / 2) : h);
+  const HF = L.helpField(p, F), h = L.dropHelp(F.hasLab ? F : HF); L.giveNeeded(p, HF, r === "B" ? Math.ceil(h / 2) : h);
   gacha(p, F); craftAll(p);
 }
 function login(p, day) {
   p.coins += L.loginCoins(day);
-  const F = [...FIELDS].sort((a, b) => remain(p, b) - remain(p, a))[0];
+  const F = [...L.LAB_FIELDS].sort((a, b) => remain(p, b) - remain(p, a))[0];
   L.giveNeeded(p, F, L.loginHelp());
   const g = L.pull(day % 7 === 0 ? "SR" : "R", F); p.inv[g.k] = (p.inv[g.k] || 0) + 1;
   gacha(p, F); craftAll(p);
@@ -81,7 +81,7 @@ for (let t = 0; t < N; t++) {
   daily.push(day);
 }
 console.log(`目標：全単元を ${L.GOAL_LAPS} 周 ／ 毎日ログインで ${L.GOAL_DAYS} 日`);
-FIELDS.forEach(F => console.log(`  ${F.id}: レシピ ${F.RECIPES.length}・単元 ${F.CH.length}・必要な素材 ${L.totalNeed(F)} 枚 → クリア1回のおたすけ ${L.dropHelp(F)} 枚`));
+L.LAB_FIELDS.forEach(F => console.log(`  ${F.id}: レシピ ${F.RECIPES.length}・単元 ${F.CH.length}・必要な素材 ${L.totalNeed(F)} 枚 → クリア1回のおたすけ ${L.dropHelp(F)} 枚`));
 console.log(`  ログイン1日のおたすけ ${L.loginHelp()} 枚`);
 console.log(`① 周回だけ　　　　：平均 ${avg(laps)} 周（最短 ${Math.min(...laps)}・最長 ${Math.max(...laps)}）`);
 console.log(`② ログインだけ　　：平均 ${avg(loginOnly)} 日（約 ${(avg(loginOnly) / 7).toFixed(1)} 週）`);

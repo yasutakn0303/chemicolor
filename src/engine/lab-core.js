@@ -6,6 +6,9 @@ const FIELD_OF = Object.fromEntries(FIELDS.map(f => [f.id, f]));
 const ALL_ITEM = {};
 FIELDS.forEach(f => [...f.MATS, ...f.PROD].forEach(x => { if (!ALL_ITEM[x.k]) ALL_ITEM[x.k] = x; }));
 FIELDS.forEach(f => {
+  f.hasLab = f.RECIPES.length > 0;
+  // 合成ラボのない分野（高分子）は、ラボのある分野の素材をドロップする
+  if (!f.hasLab) f.POOL_FROM = FIELDS.filter(g => g.RECIPES.length).map(g => g.id);
   // ガチャに出る素材：自分の分野の素材 ＋ POOL_FROM の分野の素材
   const own = new Set(f.MATS.map(m => m.k));
   f.pool = [...f.MATS, ...f.POOL_FROM.flatMap(id => FIELD_OF[id].MATS).filter(m => !own.has(m.k) && own.add(m.k))];
@@ -26,7 +29,7 @@ const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
 const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]); return (o.find(x => !x.mat) || o[0]).cat; };
 
 // --- ガチャ設定（たくさん引けるように）。素材は今の分野のもの（高分子は無機・有機の素材も出る）
-const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 100, PER_PULL = 5;
+const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
   const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
   const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
@@ -60,8 +63,8 @@ function showDetail(k) {
 // 実際のペースは tools/sim_collect.js で確かめられる。
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
 // ガチャ（コイン）でも素材が集まるので、おたすけの量は少なめにかける（tools/sim_collect.js で調整した値）
-const HELP = {drop:.3, login:.18};
-const loginCoins = streak => 150 + Math.min(streak, 7) * 30;   // ログインボーナスのコイン（連続日数で増える）
+const HELP = {drop:.1, login:.05};
+const loginCoins = streak => 120 + Math.min(streak, 7) * 20;   // ログインボーナスのコイン（連続日数で増える）
 
 // 未発見のレシピを順に作るとしたら、足りない素材は何か（中間体は作り方までさかのぼる）
 function planNeed(F, inv0, found0) {
@@ -86,8 +89,11 @@ function planNeed(F, inv0, found0) {
 const needNow = (p, F = FIELD) => planNeed(F, p.inv || {}, p.recipes || {});
 const totalNeed = F => F._total ?? (F._total = planNeed(F, F.STARTER, {}).length);
 const dropHelp = F => Math.ceil(totalNeed(F) / (F.CH.length * GOAL_LAPS) * HELP.drop);          // クリア1回あたり
-const loginHelp = () => Math.ceil(FIELDS.reduce((a, f) => a + totalNeed(f), 0) / GOAL_DAYS * HELP.login); // ログイン1日あたり
+const loginHelp = () => Math.ceil(LAB_FIELDS.reduce((a, f) => a + totalNeed(f), 0) / GOAL_DAYS * HELP.login); // ログイン1日あたり
 const fieldDone = (p, F) => F.RECIPES.filter(r => p.recipes && p.recipes[r.id]).length;
+const LAB_FIELDS = FIELDS.filter(f => f.hasLab);
+// おたすけ素材を配る分野：ラボのない分野では、未発見のレシピがいちばん多く残っている分野へ
+const helpField = (p, F) => F.hasLab ? F : [...LAB_FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
 function giveNeeded(p, F, n) {
   const got = needNow(p, F).slice(0, n);
   got.forEach(k => p.inv[k] = (p.inv[k] || 0) + 1);
@@ -97,6 +103,7 @@ function giveNeeded(p, F, n) {
 function dropMats(r) {
   const p = P(); ensureInv(p); const n = {S:8, A:5, B:3}[r], got = [];
   for (let i = 0; i < n; i++) { const m = pull(); p.inv[m.k] = (p.inv[m.k] || 0) + 1; got.push(m); }
-  const h = dropHelp(FIELD), help = giveNeeded(p, FIELD, r === "B" ? Math.ceil(h / 2) : h);
+  const HF = helpField(p, FIELD), h = dropHelp(FIELD.hasLab ? FIELD : HF);
+  const help = giveNeeded(p, HF, r === "B" ? Math.ceil(h / 2) : h);
   return {got, help};
 }

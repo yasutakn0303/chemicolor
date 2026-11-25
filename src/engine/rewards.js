@@ -123,11 +123,10 @@ const BADGES = [
   {cat:"合成", id:"crafts200",e:"🏭", nm:"合成工場",       tx:"合成を200回する",     test:p => (p.crafts || 0) >= 200},
   {cat:"合成", id:"self10",   e:"💡", nm:"ひらめき",       tx:"ヒントなしで10レシピ発見", test:p => (p.selfFound || 0) >= 10},
   {cat:"合成", id:"self50",   e:"🧠", nm:"ひらめきの天才", tx:"ヒントなしで50レシピ発見", test:p => (p.selfFound || 0) >= 50},
-  {cat:"合成", id:"craftAll", e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見", test:p => FIELDS.some(f => fieldComp(f.id)(p))},
+  {cat:"合成", id:"craftAll", e:"🏅", nm:"全レシピ発見",   tx:"無機か有機の全レシピを発見", test:p => LAB_FIELDS.some(f => fieldComp(f.id)(p))},
   {cat:"合成", id:"compInorg",e:"🥉", nm:"無機コンプリート",   tx:"無機の全レシピを発見",   test:fieldComp("inorg")},
   {cat:"合成", id:"compOrg",  e:"🥈", nm:"有機コンプリート",   tx:"有機の全レシピを発見",   test:fieldComp("org")},
-  {cat:"合成", id:"compPoly", e:"🥇", nm:"高分子コンプリート", tx:"高分子の全レシピを発見", test:fieldComp("poly")},
-  {cat:"合成", id:"compAll",  e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見", test:p => FIELDS.every(f => fieldComp(f.id)(p))},
+  {cat:"合成", id:"compAll",  e:"🌈", nm:"全分野コンプリート", tx:"無機・有機の全レシピを発見", test:p => LAB_FIELDS.every(f => fieldComp(f.id)(p))},
   // 分野ごとの物質（src/data/*-lab.js の LAB_BADGES）
   ...FIELDS.flatMap(f => f.LAB_BADGES.map(b => ({cat:f.name, ...b}))),
 ];
@@ -218,17 +217,19 @@ menu = function () {
   ensureInv(P());
   const p = P(), lv = lvOfXp(p.xp), pr = (p.xp - xpFor(lv)) / (xpFor(lv + 1) - xpFor(lv)) * 100;
   stage.querySelector(".logo").insertAdjacentHTML("beforebegin", `<div class="ftabs">${FIELDS.map(f => { ensureInv(p, f);
-      const pc = Math.floor(fieldDone(p, f) / f.RECIPES.length * 100);
-      return `<button data-f="${f.id}" class="${f === FIELD ? "on" : ""}"><span>${f.em}</span>${f.name}<small>${pc === 100 ? "👑 COMP" : `コンプ ${pc}%`}</small></button>`; }).join("")}</div>`);
+      // ラボのある分野はレシピのコンプ率、ない分野（高分子）は単元のクリア数
+      const pc = f.hasLab ? Math.floor(fieldDone(p, f) / f.RECIPES.length * 100) : 0, cl = f.CH.filter(c => p.best[c.id]).length;
+      return `<button data-f="${f.id}" class="${f === FIELD ? "on" : ""}"><span>${f.em}</span>${f.name}<small>${f.hasLab ? (pc === 100 ? "👑 COMP" : `コンプ ${pc}%`) : `クリア ${cl}/${f.CH.length}`}</small></button>`; }).join("")}</div>`);
   stage.querySelector(".ftabs").insertAdjacentHTML("beforebegin", `<div class="pbar">
       <div class="av">${["🧑‍🔬","⚗️","🧪","🔬","🌟"][Math.min(4, Math.floor((lv - 1) / 2))]}</div>
       <div class="nm2">${esc(S.cur)}<small>Lv.${lv}　次まで ${xpFor(lv + 1) - p.xp} EXP</small><div class="xpb"><i style="width:${pr}%"></i></div></div>
       <div class="coin">🪙 ${p.coins}</div></div>`);
   stage.querySelector(".chs").insertAdjacentHTML("afterend", `<div class="navs">
       <button class="nv" id="nRank"><span class="e">🏆</span>ランキング</button>
-      <button class="nv" id="nGacha"><span class="e">🎁</span>素材ガチャ</button>
-      <button class="nv" id="nLab"><span class="e">⚗️</span>合成ラボ</button>
-      <button class="nv" id="nMy"><span class="e">🎖️</span>バッジ・図鑑</button></div>`);
+      <button class="nv" id="nGacha" ${FIELD.hasLab ? "" : "hidden"}><span class="e">🎁</span>素材ガチャ</button>
+      <button class="nv" id="nLab" ${FIELD.hasLab ? "" : "hidden"}><span class="e">⚗️</span>合成ラボ</button>
+      <button class="nv" id="nMy"><span class="e">🎖️</span>${FIELD.hasLab ? "バッジ・図鑑" : "バッジ"}</button></div>
+    ${FIELD.hasLab ? "" : `<div class="note" style="margin-top:8px">🧬 高分子はクイズだけ。クリアすると無機・有機の素材がもらえるよ</div>`}`);
   stage.querySelectorAll(".ftabs button").forEach(b => b.onclick = () => { setField(b.dataset.f); S.field = FIELD.id; saveS(); slot = {}; recTab = null; menu(); });
   $("nRank").onclick = () => ranking(cur && CH.includes(cur) ? cur.id : "total"); $("nGacha").onclick = gacha; $("nMy").onclick = () => mypage(); $("nLab").onclick = () => lab();
   stage.querySelectorAll(".cc").forEach(b => { const c = CH[+b.dataset.i], s = p.best[c.id]; if (s) { b.querySelector(".best")?.remove(); b.insertAdjacentHTML("afterbegin", `<span class="best">${s.toLocaleString()}pt</span>`); } });
@@ -340,7 +341,7 @@ function dailyBonus() {
   ensureInv(p);
   const bonus = loginCoins(p.streak); p.coins += bonus; p.earned += bonus;
   // おたすけ素材：まだ作っていないレシピがいちばん多く残っている分野へ
-  const F = [...FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
+  const F = [...LAB_FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
   const help = giveNeeded(p, F, loginHelp());
   const gift = p.streak % 7 === 0 ? pull("SR", F) : pull("R", F); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
   const b = autoBadges();
@@ -380,6 +381,7 @@ function ranking(tab, mode = "local") {
 
 // ================= 素材ガチャ（演出つき） =================
 function gacha() {
+  if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none";
   const p = P(); ensureInv(p);
   const can = n => p.coins >= GACHA_COST * n;
@@ -428,6 +430,7 @@ async function gachaFx(got) {
 let slot = {}, recTab = null;
 const canMake = (p, r) => Object.entries(r.inp).every(([k, n]) => (p.inv[k] || 0) >= n);
 function lab(msg = "") {
+  if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const p = P(); ensureInv(p);
   const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0 && FIELD.used.has(k));   // この分野のレシピで使うものだけ
@@ -504,7 +507,6 @@ async function mix() {
   if (first) { p.coins += 50; p.earned += 50; }
   const ids = ["craft1"]; if (PROD.filter(x => p.made[x.k]).length >= 10) ids.push("craft10");
   if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
-  if (FIELDS.every(f => f.RECIPES.every(x => p.recipes[x.id]))) ids.push("compAll");
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
   const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
   await mixFx(r, used, first);
@@ -535,7 +537,7 @@ function mypage(tab = "badge") {
     <h2 class="pop">${esc(S.cur)} のコレクション <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
     <div class="tabs"><button data-t="badge" class="${tab === "badge" ? "on" : ""}">バッジ ${bn}/${BADGES.length}</button>
       ${LAB_TABS.map(t => `<button data-t="${t}" class="${tab === t ? "on" : ""}">${t} ${cnt(t)}/${book(t).length}</button>`).join("")}
-      <button data-t="mat" class="${tab === "mat" ? "on" : ""}">素材</button></div>
+      ${FIELD.hasLab ? `<button data-t="mat" class="${tab === "mat" ? "on" : ""}">素材</button>` : ""}</div>
     ${tab === "badge" ? [...new Set(BADGES.map(b => b.cat))].map(c => { const L = BADGES.filter(b => b.cat === c);
         return `<div class="sec">${c}　${L.filter(b => p.badges[b.id]).length}/${L.length}</div><div class="bgs">${L.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`; }).join("")
       : tab === "mat" ? `<div class="stk">${POOL.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
