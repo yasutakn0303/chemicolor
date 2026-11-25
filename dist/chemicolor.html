@@ -242,7 +242,8 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
 .fxgrid{display:grid;gap:6px;width:100%;max-width:400px;max-height:60vh;overflow:auto}
 .fc{opacity:0;animation:cardin .4s cubic-bezier(.2,1.5,.4,1) forwards}
-.fc .st{box-shadow:0 3px 0 #0003}
+.fc .st{box-shadow:0 3px 0 #0003;color:var(--ink);font-size:12px;min-height:84px;padding:8px 3px}
+.fc .st .f{font-size:14px;margin-top:2px}.fc .st .rr{font-size:11px;font-weight:900}
 .fc.SR .st{box-shadow:0 0 0 3px #ffc93c,0 0 18px #ffe28a;animation:shine 1.2s ease-in-out infinite alternate}
 .fc.R .st{box-shadow:0 0 0 3px #3d7cff}
 @keyframes cardin{0%{opacity:0;transform:rotateY(90deg) scale(.6)}100%{opacity:1;transform:none}}
@@ -309,17 +310,25 @@ FAM.gray = ["銀","灰"]; FAM.yellow.push("橙黄");
 const keyOf = q => q.ans || q.c;
 function buildQ(ch) {
   if (ch.swipe) {
-    const boss = pickOne(ch.q.filter(x => x.boss)), rest = ch.q.filter(x => x !== boss);  // ボスは候補から毎回ランダム
-    const pick = d => {
-      const g = shuffle(rest.filter(x => x.d === d));
-      if (!ch.swipe.balance) return g;
-      // 答えが偏らないように、答えごとに交互に並べる
-      const by = {}; g.forEach(x => (by[x.ans] = by[x.ans] || []).push(x));
-      const keys = shuffle(Object.keys(by)), out = [];
-      for (let i = 0; out.length < g.length; i++) keys.forEach(k => { if (by[k][i]) out.push(by[k][i]); });
+    const boss = pickOne(ch.q.filter(x => x.boss)), gs = new Set([boss.g]);  // ボスは候補から毎回ランダム
+    const rest = ch.q.filter(x => x !== boss && !(x.g && x.g === boss.g));
+    const pick = (d, n) => {
+      let g = shuffle(rest.filter(x => x.d === d));
+      if (ch.swipe.balance) {
+        // 答えが偏らないように、答えごとに交互に並べる
+        const by = {}; g.forEach(x => (by[x.ans] = by[x.ans] || []).push(x));
+        const keys = shuffle(Object.keys(by)), out = [];
+        for (let i = 0; out.length < g.length; i++) keys.forEach(k => { if (by[k][i]) out.push(by[k][i]); });
+        g = out;
+      }
+      // 同じ話題（g）の問題は1回に1問まで
+      const out = [];
+      for (const x of g) { if (out.length >= n) break; if (x.g && gs.has(x.g)) continue; if (x.g) gs.add(x.g); out.push(x); }
       return out;
     };
-    return [...shuffle(pick(1).slice(0, 4)), ...shuffle(pick(2).slice(0, 3)), ...shuffle(pick(3).slice(0, 2)), boss];
+    // 話題の重複チェックは難易度の順をランダムにして行う（いつも Lv.1 の問題が優先されないように）
+    const got = {}; shuffle([[1, 4], [2, 3], [3, 2]]).forEach(([d, n]) => got[d] = pick(d, n));
+    return [...shuffle(got[1]), ...shuffle(got[2]), ...shuffle(got[3]), boss];
   }
   return null;
 }
@@ -396,6 +405,11 @@ const CH = [
   {fm:"I<sub>2</sub>",nm:"ヨウ素（固体）",c:"黒紫",d:1,k:"solid"},
   {fm:"I<sub>2</sub> + デンプン",nm:"ヨウ素デンプン反応",c:"青紫",d:1,k:"ion",sz:"m"},
   {fm:"KI + I<sub>2</sub>",nm:"ヨウ素ヨウ化カリウム水溶液",c:"褐",d:2,k:"ion",trap:"紫",sz:"m"},
+  {fm:"Br<sub>2</sub>",nm:"臭素（液体）",c:"赤褐",d:1,k:"ion",hint:"常温で液体の非金属単体"},
+  {fm:"CO<sub>2</sub>",nm:"二酸化炭素",c:"無色",d:1},
+  {fm:"Br<sub>2</sub> aq",nm:"臭素水",c:"赤褐",d:2,k:"ion",trap:"黄緑",hint:"エチレンなどに付加すると色が消える"},
+  {fm:"I<sub>2</sub> ＋ エタノール",nm:"ヨウ素のエタノール溶液（ヨードチンキ）",c:"褐",d:2,k:"ion",sz:"m",trap:"紫"},
+  {fm:"N<sub>2</sub>O<sub>4</sub>",nm:"四酸化二窒素",c:"無色",d:3,trap:"赤褐",hint:"2NO₂（赤褐）⇄ N₂O₄（無色）。冷やすと色がうすくなる"},
  ]},
  {id:"flame", no:"♯3", title:"炎色反応", rpg:"炎色の火山", em:"🔥", kind:"flame", prompt:"炎色反応は？", prompts:["炎色反応は？","炎の色は？","炎に入れると何色？"], n:7, capAll:1, bg:"#fff0c2",
   allow:["赤","橙赤","紅","黄","黄緑","緑","青緑","青","赤紫","紫"], cap:{},
@@ -422,20 +436,29 @@ const CH = [
  {id:"ion", no:"♯4", title:"イオンの色", rpg:"イオンの湖", em:"💧", kind:"ion", prompt:"水溶液は何色？", prompts:["水溶液は何色？","水溶液の色は？","溶かすと何色？"], bg:"#d3f3ea",
   allow:["無色","青","深青","黄","淡黄","黄褐","淡緑","緑","赤橙","赤紫","淡桃","紫","赤"], cap:{"無色":1},
   q:[
-  {fm:"Cu<sup>2+</sup>",nm:"銅(Ⅱ)イオン",c:"青",d:1},
-  {fm:"Fe<sup>3+</sup>",nm:"鉄(Ⅲ)イオン",c:"黄褐",d:1},
-  {fm:"Ni<sup>2+</sup>",nm:"ニッケル(Ⅱ)イオン",c:"緑",d:1},
-  {fm:fx("CrO","4","2−"),nm:"クロム酸イオン",c:"黄",d:1},
-  {fm:fx("MnO","4","−"),nm:"過マンガン酸イオン",c:"赤紫",d:1},
+  {g:"Cu",fm:"Cu<sup>2+</sup>",nm:"銅(Ⅱ)イオン",c:"青",d:1},
+  {g:"Fe3",fm:"Fe<sup>3+</sup>",nm:"鉄(Ⅲ)イオン",c:"黄褐",d:1},
+  {g:"Ni",fm:"Ni<sup>2+</sup>",nm:"ニッケル(Ⅱ)イオン",c:"緑",d:1},
+  {g:"Cr6y",fm:fx("CrO","4","2−"),nm:"クロム酸イオン",c:"黄",d:1},
+  {g:"Mn7",fm:fx("MnO","4","−"),nm:"過マンガン酸イオン",c:"赤紫",d:1},
   {fm:"Al<sup>3+</sup>",nm:"アルミニウムイオン",c:"無色",d:1},
-  {fm:fx("Cr<sub>2</sub>O","7","2−"),nm:"二クロム酸イオン",c:"赤橙",d:2,sz:"m"},
-  {fm:"Fe<sup>2+</sup>",nm:"鉄(Ⅱ)イオン",c:"淡緑",d:2,trap:"黄褐",hint:"Fe³⁺ は黄褐 ／ Fe²⁺ は淡緑"},
+  {g:"Cr6o",fm:fx("Cr<sub>2</sub>O","7","2−"),nm:"二クロム酸イオン",c:"赤橙",d:2,sz:"m"},
+  {g:"Fe2",fm:"Fe<sup>2+</sup>",nm:"鉄(Ⅱ)イオン",c:"淡緑",d:2,trap:"黄褐",hint:"Fe³⁺ は黄褐 ／ Fe²⁺ は淡緑"},
   {fm:"[Cu(NH<sub>3</sub>)<sub>4</sub>]<sup>2+</sup>",nm:"テトラアンミン銅(Ⅱ)イオン",c:"深青",d:2,trap:"青",sz:"l"},
   {fm:"[Ag(NH<sub>3</sub>)<sub>2</sub>]<sup>+</sup>",nm:"ジアンミン銀(Ⅰ)イオン",c:"無色",d:2,sz:"l"},
   {fm:"Mn<sup>2+</sup>",nm:"マンガン(Ⅱ)イオン",c:"淡桃",d:3,trap:"赤紫",hint:"MnO₄⁻ は赤紫 ／ Mn²⁺ は淡桃"},
   {fm:"Cr<sup>3+</sup>",nm:"クロム(Ⅲ)イオン",c:"緑",d:3,trap:"赤橙",hint:"Cr₂O₇²⁻ は赤橙 ／ Cr³⁺ は緑"},
   {fm:"[Zn(NH<sub>3</sub>)<sub>4</sub>]<sup>2+</sup>",nm:"テトラアンミン亜鉛(Ⅱ)イオン",c:"無色",d:3,trap:"深青",hint:"Cu のアンミン錯イオンは深青 ／ Zn は無色",sz:"l"},
   {fm:"[Fe(CN)<sub>6</sub>]<sup>4−</sup>",nm:"ヘキサシアニド鉄(Ⅱ)酸イオン",c:"淡黄",d:3,trap:"黄",hint:"[Fe(CN)₆]³⁻ は黄 ／ ⁴⁻ は淡黄",sz:"l"},
+  {fm:"CuSO<sub>4</sub> aq",nm:"硫酸銅(Ⅱ)水溶液",c:"青",d:1,g:"Cu"},
+  {fm:"FeCl<sub>3</sub> aq",nm:"塩化鉄(Ⅲ)水溶液",c:"黄褐",d:1,g:"Fe3"},
+  {fm:"KMnO<sub>4</sub> aq",nm:"過マンガン酸カリウム水溶液",c:"赤紫",d:1,g:"Mn7"},
+  {fm:"K<sub>2</sub>CrO<sub>4</sub> aq",nm:"クロム酸カリウム水溶液",c:"黄",d:2,g:"Cr6y",sz:"m"},
+  {fm:"K<sub>2</sub>Cr<sub>2</sub>O<sub>7</sub> aq",nm:"二クロム酸カリウム水溶液",c:"赤橙",d:2,g:"Cr6o",sz:"m",trap:"黄",hint:"CrO₄²⁻ 黄 ⇄ Cr₂O₇²⁻ 赤橙（酸性にすると赤橙）"},
+  {fm:"FeSO<sub>4</sub> aq",nm:"硫酸鉄(Ⅱ)水溶液",c:"淡緑",d:2,g:"Fe2",trap:"黄褐"},
+  {fm:"NiCl<sub>2</sub> aq",nm:"塩化ニッケル(Ⅱ)水溶液",c:"緑",d:2,g:"Ni"},
+  {fm:"[Fe(CN)<sub>6</sub>]<sup>3−</sup>",nm:"ヘキサシアニド鉄(Ⅲ)酸イオン",c:"黄",d:3,sz:"l",trap:"淡黄",hint:"[Fe(CN)₆]³⁻ は黄 ／ ⁴⁻ は淡黄"},
+  {fm:"Fe<sup>3+</sup> ＋ SCN<sup>−</sup>",nm:"チオシアン酸カリウム水溶液を加える",c:"赤",d:3,sz:"m",trap:"黄褐",hint:"血赤色になる → Fe³⁺ の検出"},
  ]},
 ];
 
@@ -447,21 +470,29 @@ CH.push({id:"collect", no:"♯5", title:"気体の捕集法", em:"🫧", mode:"c
    chips:[["水に？", q => `水に：${q.sol}`], ["空気より？", q => `空気より：${airText(q)}`]],
    why:q => `水に${q.sol}・空気より${airText(q)}`},
  q:[
-  {fm:"H<sub>2</sub>",nm:"水素",M:2,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。いちばん軽い気体。"},
-  {fm:"O<sub>2</sub>",nm:"酸素",M:32,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。ものが燃えるのを助ける。"},
+  {g:"H2",fm:"H<sub>2</sub>",nm:"水素",M:2,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。いちばん軽い気体。"},
+  {g:"O2",fm:"O<sub>2</sub>",nm:"酸素",M:32,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。ものが燃えるのを助ける。"},
   {fm:"N<sub>2</sub>",nm:"窒素",M:28,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。空気の約8割をしめる。"},
-  {fm:"NH<sub>3</sub>",nm:"アンモニア",M:17,sol:"非常によく溶ける",gc:"無色",ans:"上方置換",d:1,at:4,desc:"刺激臭。水溶液は塩基性。"},
+  {g:"NH3",fm:"NH<sub>3</sub>",nm:"アンモニア",M:17,sol:"非常によく溶ける",gc:"無色",ans:"上方置換",d:1,at:4,desc:"刺激臭。水溶液は塩基性。"},
   {fm:"HCl",nm:"塩化水素",M:36.5,sol:"非常によく溶ける",gc:"無色",ans:"下方置換",d:1,at:2,desc:"刺激臭。NH₃ と出会うと白煙。"},
-  {fm:"CO<sub>2</sub>",nm:"二酸化炭素",M:44,sol:"少し溶ける",gc:"無色",ans:"下方置換",alt:"上方置換",d:1,at:3,desc:"無色・無臭。石灰水を白くにごらせる。",hint:"CO₂ は下方置換（水上置換で集めることもある）"},
+  {g:"CO2",fm:"CO<sub>2</sub>",nm:"二酸化炭素",M:44,sol:"少し溶ける",gc:"無色",ans:"下方置換",alt:"上方置換",d:1,at:3,desc:"無色・無臭。石灰水を白くにごらせる。",hint:"CO₂ は下方置換（水上置換で集めることもある）"},
   {fm:"CH<sub>4</sub>",nm:"メタン",M:16,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"上方置換",d:2,at:5,desc:"無色・無臭。天然ガスの主成分。",hint:"軽くても水に溶けにくければ水上置換"},
   {fm:"CO",nm:"一酸化炭素",M:28,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:2,at:2,desc:"無色・無臭。とても有毒。"},
   {fm:"NO<sub>2</sub>",nm:"二酸化窒素",M:46,sol:"よく溶ける",gc:"赤褐",ans:"下方置換",trap:"水上置換",d:2,at:3,desc:"赤褐色・刺激臭。銅と濃硝酸から発生。",hint:"NO は水上置換 ／ NO₂ は水に溶けるので下方置換"},
-  {fm:"H<sub>2</sub>S",nm:"硫化水素",M:34,sol:"溶ける",gc:"無色",ans:"下方置換",d:2,at:3,desc:"無色・腐卵臭。有毒。"},
+  {g:"H2S",fm:"H<sub>2</sub>S",nm:"硫化水素",M:34,sol:"溶ける",gc:"無色",ans:"下方置換",d:2,at:3,desc:"無色・腐卵臭。有毒。"},
   {fm:"SO<sub>2</sub>",nm:"二酸化硫黄",M:64,sol:"よく溶ける",gc:"無色",ans:"下方置換",d:2,at:3,desc:"無色・刺激臭。還元性・漂白作用。"},
   {fm:"NO",nm:"一酸化窒素",M:30,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"下方置換",d:3,boss:1,at:2,desc:"無色。銅と希硝酸から発生。",hint:"NO は空気中の O₂ とすぐ反応 → 水上置換しか使えない"},
   {fm:"C<sub>2</sub>H<sub>4</sub>",nm:"エチレン",M:28,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"上方置換",d:3,at:6,desc:"無色・かすかに甘いにおい。"},
   {fm:"C<sub>2</sub>H<sub>2</sub>",nm:"アセチレン",M:26,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"上方置換",d:3,at:4,desc:"無色。炭化カルシウムと水から発生。"},
-  {fm:"Cl<sub>2</sub>",nm:"塩素",M:71,sol:"溶ける",gc:"黄緑",ans:"下方置換",trap:"水上置換",d:3,at:2,boss:1,desc:"黄緑色・刺激臭。漂白・殺菌作用。",hint:"Cl₂ は水に溶けるので下方置換"},
+  {g:"Cl2",fm:"Cl<sub>2</sub>",nm:"塩素",M:71,sol:"溶ける",gc:"黄緑",ans:"下方置換",trap:"水上置換",d:3,at:2,boss:1,desc:"黄緑色・刺激臭。漂白・殺菌作用。",hint:"Cl₂ は水に溶けるので下方置換"},
+  {g:"H2",fm:"H<sub>2</sub>",nm:"Zn ＋ 希硫酸 で発生",M:2,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"発生した気体は水素"},
+  {g:"O2",fm:"O<sub>2</sub>",nm:"H₂O₂ ＋ MnO₂ で発生",M:32,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"発生した気体は酸素"},
+  {g:"CO2",fm:"CO<sub>2</sub>",nm:"CaCO₃ ＋ 塩酸 で発生",M:44,sol:"少し溶ける",gc:"無色",ans:"下方置換",d:1,at:3,desc:"発生した気体は二酸化炭素"},
+  {g:"NH3",fm:"NH<sub>3</sub>",nm:"NH₄Cl ＋ Ca(OH)₂ を加熱",M:17,sol:"非常によく溶ける",gc:"無色",ans:"上方置換",d:2,at:4,desc:"発生した気体はアンモニア"},
+  {g:"H2S",fm:"H<sub>2</sub>S",nm:"FeS ＋ 希硫酸 で発生",M:34,sol:"溶ける",gc:"無色",ans:"下方置換",trap:"水上置換",d:2,at:3,desc:"発生した気体は硫化水素"},
+  {g:"Cl2",fm:"Cl<sub>2</sub>",nm:"MnO₂ ＋ 濃塩酸 を加熱",M:71,sol:"溶ける",gc:"黄緑",ans:"下方置換",trap:"水上置換",d:3,at:2,desc:"発生した気体は塩素"},
+  {fm:"C<sub>2</sub>H<sub>6</sub>",nm:"エタン",M:30,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:2,at:8,desc:"無色・無臭。天然ガスにふくまれる"},
+  {fm:"C<sub>3</sub>H<sub>8</sub>",nm:"プロパン",M:44,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"下方置換",d:3,at:11,desc:"家庭用のガスボンベ（LPG）",hint:"空気より重くても、水に溶けにくければ水上置換"},
  ]});
 function collectOpts(q, lv) {
   // 不正解の選択肢は毎回ランダム（後半ほど「ひっかけ」が出やすい）
@@ -563,6 +594,9 @@ CH.push({id:"smell", no:"♯7", title:"気体・物質のにおい", em:"👃", 
   {fm:"HCHO",nm:"ホルムアルデヒド",c:"刺激臭",d:3,trap:"果実の香り"},
   {fm:"C<sub>6</sub>H<sub>5</sub>OH",nm:"フェノール",c:"特異臭",d:3,sz:"m",trap:"刺激臭",hint:"フェノールは特異臭"},
   {fm:"CH<sub>3</sub>COOH",nm:"酢酸",c:"刺激臭",d:3,sz:"m",trap:"果実の香り",hint:"酢酸は刺激臭 ／ 酢酸エチル（エステル）は果実の香り"},
+  {fm:"C<sub>6</sub>H<sub>6</sub>",nm:"ベンゼン",c:"特異臭",d:2,trap:"刺激臭",hint:"ベンゼン・トルエンなどは特異臭"},
+  {fm:"C<sub>2</sub>H<sub>5</sub>OC<sub>2</sub>H<sub>5</sub>",nm:"ジエチルエーテル",c:"特異臭",d:2,sz:"l",trap:"果実の香り"},
+  {fm:"CH<sub>3</sub>COOC<sub>5</sub>H<sub>11</sub>",nm:"酢酸ペンチル",c:"果実の香り",d:3,sz:"l",trap:"特異臭",hint:"バナナのような香りのエステル"},
  ]});
 
 // ================= ♯8 試薬の保存方法：どっち？ =================
@@ -601,30 +635,71 @@ CH.push({id:"store", no:"♯8", title:"試薬の保存方法：どっち？", em
   {nm:"過マンガン酸カリウム水溶液",fm:"KMnO<sub>4</sub> aq",gc:"赤紫",pair:["透明びん","褐色びん"],ans:"褐色びん",d:3,prop:"光で分解しやすい",why2:"光で分解"},
   {nm:"臭素",fm:"Br<sub>2</sub>",gc:"赤褐",pair:["ゴム栓","ガラス栓"],ans:"ガラス栓",d:3,trap:1,prop:"反応性が高くゴムを侵す",why2:"ゴムを侵す"},
   {nm:"フッ化水素酸",fm:"HF aq",gc:"無色",pair:["ガラスびん","ポリ容器"],ans:"ポリ容器",d:3,boss:1,prop:"ガラス（SiO₂）を溶かす",why2:"ガラスを溶かす"},
+  {nm:"水酸化カリウム（固体）",fm:"KOH",gc:"白",pair:["空気中","密閉容器"],ans:"密閉容器",d:2,prop:"潮解性があり、空気中の CO₂ も吸収する",why2:"潮解性"},
+  {nm:"塩化カルシウム（無水）",fm:"CaCl<sub>2</sub>",gc:"白",pair:["密閉容器","空気中"],ans:"密閉容器",d:2,prop:"潮解性がある（乾燥剤に使う）",why2:"潮解性"},
+  {nm:"臭化銀",fm:"AgBr",gc:"淡黄",pair:["透明びん","褐色びん"],ans:"褐色びん",d:3,boss:1,prop:"光で分解して Ag が析出（感光性）",why2:"光で分解"},
+  {nm:"塩素水",fm:"Cl<sub>2</sub> aq",gc:"黄緑",pair:["褐色びん","透明びん"],ans:"褐色びん",d:3,prop:"光で HClO が分解して O₂ を出す",why2:"光で分解"},
+  {nm:"水ガラス（ケイ酸ナトリウム水溶液）",fm:"Na<sub>2</sub>SiO<sub>3</sub> aq",gc:"無色",pair:["ゴム栓","ガラス栓"],ans:"ゴム栓",d:3,boss:1,prop:"強い塩基性で、乾くとガラス栓が固着する",why2:"ガラス栓が固着"},
+  {nm:"炭酸ナトリウム水溶液",fm:"Na<sub>2</sub>CO<sub>3</sub> aq",gc:"無色",pair:["ガラス栓","ゴム栓"],ans:"ゴム栓",d:2,prop:"塩基性でガラスと反応する",why2:"ガラス栓が固着"},
  ].map(q => ({...q, at:1, desc:"どうやって保存する？"}))});
 
-// ================= ♯9 工業的製法と触媒（4択） =================
-// 答えは触媒の化学式。色は粉末の見た目（Fe₃O₄・MnO₂ は黒、V₂O₅ は橙黄、Pt・Ni は銀色）
+// ================= ♯9 工業的製法（4択：触媒・製法・生成物など） =================
+// 問題ごとに選択肢の候補（opts）を決める。g は製法の話題で、1回の出題では同じ話題は1問まで → 毎回ちがう製法が10個出る。
+// ask は問題ごとの問いかけ（カード上部の黄色い帯）。
 const CATCOL = {"Fe₃O₄":"黒", "V₂O₅":"橙黄", "Pt":"銀", "MnO₂":"黒", "Ni":"銀"};
-CH.push({id:"cat", no:"♯9", title:"工業的製法と触媒", em:"🏭", kind:"cat", isNew:1, prompt:"触媒は？", prompts:["触媒は？","使う触媒は？","触媒を答えよ！"],
-  bg:"#e6ecf5", allow:Object.keys(CATCOL), cap:{}, capAll:3, noSim:1,
-  icon:o => drop(CATCOL[o], 20), art:c => illust("solid", CATCOL[c]),
-  tints:{"Fe₃O₄":"#dfe3ea", "V₂O₅":"#ffe7c2", "Pt":"#eef1f6", "MnO₂":"#dfe3ea", "Ni":"#eef1f6"},
+const CATS = Object.keys(CATCOL), PRODS = ["アンモニア","硫酸","硝酸","炭酸ナトリウム","水酸化ナトリウム"];
+const factoryArt = () => `<svg width="96" height="96" viewBox="0 0 96 96">
+  <path d="M10 84 V44 L32 56 V44 L54 56 V44 L76 56 V20 H86 V84 Z" fill="#e6ecf5" stroke="#6b7a99" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="20" y="66" width="10" height="10" fill="#ffc93c"/><rect x="42" y="66" width="10" height="10" fill="#ffc93c"/><rect x="64" y="66" width="10" height="10" fill="#ffc93c"/>
+  <circle cx="80" cy="12" r="5" fill="#c9d6ea"/><circle cx="88" cy="5" r="3.5" fill="#c9d6ea"/></svg>`;
+CH.push({id:"cat", no:"♯9", title:"工業的製法", em:"🏭", kind:"ind", isNew:1, prompt:"答えは？", bg:"#e6ecf5", cap:{}, noSim:1,
+  icon:o => CATCOL[o] ? drop(CATCOL[o], 20) : `<span style="font-size:16px">🏭</span>`,
+  art:c => CATCOL[c] ? illust("solid", CATCOL[c]) : factoryArt(),
   q:[
-  {fm:"ハーバー・ボッシュ法",nm:"アンモニアの工業的製法",c:"Fe₃O₄",d:1,sz:"w",hint:"四酸化三鉄 Fe₃O₄ を主成分とする鉄触媒"},
-  {fm:"接触法",nm:"硫酸の工業的製法",c:"V₂O₅",d:1,sz:"w",hint:"SO₂ → SO₃ の酸化に酸化バナジウム(Ⅴ)"},
-  {fm:"オストワルト法",nm:"硝酸の工業的製法",c:"Pt",d:1,sz:"w",hint:"NH₃ → NO の酸化に白金"},
-  {fm:"過酸化水素の分解",nm:"実験室での酸素の発生",c:"MnO₂",d:1,sz:"w",hint:"酸化マンガン(Ⅳ)。反応の前後で変化しない"},
-  {fm:"N<sub>2</sub> ＋ 3H<sub>2</sub> ⇄ 2NH<sub>3</sub>",nm:"ハーバー・ボッシュ法",c:"Fe₃O₄",d:2,sz:"l",trap:"Pt",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
-  {fm:"2SO<sub>2</sub> ＋ O<sub>2</sub> ⇄ 2SO<sub>3</sub>",nm:"接触法（硫酸の製造）",c:"V₂O₅",d:2,sz:"l",trap:"Pt"},
-  {fm:"4NH<sub>3</sub> ＋ 5O<sub>2</sub> → 4NO ＋ 6H<sub>2</sub>O",nm:"オストワルト法（硝酸の製造）",c:"Pt",d:2,sz:"w",trap:"V₂O₅",hint:"接触法 → V₂O₅ ／ オストワルト法 → Pt"},
-  {fm:"2KClO<sub>3</sub> → 2KCl ＋ 3O<sub>2</sub>",nm:"塩素酸カリウムの分解",c:"MnO₂",d:2,sz:"l",hint:"酸素の発生。H₂O₂ の分解と同じ MnO₂"},
-  {fm:"2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O ＋ O<sub>2</sub>",nm:"過酸化水素の分解",c:"MnO₂",d:2,sz:"l",hint:"濃塩酸と MnO₂ で Cl₂ を出すときは、MnO₂ は触媒ではなく酸化剤"},
-  {fm:"アンモニアの工業的製法",nm:"N₂ と H₂ から直接合成",c:"Fe₃O₄",d:3,sz:"w",trap:"Pt",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
-  {fm:"硫酸の工業的製法",nm:"SO₂ を酸化して SO₃ に",c:"V₂O₅",d:3,sz:"w",trap:"Pt",hint:"接触法 → V₂O₅"},
-  {fm:"硝酸の工業的製法",nm:"NH₃ を酸化して NO に",c:"Pt",d:3,sz:"w",trap:"Fe₃O₄",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
-  {fm:"硬化油の製造",nm:"油脂の二重結合に H₂ を付加",c:"Ni",d:3,sz:"w",trap:"Pt",hint:"ニッケル触媒で水素を付加（マーガリンなど）"},
-  {fm:"C<sub>6</sub>H<sub>6</sub> ＋ 3H<sub>2</sub> → C<sub>6</sub>H<sub>12</sub>",nm:"ベンゼン → シクロヘキサン",c:"Ni",d:3,sz:"l",hint:"Ni 触媒・高温高圧で付加"},
+  // ハーバー・ボッシュ法
+  {g:"hb",fm:"ハーバー・ボッシュ法",nm:"N₂ と H₂ から直接合成",ask:"つくる物質は？",c:"アンモニア",opts:PRODS,d:1,sz:"w"},
+  {g:"hb",fm:"N<sub>2</sub> ＋ 3H<sub>2</sub> ⇄ 2NH<sub>3</sub>",nm:"ハーバー・ボッシュ法",ask:"触媒は？",c:"Fe₃O₄",opts:CATS,d:2,sz:"l",hint:"四酸化三鉄 Fe₃O₄ を主成分とする鉄触媒"},
+  {g:"hb",fm:"ハーバー・ボッシュ法",nm:"発熱反応で、気体の分子数が減る",ask:"反応の条件は？",c:"高圧・約500℃",opts:["低圧・約500℃","常圧・常温","低圧・約1000℃"],d:3,sz:"w",
+   hint:"高圧ほど NH₃ が増える。低温ほど NH₃ が増えるが反応がおそいので約500℃"},
+  // 接触法
+  {g:"ct",fm:"接触法",nm:"SO₂ を酸化して SO₃ に",ask:"つくる物質は？",c:"硫酸",opts:PRODS,d:1,sz:"w"},
+  {g:"ct",fm:"2SO<sub>2</sub> ＋ O<sub>2</sub> ⇄ 2SO<sub>3</sub>",nm:"接触法",ask:"触媒は？",c:"V₂O₅",opts:CATS,d:2,sz:"l",hint:"酸化バナジウム(Ⅴ)"},
+  {g:"ct",fm:"接触法の最後の工程",nm:"できた SO₃ を吸収させる",ask:"何に吸収させる？",c:"濃硫酸",opts:["水","希硫酸","NaOH 水溶液"],d:3,sz:"w",
+   hint:"水に直接吸収させると霧状になる → 濃硫酸に吸収させて発煙硫酸にし、希硫酸でうすめる"},
+  // オストワルト法
+  {g:"os",fm:"オストワルト法",nm:"NH₃ → NO → NO₂ → HNO₃",ask:"つくる物質は？",c:"硝酸",opts:PRODS,d:1,sz:"w"},
+  {g:"os",fm:"4NH<sub>3</sub> ＋ 5O<sub>2</sub> → 4NO ＋ 6H<sub>2</sub>O",nm:"オストワルト法の最初の工程",ask:"触媒は？",c:"Pt",opts:CATS,d:2,sz:"w",hint:"白金。NH₃ をつくる（Fe₃O₄）と取りちがえないように"},
+  {g:"os",fm:"オストワルト法",nm:"硝酸をつくるときの原料の気体",ask:"原料は？",c:"アンモニア",opts:["窒素","一酸化窒素","二酸化硫黄"],d:3,sz:"w",hint:"ハーバー・ボッシュ法でつくった NH₃ を酸化する"},
+  // アンモニアソーダ法
+  {g:"sv",fm:"アンモニアソーダ法",nm:"ソルベー法ともいう",ask:"つくる物質は？",c:"炭酸ナトリウム",opts:["水酸化ナトリウム","硫酸","硝酸","アンモニア"],d:1,sz:"w"},
+  {g:"sv",fm:"NaCl 飽和水溶液 ＋ NH<sub>3</sub> ＋ CO<sub>2</sub>",nm:"アンモニアソーダ法の最初の工程",ask:"沈殿するのは？",c:"炭酸水素ナトリウム",opts:["炭酸ナトリウム","塩化アンモニウム","炭酸カルシウム"],d:2,sz:"w",
+   hint:"溶けにくい NaHCO₃ が沈殿 → 加熱して Na₂CO₃ に"},
+  {g:"sv",fm:"アンモニアソーダ法",nm:"NH₃ は回収して再利用する",ask:"最後に残る副生成物は？",c:"塩化カルシウム",opts:["塩化アンモニウム","塩化ナトリウム","水酸化カルシウム"],d:3,sz:"w",
+   hint:"全体では 2NaCl ＋ CaCO₃ → Na₂CO₃ ＋ CaCl₂"},
+  // 水酸化ナトリウム
+  {g:"naoh",fm:"水酸化ナトリウムの工業的製法",nm:"NaCl 水溶液の電気分解",ask:"方法の名前は？",c:"イオン交換膜法",opts:["アンモニアソーダ法","接触法","テルミット法"],d:1,sz:"w"},
+  {g:"naoh",fm:"イオン交換膜法",nm:"NaCl 水溶液の電気分解",ask:"陰極で発生する気体は？",c:"水素",opts:["塩素","酸素","窒素"],d:2,sz:"w",hint:"陽極で Cl₂、陰極で H₂（と OH⁻）"},
+  {g:"naoh",fm:"イオン交換膜法",nm:"陽イオン交換膜を使う",ask:"膜を通りぬけるイオンは？",c:"Na⁺",opts:["Cl⁻","OH⁻","H⁺"],d:3,sz:"w",hint:"Na⁺ が陰極側へ移動 → 陰極側で NaOH ができる"},
+  // テルミット法
+  {g:"th",fm:"テルミット法",nm:"Fe₂O₃ を還元して鉄を取り出す",ask:"還元に使う金属は？",c:"アルミニウム",opts:["銅","銀","鉄"],d:1,sz:"w",hint:"Al の粉末。Al は O と結びつきやすい"},
+  {g:"th",fm:"2Al ＋ Fe<sub>2</sub>O<sub>3</sub> → Al<sub>2</sub>O<sub>3</sub> ＋ 2Fe",nm:"大量の熱が出る",ask:"この方法の名前は？",c:"テルミット法",opts:["接触法","溶融塩電解","ハーバー・ボッシュ法"],d:2,sz:"w"},
+  {g:"th",fm:"テルミット法",nm:"反応熱で鉄が融けるほど高温になる",ask:"利用される場面は？",c:"レールの溶接",opts:["肥料の製造","ガラスの製造","漂白剤の製造"],d:3,sz:"w"},
+  // アルミニウム
+  {g:"al",fm:"アルミニウムの製法",nm:"Al₂O₃ を融かして電気分解",ask:"方法の名前は？",c:"溶融塩電解",opts:["テルミット法","水溶液の電気分解","接触法"],d:1,sz:"w",hint:"水溶液の電気分解では Al ではなく H₂ が出る"},
+  {g:"al",fm:"アルミニウムの溶融塩電解",nm:"Al₂O₃ の融点を下げたい",ask:"加える物質は？",c:"氷晶石",opts:["石灰石","コークス","塩化ナトリウム"],d:2,sz:"w",hint:"氷晶石 Na₃AlF₆"},
+  {g:"al",fm:"アルミニウムの原料",nm:"精製すると酸化アルミニウム（アルミナ）",ask:"原料の鉱石は？",c:"ボーキサイト",opts:["赤鉄鉱","黄銅鉱","石灰石"],d:3,sz:"w"},
+  // 鉄
+  {g:"fe",fm:"溶鉱炉（高炉）",nm:"鉄鉱石 Fe₂O₃ を還元する",ask:"還元する気体は？",c:"一酸化炭素",opts:["水素","二酸化炭素","酸素"],d:1,sz:"w",hint:"コークス C が燃えてできる CO が還元する"},
+  {g:"fe",fm:"溶鉱炉でできる鉄",nm:"炭素を約4%ふくみ、かたくてもろい",ask:"この鉄の名前は？",c:"銑鉄",opts:["鋼","純鉄","スラグ"],d:2,sz:"w"},
+  {g:"fe",fm:"転炉",nm:"銑鉄に O₂ を吹きこんで炭素を減らす",ask:"できるものは？",c:"鋼",opts:["銑鉄","スラグ","鉄鉱石"],d:3,sz:"w",hint:"炭素 2% 以下。ねばり強い"},
+  // 銅
+  {g:"cu",fm:"粗銅 → 純銅",nm:"硫酸銅(Ⅱ)水溶液中で電気分解",ask:"方法の名前は？",c:"電解精錬",opts:["溶融塩電解","テルミット法","接触法"],d:1,sz:"w"},
+  {g:"cu",fm:"銅の電解精錬",nm:"陽極の下にたまる泥（陽極泥）",ask:"ふくまれる金属は？",c:"金・銀",opts:["鉄・亜鉛","ナトリウム・カリウム","アルミニウム"],d:2,sz:"w",
+   hint:"Cu よりイオンになりにくい Au・Ag は溶けずに沈む（Fe・Zn はイオンになって溶ける）"},
+  // 触媒（実験室・その他）
+  {g:"mn",fm:"2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O ＋ O<sub>2</sub>",nm:"過酸化水素の分解",ask:"触媒は？",c:"MnO₂",opts:CATS,d:1,sz:"l",hint:"濃塩酸と MnO₂ で Cl₂ を出すときは、MnO₂ は触媒ではなく酸化剤"},
+  {g:"mn",fm:"2KClO<sub>3</sub> → 2KCl ＋ 3O<sub>2</sub>",nm:"塩素酸カリウムの分解",ask:"触媒は？",c:"MnO₂",opts:CATS,d:2,sz:"l"},
+  {g:"ni",fm:"硬化油の製造",nm:"油脂の二重結合に H₂ を付加",ask:"触媒は？",c:"Ni",opts:["V₂O₅","MnO₂","Fe₃O₄"],d:3,sz:"w",hint:"ニッケル触媒で水素を付加（マーガリンなど）"},
  ]});
 
 // ================= 素材・物質データ（高校化学レベルの解説つき） =================
@@ -763,10 +838,10 @@ const CH = [
   q:[
   {fm:"フェノール ＋ FeCl<sub>3</sub>",nm:"塩化鉄(Ⅲ)水溶液で呈色",c:"紫",d:1,sz:"w",hint:"フェノール性 -OH の検出"},
   {fm:"アニリン ＋ さらし粉",nm:"さらし粉水溶液で呈色",c:"赤紫",d:1,sz:"w"},
-  {fm:"ヨードホルム反応",nm:"CH₃CO- をもつ物質 ＋ I₂ ＋ NaOH",c:"黄",d:1,sz:"w",hint:"CHI₃（ヨードホルム）の黄色沈殿"},
-  {fm:"フェーリング液の還元",nm:"アルデヒドで加熱",c:"赤",d:1,sz:"w",hint:"Cu₂O の赤色沈殿"},
-  {fm:"ヨウ素デンプン反応",nm:"デンプン ＋ ヨウ素液",c:"青紫",d:1,sz:"w"},
-  {fm:"銀鏡反応",nm:"アルデヒド ＋ アンモニア性硝酸銀",c:"銀",d:1,sz:"w",hint:"Ag が析出して鏡のようになる"},
+  {g:"iodo",fm:"ヨードホルム反応",nm:"CH₃CO- をもつ物質 ＋ I₂ ＋ NaOH",c:"黄",d:1,sz:"w",hint:"CHI₃（ヨードホルム）の黄色沈殿"},
+  {g:"fehling",fm:"フェーリング液の還元",nm:"アルデヒドで加熱",c:"赤",d:1,sz:"w",hint:"Cu₂O の赤色沈殿"},
+  {g:"starch",fm:"ヨウ素デンプン反応",nm:"デンプン ＋ ヨウ素液",c:"青紫",d:1,sz:"w"},
+  {g:"silver",fm:"銀鏡反応",nm:"アルデヒド ＋ アンモニア性硝酸銀",c:"銀",d:1,sz:"w",hint:"Ag が析出して鏡のようになる"},
   {fm:"キサントプロテイン反応",nm:"ベンゼン環をもつタンパク質 ＋ 濃硝酸",c:"黄",d:2,sz:"w",trap:"橙黄",hint:"加熱で黄色 → アンモニア水で塩基性にすると橙黄色"},
   {fm:"ビウレット反応",nm:"タンパク質 ＋ NaOH ＋ CuSO₄",c:"赤紫",d:2,sz:"w",trap:"紫",hint:"ビウレット：赤紫 ／ ニンヒドリン：赤紫〜青紫"},
   {fm:"ニンヒドリン反応",nm:"アミノ酸 ＋ ニンヒドリン",c:"紫",d:2,sz:"w",trap:"黄",hint:"アミノ基の検出。赤紫〜青紫になる"},
@@ -778,6 +853,12 @@ const CH = [
   {fm:"ピクリン酸",nm:"2,4,6-トリニトロフェノール",c:"黄",d:3,sz:"m",trap:"淡黄"},
   {fm:"p-ヒドロキシアゾベンゼン",nm:"ジアゾカップリングでできる染料",c:"橙赤",d:3,sz:"w",trap:"赤"},
   {fm:"フェノール ＋ 臭素水",nm:"2,4,6-トリブロモフェノール",c:"白",d:3,sz:"w",trap:"黄",hint:"白色沈殿が生じる（置換反応）"},
+  {g:"fehling",fm:"グルコース ＋ フェーリング液",nm:"加熱する",c:"赤",d:2,sz:"w",trap:"青",hint:"グルコースは還元性 → Cu₂O の赤色沈殿"},
+  {g:"silver",fm:"グルコース ＋ アンモニア性硝酸銀",nm:"おだやかに加熱",c:"銀",d:2,sz:"w",hint:"還元性のある糖も銀鏡反応を示す"},
+  {g:"iodo",fm:"エタノール ＋ I<sub>2</sub> ＋ NaOH",nm:"ヨードホルム反応",c:"黄",d:2,sz:"w",hint:"CH₃CH(OH)- をもつアルコールも陽性"},
+  {fm:"硫黄の検出",nm:"タンパク質 ＋ NaOH で加熱 → 酢酸鉛(Ⅱ)",c:"黒",d:2,sz:"w",trap:"白",hint:"PbS の黒色沈殿 → 硫黄をふくむアミノ酸がある"},
+  {g:"starch",fm:"アミロース ＋ ヨウ素液",nm:"直鎖状のデンプン",c:"青",d:3,sz:"w",trap:"赤紫",hint:"アミロース：濃青色 ／ アミロペクチン：赤紫色"},
+  {g:"starch",fm:"アミロペクチン ＋ ヨウ素液",nm:"枝分かれの多いデンプン",c:"赤紫",d:3,sz:"w",trap:"青",hint:"アミロース：濃青色 ／ アミロペクチン：赤紫色"},
  ]},
  {id:"extract", no:"♯2", title:"抽出：水層 or エーテル層", em:"🧫", mode:"swipe", prompt:"どっちの層？", bg:"#dff0ff", cap:{},
   swipe:{title:"抽出スワイプ", big:"抽出", note:"層を選ぶ",
@@ -798,6 +879,13 @@ const CH = [
   {nm:"アニリン塩酸塩",fm:"＋ NaOH水溶液",ans:"エーテル層",d:3,tag:"弱塩基の塩",desc:"C₆H₅NH₃Cl",k1:"弱塩基の塩",k2:"弱塩基の遊離 → アニリンにもどる"},
   {nm:"安息香酸ナトリウム",fm:"＋ 塩酸",ans:"エーテル層",d:3,tag:"カルボン酸の塩",desc:"C₆H₅COONa",k1:"弱酸の塩",k2:"弱酸の遊離 → 安息香酸にもどる"},
   {nm:"サリチル酸メチル",fm:"＋ NaHCO₃水溶液",ans:"エーテル層",d:3,boss:1,tag:"エステル",desc:"湿布薬の成分。-COOCH₃ とフェノール性 -OH",k1:"-COOH がない（フェノール性 -OH は炭酸より弱い）",k2:"NaHCO₃ とは反応しない",hint:"-COOH がないので NaHCO₃ では塩にならない"},
+  {nm:"ニトロベンゼン",fm:"＋ NaOH水溶液",ans:"エーテル層",d:1,tag:"中性",desc:"ベンゼン環に -NO₂",k1:"中性",k2:"反応しない"},
+  {nm:"トルエン",fm:"＋ 塩酸",ans:"エーテル層",d:1,tag:"中性",desc:"ベンゼン環に -CH₃",k1:"中性",k2:"反応しない"},
+  {nm:"アニリン",fm:"＋ 希硫酸",ans:"水層",d:2,tag:"弱塩基",desc:"ベンゼン環に -NH₂",k1:"弱塩基",k2:"中和して塩（アニリン硫酸塩）になる"},
+  {nm:"安息香酸",fm:"＋ 塩酸",ans:"エーテル層",d:2,tag:"カルボン酸",desc:"ベンゼン環に -COOH",k1:"酸",k2:"酸どうしなので反応しない"},
+  {nm:"フェノール",fm:"＋ 塩酸",ans:"エーテル層",d:2,tag:"弱酸",desc:"ベンゼン環に -OH",k1:"弱酸",k2:"酸どうしなので反応しない"},
+  {nm:"ナフタレン",fm:"＋ NaOH水溶液",ans:"エーテル層",d:2,tag:"中性",desc:"ベンゼン環が2つつながった炭化水素",k1:"中性",k2:"反応しない"},
+  {nm:"p-クレゾール",fm:"＋ NaOH水溶液",ans:"水層",d:3,tag:"フェノール類",desc:"ベンゼン環に -OH と -CH₃",k1:"フェノール類（弱酸）",k2:"中和して塩になる",hint:"-CH₃ がついていてもフェノール類 → NaOH と反応"},
  ].map(q => ({...q, gc:"無色", ring:1}))},
  {id:"react", no:"♯3", title:"反応の種類：置換 or 付加", em:"🔁", mode:"swipe", prompt:"どっちの反応？", bg:"#dcf7ef", cap:{},
   swipe:{title:"反応スワイプ", big:"置換？付加？", note:"反応の種類を選ぶ",
@@ -818,6 +906,13 @@ const CH = [
   {nm:"トルエン ＋ Cl₂",fm:"",cond:"光",ans:"置換",d:3,boss:1,bond:"側鎖の -CH₃（単結合）",prod:"側鎖の H が Cl に置き換わる",desc:"光のときは側鎖が反応",ring:1,hint:"光でも、反応するのは側鎖のメチル基 → 置換"},
   {nm:"アセチレン ＋ H₂O",fm:"",cond:"HgSO₄ 触媒",ans:"付加",d:3,bond:"三重結合",prod:"ビニルアルコール → アセトアルデヒド",desc:"不安定な中間体を経る"},
   {nm:"ベンゼン ＋ Cl₂",fm:"",cond:"光（紫外線）",ans:"付加",d:3,boss:1,bond:"ベンゼン環",prod:"ヘキサクロロシクロヘキサン",desc:"同じ組み合わせでも条件で変わる！",ring:1,hint:"Fe 触媒 → 置換 ／ 光 → 付加"},
+  {nm:"エタン ＋ Cl₂",fm:"",cond:"光",ans:"置換",d:1,bond:"単結合だけ",prod:"クロロエタン ＋ HCl",desc:"アルカンの反応"},
+  {nm:"プロペン ＋ H₂",fm:"",cond:"触媒",ans:"付加",d:1,bond:"二重結合",prod:"プロパン",desc:"水素を付け加える"},
+  {nm:"エチレン ＋ HCl",fm:"",cond:"触媒",ans:"付加",d:2,bond:"二重結合",prod:"クロロエタン",desc:"二重結合に HCl"},
+  {nm:"アセチレン ＋ Br₂",fm:"",cond:"常温",ans:"付加",d:2,bond:"三重結合",prod:"1,1,2,2-テトラブロモエタン",desc:"臭素水の色が消える"},
+  {nm:"ベンゼン ＋ Br₂",fm:"",cond:"Fe 触媒",ans:"置換",d:2,bond:"ベンゼン環",prod:"ブロモベンゼン ＋ HBr",desc:"ハロゲン化",ring:1},
+  {nm:"アセチレン ＋ CH₃COOH",fm:"",cond:"触媒",ans:"付加",d:3,bond:"三重結合",prod:"酢酸ビニル",desc:"ビニロンの原料をつくる"},
+  {nm:"アセチレン ＋ HCN",fm:"",cond:"触媒",ans:"付加",d:3,bond:"三重結合",prod:"アクリロニトリル",desc:"アクリル繊維の原料をつくる"},
  ].map(q => ({gc:"無色", at:3, ...q}))},
 ];
 
@@ -960,7 +1055,7 @@ const fiberArt = c => `<svg width="96" height="104" viewBox="0 0 96 104">
   <text x="48" y="60" text-anchor="middle" font-size="22">${FIBER[c] ? FIBER[c].e : ""}</text></svg>`;
 
 const MONO = ["エチレン","プロペン","塩化ビニル","スチレン","酢酸ビニル","アクリロニトリル","メタクリル酸メチル","テトラフルオロエチレン",
-  "イソプレン","1,3-ブタジエン","クロロプレン","ε-カプロラクタム","α-グルコース","β-グルコース","乳酸"];
+  "イソプレン","1,3-ブタジエン","クロロプレン","ε-カプロラクタム","α-グルコース","β-グルコース","乳酸","アクリル酸ナトリウム","塩化ビニリデン"];
 
 const CH = [
  {id:"mono", no:"♯1", title:"単量体（モノマー）はどれ？", em:"🔗", kind:"mono", prompt:"単量体は？", prompts:["単量体は？","原料の単量体は？","何が重合した？"], bg:"#e3ecff",
@@ -968,20 +1063,24 @@ const CH = [
   q:[
   {fm:"ポリエチレン",nm:"(-CH₂-CH₂-)ₙ　袋・容器",c:"エチレン",d:1,sz:"w"},
   {fm:"ポリ塩化ビニル",nm:"(-CH₂-CHCl-)ₙ　水道管・ホース",c:"塩化ビニル",d:1,sz:"w"},
-  {fm:"ポリスチレン",nm:"発泡スチロールの原料",c:"スチレン",d:1,sz:"w"},
+  {g:"sty",fm:"ポリスチレン",nm:"発泡スチロールの原料",c:"スチレン",d:1,sz:"w"},
   {fm:"ポリプロピレン",nm:"(-CH₂-CH(CH₃)-)ₙ　容器・繊維",c:"プロペン",d:1,sz:"w",hint:"プロペンはプロピレンともいう"},
   {fm:"ポリ酢酸ビニル",nm:"接着剤・ビニロンの原料",c:"酢酸ビニル",d:2,sz:"w",trap:"塩化ビニル"},
   {fm:"ポリアクリロニトリル",nm:"アクリル繊維の主成分",c:"アクリロニトリル",d:2,sz:"w",trap:"メタクリル酸メチル"},
   {fm:"ポリメタクリル酸メチル",nm:"アクリル樹脂（有機ガラス）",c:"メタクリル酸メチル",d:2,sz:"w",trap:"アクリロニトリル",hint:"アクリル樹脂 → メタクリル酸メチル ／ アクリル繊維 → アクリロニトリル"},
   {fm:"ポリテトラフルオロエチレン",nm:"フライパンのコーティング（テフロン）",c:"テトラフルオロエチレン",d:2,sz:"w",trap:"エチレン"},
-  {fm:"天然ゴム",nm:"ポリイソプレン（シス形）",c:"イソプレン",d:2,sz:"w",trap:"1,3-ブタジエン"},
+  {fm:"天然ゴム",nm:"ポリイソプレン（シス形）",c:"イソプレン",d:1,sz:"w",trap:"1,3-ブタジエン"},
   {fm:"ブタジエンゴム",nm:"合成ゴム",c:"1,3-ブタジエン",d:2,sz:"w",trap:"イソプレン"},
   {fm:"ナイロン6",nm:"環状の単量体が開いてつながる",c:"ε-カプロラクタム",d:2,sz:"w",hint:"開環重合でできるポリアミド"},
   {fm:"クロロプレンゴム",nm:"合成ゴム（耐油性）",c:"クロロプレン",d:3,sz:"w",trap:"塩化ビニル",hint:"Cl をもつゴム → クロロプレン"},
-  {fm:"デンプン",nm:"米・いもにふくまれる多糖",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"デンプン → α-グルコース ／ セルロース → β-グルコース"},
+  {g:"glc",fm:"デンプン",nm:"米・いもにふくまれる多糖",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"デンプン → α-グルコース ／ セルロース → β-グルコース"},
   {fm:"セルロース",nm:"植物の細胞壁の主成分",c:"β-グルコース",d:3,sz:"w",trap:"α-グルコース",hint:"デンプン → α-グルコース ／ セルロース → β-グルコース"},
-  {fm:"グリコーゲン",nm:"動物の肝臓・筋肉にたくわえる多糖",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"アミロペクチンに似た構造（α-グルコース）"},
+  {g:"glc",fm:"グリコーゲン",nm:"動物の肝臓・筋肉にたくわえる多糖",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"アミロペクチンに似た構造（α-グルコース）"},
   {fm:"ポリ乳酸",nm:"微生物に分解される（生分解性）",c:"乳酸",d:3,sz:"w",hint:"乳酸が縮合重合したポリエステル"},
+  {g:"glc",fm:"アミロース",nm:"直鎖状のデンプン（ヨウ素で濃青色）",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"アミロース・アミロペクチンはどちらも α-グルコース"},
+  {g:"sty",fm:"発泡スチロール",nm:"ポリスチレンを発泡させたもの",c:"スチレン",d:1,sz:"w",trap:"エチレン"},
+  {fm:"ポリアクリル酸ナトリウム",nm:"紙おむつの吸水性高分子",c:"アクリル酸ナトリウム",d:3,sz:"w",trap:"アクリロニトリル",hint:"-COONa が水を引きつける（高吸水性樹脂）"},
+  {fm:"ポリ塩化ビニリデン",nm:"食品用ラップフィルム",c:"塩化ビニリデン",d:3,sz:"w",trap:"塩化ビニル",hint:"CH₂=CCl₂（Cl が2つ）"},
  ]},
  {id:"poly", no:"♯2", title:"重合の種類：どっち？", em:"⛓️", mode:"swipe", prompt:"どの重合？", bg:"#dcf7ef", cap:{},
   swipe:{title:"重合スワイプ", big:"どの重合？", note:"重合の種類を選ぶ",
@@ -1008,6 +1107,15 @@ const CH = [
    hint:"フェノール樹脂・尿素樹脂・メラミン樹脂は付加縮合"},
   {nm:"尿素樹脂",ans:"付加縮合",pair:["付加縮合","縮合重合"],d:3,mono:"尿素 ＋ ホルムアルデヒド",how:"付加と縮合をくり返す",use:"熱硬化性樹脂",
    hint:"フェノール樹脂・尿素樹脂・メラミン樹脂は付加縮合"},
+  {nm:"ポリアクリロニトリル",ans:"付加重合",d:1,mono:"アクリロニトリル",how:"二重結合が開いてつながる",use:"アクリル繊維"},
+  {nm:"ポリメタクリル酸メチル",ans:"付加重合",d:2,mono:"メタクリル酸メチル",how:"二重結合が開いてつながる",use:"アクリル樹脂"},
+  {nm:"ポリテトラフルオロエチレン",ans:"付加重合",d:2,mono:"テトラフルオロエチレン",how:"二重結合が開いてつながる",use:"フライパン"},
+  {nm:"ブタジエンゴム",ans:"付加重合",d:2,mono:"1,3-ブタジエン",how:"二重結合が開き、鎖の中に二重結合が残る",use:"合成ゴム"},
+  {nm:"セルロース",ans:"縮合重合",d:2,mono:"β-グルコース",how:"水がとれてグリコシド結合",use:"天然高分子"},
+  {nm:"アラミド繊維",ans:"縮合重合",d:3,mono:"テレフタル酸ジクロリド ＋ p-フェニレンジアミン",how:"HCl がとれてアミド結合",use:"防弾チョッキ",ring:1,
+   hint:"とれるのが H₂O でなく HCl でも、小さな分子がとれてつながる → 縮合重合"},
+  {nm:"メラミン樹脂",ans:"付加縮合",pair:["付加縮合","縮合重合"],d:3,mono:"メラミン ＋ ホルムアルデヒド",how:"付加と縮合をくり返す",use:"食器",
+   hint:"フェノール樹脂・尿素樹脂・メラミン樹脂は付加縮合"},
  ].map(q => ({fm:"", gc:"白", at:3, desc:`単量体：${q.mono}`, ...q}))},
  {id:"thermo", no:"♯3", title:"熱可塑性？熱硬化性？", em:"🔥", mode:"swipe", prompt:"どっちの樹脂？", bg:"#ffe3dc", cap:{},
   swipe:{title:"樹脂スワイプ", big:"加熱すると<br>やわらかくなる？", note:"樹脂の性質を選ぶ",
@@ -1021,14 +1129,23 @@ const CH = [
   {nm:"ポリスチレン",ans:"熱可塑性",d:1,str:"鎖状構造",how:"付加重合",use:"発泡スチロール"},
   {nm:"ポリプロピレン",ans:"熱可塑性",d:1,str:"鎖状構造",how:"付加重合",use:"容器"},
   {nm:"フェノール樹脂",ans:"熱硬化性",d:1,str:"立体網目状構造",how:"付加縮合",use:"電気部品（ベークライト）"},
-  {nm:"尿素樹脂",ans:"熱硬化性",d:2,str:"立体網目状構造",how:"付加縮合",use:"電気器具・接着剤"},
+  {g:"mel",nm:"メラミン樹脂",ans:"熱硬化性",d:1,str:"立体網目状構造",how:"付加縮合",use:"食器・化粧板"},
+  {nm:"尿素樹脂",ans:"熱硬化性",d:1,str:"立体網目状構造",how:"付加縮合",use:"電気器具・接着剤"},
   {nm:"アクリル樹脂",ans:"熱可塑性",d:2,str:"鎖状構造",how:"付加重合",use:"水槽・レンズ"},
   {nm:"ポリ酢酸ビニル",ans:"熱可塑性",d:2,str:"鎖状構造",how:"付加重合",use:"接着剤"},
   {nm:"ポリエチレンテレフタラート",ans:"熱可塑性",d:3,trap:1,str:"鎖状構造",how:"縮合重合",use:"PET ボトル",
    hint:"縮合重合でも、鎖状なら熱可塑性"},
   {nm:"アルキド樹脂",ans:"熱硬化性",d:3,trap:1,boss:1,str:"立体網目状構造",how:"縮合重合（無水フタル酸 ＋ グリセリン）",use:"塗料",
    hint:"3価アルコールのグリセリンを使うので網目状 → 熱硬化性"},
-  {nm:"メラミン樹脂",ans:"熱硬化性",d:3,boss:1,str:"立体網目状構造",how:"付加縮合",use:"食器",hint:"加熱しても軟らかくならない → 食器にも使える"},
+  {g:"mel",nm:"メラミン樹脂",ans:"熱硬化性",d:3,boss:1,str:"立体網目状構造",how:"付加縮合",use:"食器",hint:"加熱しても軟らかくならない → 食器にも使える"},
+  {nm:"ポリテトラフルオロエチレン",ans:"熱可塑性",d:2,str:"鎖状構造",how:"付加重合",use:"フライパンのコーティング"},
+  {nm:"ナイロン66",ans:"熱可塑性",d:2,str:"鎖状構造",how:"縮合重合",use:"繊維・機械部品"},
+  {nm:"ポリ塩化ビニリデン",ans:"熱可塑性",d:2,str:"鎖状構造",how:"付加重合",use:"食品用ラップ"},
+  {nm:"ポリカーボネート",ans:"熱可塑性",d:2,str:"鎖状構造",how:"縮合重合",use:"CD・ヘルメット"},
+  {nm:"シリコーン樹脂",ans:"熱硬化性",d:2,str:"立体網目状構造（Si-O 結合）",how:"縮合重合",use:"耐熱性の塗料"},
+  {nm:"ポリ乳酸",ans:"熱可塑性",d:3,trap:1,str:"鎖状構造",how:"縮合重合",use:"生分解性プラスチック",hint:"縮合重合でも、鎖状なら熱可塑性"},
+  {nm:"エポキシ樹脂",ans:"熱硬化性",d:2,str:"立体網目状構造",how:"硬化剤で橋かけ",use:"接着剤"},
+  {nm:"不飽和ポリエステル樹脂",ans:"熱硬化性",d:3,trap:1,str:"立体網目状構造",how:"縮合重合 ＋ 付加重合で橋かけ",use:"浴槽・ボート",hint:"ポリエステルでも、橋かけして網目状 → 熱硬化性"},
  ].map(q => ({fm:"", gc:q.ans === "熱硬化性" ? "黄褐" : "白", at:4, desc:q.ans === "熱硬化性" ? "成形したあとの性質は？" : "加熱するとどうなる？", ...q}))},
  {id:"fiber", no:"♯4", title:"繊維の分類", em:"🧵", kind:"fiber", isNew:1, prompt:"何繊維？", prompts:["何繊維？","繊維の分類は？","どの繊維？"], bg:"#fff0c2",
   allow:Object.keys(FIBER), cap:{}, capAll:3, noSim:1, art:fiberArt,
@@ -1039,7 +1156,7 @@ const CH = [
   {fm:"絹",nm:"主成分：タンパク質（フィブロイン）",c:"動物繊維",d:1,sz:"w"},
   {fm:"ナイロン66",nm:"ポリアミド系",c:"合成繊維",d:1,sz:"w"},
   {fm:"ポリエステル",nm:"ポリエチレンテレフタラート",c:"合成繊維",d:1,sz:"w"},
-  {fm:"麻",nm:"主成分：セルロース",c:"植物繊維",d:2,sz:"w"},
+  {g:"asa",fm:"麻",nm:"主成分：セルロース",c:"植物繊維",d:2,sz:"w"},
   {fm:"ビスコースレーヨン",nm:"セルロースを溶かして再び繊維に",c:"再生繊維",d:2,sz:"w",trap:"合成繊維",hint:"天然のセルロースを溶かして再生 → 再生繊維"},
   {fm:"アセテート",nm:"セルロースの -OH の一部をアセチル化",c:"半合成繊維",d:2,sz:"w",trap:"再生繊維",hint:"化学変化させたセルロース → 半合成繊維"},
   {fm:"ビニロン",nm:"ポリビニルアルコールをアセタール化",c:"合成繊維",d:2,sz:"w",hint:"日本で開発された合成繊維。吸湿性がある"},
@@ -1047,6 +1164,10 @@ const CH = [
   {fm:"銅アンモニアレーヨン",nm:"シュバイツァー試薬にセルロースを溶かす（キュプラ）",c:"再生繊維",d:3,sz:"w",trap:"半合成繊維",hint:"溶かして再生しただけ → 再生繊維"},
   {fm:"トリアセチルセルロース",nm:"セルロースの -OH をすべてアセチル化",c:"半合成繊維",d:3,sz:"w",trap:"再生繊維",hint:"アセチル化（化学変化）→ 半合成"},
   {fm:"アラミド繊維",nm:"芳香族のポリアミド（防弾チョッキ）",c:"合成繊維",d:3,sz:"w",trap:"半合成繊維"},
+  {g:"asa",fm:"亜麻（リネン）",nm:"主成分：セルロース",c:"植物繊維",d:2,sz:"w"},
+  {fm:"カシミヤ",nm:"ヤギの毛。主成分：タンパク質",c:"動物繊維",d:2,sz:"w"},
+  {fm:"ナイロン6",nm:"ε-カプロラクタムの開環重合",c:"合成繊維",d:1,sz:"w"},
+  {fm:"ポリウレタン繊維",nm:"よく伸び縮みする（スパンデックス）",c:"合成繊維",d:3,sz:"w",trap:"半合成繊維"},
  ]},
 ];
 
@@ -1340,10 +1461,10 @@ function build(ch) {
   const cq = buildQ(ch); if (cq) return cq;
   const n = Math.min(ch.n || 10, ch.q.length);
   const target = n === 10 ? {1:4, 2:4, 3:2} : {1:Math.round(n*.3), 2:Math.round(n*.4), 3:n - Math.round(n*.3) - Math.round(n*.4)};
-  const cnt = {}, picked = [];
-  const ok = q => (cnt[q.c] || 0) < (ch.cap[q.c] ?? ch.capAll ?? 2);
-  const add = q => { picked.push(q); cnt[q.c] = (cnt[q.c] || 0) + 1; };
-  for (const d of [1, 2, 3]) {
+  const cnt = {}, picked = [], gs = new Set();
+  const ok = q => (cnt[q.c] || 0) < (ch.cap[q.c] ?? ch.capAll ?? 2) && !(q.g && gs.has(q.g));   // 同じ話題（g）は1回に1問まで
+  const add = q => { picked.push(q); cnt[q.c] = (cnt[q.c] || 0) + 1; if (q.g) gs.add(q.g); };
+  for (const d of shuffle([1, 2, 3])) {   // 難易度の順はランダム（「無色は1問まで」などの上限が Lv.1 で先に埋まらないように）
     for (const q of shuffle(ch.q.filter(x => x.d === d))) { if (picked.filter(p => p.d === d).length >= target[d]) break; if (ok(q)) add(q); }
   }
   for (const q of shuffle(ch.q)) { if (picked.length >= n) break; if (!picked.includes(q) && ok(q)) add(q); }
@@ -1403,12 +1524,12 @@ function ask(q, lv, my) {
   return new Promise(resolve => {
     $("tint").style.opacity = 0;
     const last = idx === Q.length - 1;
-    const opts = choices(q, lv, cur.allow);
+    const opts = q.opts ? shuffle([q.c, ...shuffle(q.opts.filter(o => o !== q.c)).slice(0, 3)]) : choices(q, lv, cur.allow);
     const LIMIT = AUTO ? 3200 : 8000, t0 = performance.now();
     stage.innerHTML = `
       <div class="card lv${lv} flip" id="card">
         <div class="ribbon ${last ? "last" : "l" + lv}">${last ? "LAST 👑" : "Lv." + lv}</div>
-        <div class="prompt">${pickOne(cur.prompts || [cur.prompt])}</div>
+        <div class="prompt">${q.ask || pickOne(cur.prompts || [cur.prompt])}</div>
         <div class="formula ${q.sz || ""}">${q.fm}</div>
         <div class="nm">${q.nm}</div>
         <div class="qm pop">?</div>
@@ -1429,7 +1550,7 @@ function ask(q, lv, my) {
       reveal(q, ok);
       drawDrops();
       if (ok) { SE.ok(); burst(el); if (combo >= 2) comboText(); }
-      await sleep(AUTO ? 2500 : q.hint ? 3000 : 2100);
+      await sleep(AUTO ? 2500 : ok ? (q.hint ? 1900 : 1100) : (q.hint ? 2800 : 2000));
       resolve();
     };
     stage.querySelectorAll(".ch").forEach(b => b.onclick = () => finish(b.dataset.c, b));
@@ -1598,7 +1719,7 @@ function swipeQ(_, q, lv, last, my) {
       $("toast").innerHTML = ok ? `<span class="ok">✓ 正解！ ${cur.swipe.right ? cur.swipe.right(q) : `${q.nm} → ${q.ans}`}</span>${q.hint ? `<small>💡 ${q.hint}</small>` : ""}${combo >= 3 ? `<small>${combo}連続！</small>` : ""}`
         : `<span class="ng">✗ 正解は ${q.ans}</span><small>💡 ${q.hint || cur.swipe.why(q)}</small>`;
       if (ok) { SE.ok(); burst(sc); } else { SE.ng(); sc.classList.add("wob"); }
-      await sleep(AUTO ? 1700 : (ok && !q.hint ? 1100 : 2300));
+      await sleep(AUTO ? 1700 : ok ? (q.hint ? 1500 : 650) : 2200);
       if (my !== run) return;
       const dir = (i ?? (ok ? opts.indexOf(q.ans) : 0)) ? 1 : -1;
       sc.style.transform = `translateX(${dir * 520}px) rotate(${dir * 25}deg)`; sc.style.opacity = 0;
@@ -1951,6 +2072,7 @@ function gacha() {
     p.coins -= GACHA_COST * n; upd(); $("p1").disabled = $("p10").disabled = true;
     const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
     if (n >= 10 && !got.some(m => m.r === "SR")) got[got.length - 1] = pull("SR");
+    got.sort((a, b) => "NRS".indexOf(b.r[0]) - "NRS".indexOf(a.r[0]));   // レアの高い順（SR → R → N）に出す
     got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1); saveS();
     await gachaFx(got); upd();
   };

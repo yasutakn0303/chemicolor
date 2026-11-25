@@ -15,17 +15,25 @@ FAM.gray = ["銀","灰"]; FAM.yellow.push("橙黄");
 const keyOf = q => q.ans || q.c;
 function buildQ(ch) {
   if (ch.swipe) {
-    const boss = pickOne(ch.q.filter(x => x.boss)), rest = ch.q.filter(x => x !== boss);  // ボスは候補から毎回ランダム
-    const pick = d => {
-      const g = shuffle(rest.filter(x => x.d === d));
-      if (!ch.swipe.balance) return g;
-      // 答えが偏らないように、答えごとに交互に並べる
-      const by = {}; g.forEach(x => (by[x.ans] = by[x.ans] || []).push(x));
-      const keys = shuffle(Object.keys(by)), out = [];
-      for (let i = 0; out.length < g.length; i++) keys.forEach(k => { if (by[k][i]) out.push(by[k][i]); });
+    const boss = pickOne(ch.q.filter(x => x.boss)), gs = new Set([boss.g]);  // ボスは候補から毎回ランダム
+    const rest = ch.q.filter(x => x !== boss && !(x.g && x.g === boss.g));
+    const pick = (d, n) => {
+      let g = shuffle(rest.filter(x => x.d === d));
+      if (ch.swipe.balance) {
+        // 答えが偏らないように、答えごとに交互に並べる
+        const by = {}; g.forEach(x => (by[x.ans] = by[x.ans] || []).push(x));
+        const keys = shuffle(Object.keys(by)), out = [];
+        for (let i = 0; out.length < g.length; i++) keys.forEach(k => { if (by[k][i]) out.push(by[k][i]); });
+        g = out;
+      }
+      // 同じ話題（g）の問題は1回に1問まで
+      const out = [];
+      for (const x of g) { if (out.length >= n) break; if (x.g && gs.has(x.g)) continue; if (x.g) gs.add(x.g); out.push(x); }
       return out;
     };
-    return [...shuffle(pick(1).slice(0, 4)), ...shuffle(pick(2).slice(0, 3)), ...shuffle(pick(3).slice(0, 2)), boss];
+    // 話題の重複チェックは難易度の順をランダムにして行う（いつも Lv.1 の問題が優先されないように）
+    const got = {}; shuffle([[1, 4], [2, 3], [3, 2]]).forEach(([d, n]) => got[d] = pick(d, n));
+    return [...shuffle(got[1]), ...shuffle(got[2]), ...shuffle(got[3]), boss];
   }
   return null;
 }

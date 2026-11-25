@@ -310,6 +310,7 @@ function gacha() {
     p.coins -= GACHA_COST * n; upd(); $("p1").disabled = $("p10").disabled = true;
     const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
     if (n >= 10 && !got.some(m => m.r === "SR")) got[got.length - 1] = pull("SR");
+    got.sort((a, b) => "NRS".indexOf(b.r[0]) - "NRS".indexOf(a.r[0]));   // レアの高い順（SR → R → N）に出す
     got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1); saveS();
     await gachaFx(got); upd();
   };
