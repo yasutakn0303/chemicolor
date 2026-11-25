@@ -1,0 +1,102 @@
+// ================= 合成ラボ：共通の部品（総合版：分野ごとに切り替え） =================
+// FIELDS（無機・有機・高分子）は build.py が作る。それぞれ CH・MATS・PROD・RECIPES などをもつ。
+// setField() で今の分野の表を CH・MATS・PROD・RECIPES・ITEM などにセットする。
+let FIELD, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES, ITEM = {}, POOL = [];
+const FIELD_OF = Object.fromEntries(FIELDS.map(f => [f.id, f]));
+const ALL_ITEM = {};
+FIELDS.forEach(f => [...f.MATS, ...f.PROD].forEach(x => { if (!ALL_ITEM[x.k]) ALL_ITEM[x.k] = x; }));
+FIELDS.forEach(f => {
+  // ガチャに出る素材：自分の分野の素材 ＋ POOL_FROM の分野の素材
+  const own = new Set(f.MATS.map(m => m.k));
+  f.pool = [...f.MATS, ...f.POOL_FROM.flatMap(id => FIELD_OF[id].MATS).filter(m => !own.has(m.k) && own.add(m.k))];
+  f.matSet = new Set(f.pool.map(m => m.k));
+  f.item = Object.fromEntries([...f.pool, ...f.PROD].map(x => [x.k, x]));
+  f.used = new Set(f.RECIPES.flatMap(r => [...Object.keys(r.inp), ...Object.keys(r.out)]));
+  f.used.forEach(k => { if (!f.item[k]) f.item[k] = ALL_ITEM[k]; });
+});
+function setField(id) {
+  FIELD = FIELD_OF[id] || FIELDS[0];
+  ({CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES} = FIELD);
+  APP = {...FIELD.APP, saveKey: APP.saveKey};
+  ITEM = FIELD.item; POOL = FIELD.pool;
+}
+
+const sideHTML = o => Object.entries(o).map(([k, n]) => `${n > 1 ? `<b style="color:var(--pink)">${n}</b>` : ""}${ITEM[k].fm}`).join(" ＋ ");
+const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
+const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]); return (o.find(x => !x.mat) || o[0]).cat; };
+
+// --- ガチャ設定（たくさん引けるように）。素材は今の分野のもの（高分子は無機・有機の素材も出る）
+const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 100, PER_PULL = 5;
+function pull(forceR, F = FIELD) {
+  const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
+  const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
+}
+function ensureInv(p, F = FIELD) {
+  if (!p.inv) { p.inv = {}; p.made = {}; p.recipes = {}; p.coins = (p.coins || 0) + 300; p.started = {}; }
+  p.started = p.started || {inorg:1};   // 分野を分ける前の記録は無機のスタートセットをもらい済み
+  if (F && !p.started[F.id]) { p.started[F.id] = 1; Object.entries(F.STARTER).forEach(([k, n]) => p.inv[k] = (p.inv[k] || 0) + n); }
+}
+function itemCard(k, n, extra = "") {
+  const it = ITEM[k] || ALL_ITEM[k];
+  return `<div class="st ${it.r || "P"}" ${extra}>${it.r ? `<span class="rr">${it.r}</span>` : it.cat !== LAB_TABS[0] && it.cat !== "素材" ? `<span class="rr" style="color:var(--mint)">${it.cat}</span>` : ""}${n != null ? `<span class="cnt">×${n}</span>` : ""}${drop(it.c, 16)}<div class="f">${it.fm}</div>${it.nm.length > 7 ? it.nm.slice(0, 7) + "…" : it.nm}</div>`;
+}
+function detailHTML(k) {
+  const it = ITEM[k] || ALL_ITEM[k];
+  return `<div class="det">
+    <div class="det-h">${drop(it.c, 26)}<div><div class="det-f">${it.fm}</div><b>${it.nm}</b></div></div>
+    <div class="tags"><span>${it.cat}</span><span>${it.st}</span><span style="background:${HEX[it.c] ? pastel(it.c) : "#eef3fb"}">${it.c}</span></div>
+    <ul>${it.info.map(t => `<li>${t}</li>`).join("")}</ul></div>`;
+}
+function showDetail(k) {
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="box">${detailHTML(k)}<button class="btn sub" id="dOk">とじる</button></div>`;
+  document.body.appendChild(m); m.querySelector("#dOk").onclick = () => m.remove();
+}
+
+// ================= コンプまでの目安（素材の配り方） =================
+// 「全単元を GOAL_LAPS 周」または「毎日ログインで GOAL_DAYS 日」で、全分野のレシピがそろうように、
+// 未発見のレシピに足りない素材（おたすけ素材）を、クリアごと・ログインごとに配る。
+// 配る枚数はデータから自動で計算するので、レシピや単元を増やしても目安は変わらない。
+// 実際のペースは tools/sim_collect.js で確かめられる。
+const GOAL_LAPS = 4, GOAL_DAYS = 28;
+// ガチャ（コイン）でも素材が集まるので、おたすけの量は少なめにかける（tools/sim_collect.js で調整した値）
+const HELP = {drop:.3, login:.15};
+const loginCoins = streak => 150 + Math.min(streak, 7) * 30;   // ログインボーナスのコイン（連続日数で増える）
+
+// 未発見のレシピを順に作るとしたら、足りない素材は何か（中間体は作り方までさかのぼる）
+function planNeed(F, inv0, found0) {
+  const inv = {...inv0}, found = {...found0}, need = [];
+  const prodBy = k => F.RECIPES.find(r => r.out[k] && !r.inp[k]);
+  const lackOf = (k, n) => { for (let i = 0; i < n; i++) need.push(k); };
+  const get = (k, n, d) => {
+    const have = inv[k] || 0;
+    if (have >= n) { inv[k] = have - n; return; }
+    inv[k] = 0; let lack = n - have;
+    const r = F.matSet.has(k) || d > 6 ? null : prodBy(k);
+    if (!r) return lackOf(k, lack);
+    while (lack > 0) { make(r, d + 1); const g = Math.min(lack, inv[k] || 0); inv[k] -= g; lack -= g; }
+  };
+  const make = (r, d) => {
+    Object.entries(r.inp).forEach(([k, n]) => get(k, n, d));
+    Object.entries(r.out).forEach(([k, n]) => inv[k] = (inv[k] || 0) + n); found[r.id] = 1;
+  };
+  F.RECIPES.forEach(r => { if (!found[r.id]) make(r, 0); });
+  return need.filter(k => F.matSet.has(k));
+}
+const needNow = (p, F = FIELD) => planNeed(F, p.inv || {}, p.recipes || {});
+const totalNeed = F => F._total ?? (F._total = planNeed(F, F.STARTER, {}).length);
+const dropHelp = F => Math.ceil(totalNeed(F) / (F.CH.length * GOAL_LAPS) * HELP.drop);          // クリア1回あたり
+const loginHelp = () => Math.ceil(FIELDS.reduce((a, f) => a + totalNeed(f), 0) / GOAL_DAYS * HELP.login); // ログイン1日あたり
+const fieldDone = (p, F) => F.RECIPES.filter(r => p.recipes && p.recipes[r.id]).length;
+function giveNeeded(p, F, n) {
+  const got = needNow(p, F).slice(0, n);
+  got.forEach(k => p.inv[k] = (p.inv[k] || 0) + 1);
+  return got.map(k => F.item[k]);
+}
+// クリアの報酬：ランダム素材 ＋ おたすけ素材（未発見レシピに足りないもの）
+function dropMats(r) {
+  const p = P(); ensureInv(p); const n = {S:8, A:5, B:3}[r], got = [];
+  for (let i = 0; i < n; i++) { const m = pull(); p.inv[m.k] = (p.inv[m.k] || 0) + 1; got.push(m); }
+  const h = dropHelp(FIELD), help = giveNeeded(p, FIELD, r === "B" ? Math.ceil(h / 2) : h);
+  return {got, help};
+}

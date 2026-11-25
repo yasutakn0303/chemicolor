@@ -99,3 +99,14 @@
 .rc{border:none;text-align:left;font:inherit;color:var(--ink);cursor:default}
 .rc.ok{cursor:pointer}.rc.short{opacity:.6}
 .sec small{font-weight:500;color:var(--sub);font-size:11px}
+/* 分野タブ（無機・有機・高分子） */
+.ftabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.ftabs button{border:3px solid var(--ink);background:#fff;border-radius:16px;font:inherit;font-weight:900;font-size:14px;padding:6px 2px;cursor:pointer;color:var(--ink);box-shadow:0 3px 0 var(--ink);line-height:1.2}
+.ftabs button span{display:block;font-size:20px}
+.ftabs button small{display:block;font-size:10px;color:var(--sub);font-family:Quicksand,sans-serif}
+.ftabs button.on{background:var(--sun);transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+/* 登録 */
+.plist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.plist .pl{border:2px solid #c9d6ea;background:#fff;border-radius:999px;font:inherit;font-weight:900;font-size:15px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.flab{font-weight:900;font-size:14px;margin-top:10px}.flab small{font-size:11px;color:var(--sub)}
+.inp.pin{letter-spacing:.4em;margin:6px 0}

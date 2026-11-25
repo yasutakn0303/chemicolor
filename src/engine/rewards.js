@@ -3,13 +3,45 @@ const SAVE_KEY = APP.saveKey;
 let S = (() => { try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || null; } catch (e) { return null; } })() || {players:{}, rank:{}, cur:null};
 const saveS = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} };
 const P = () => S.players[S.cur];
+
+// --- 以前の「有機版」（別ファイル）の記録を、総合版に一度だけ引き継ぐ（元の記録は消さない）
+(function mergeOrganic() {
+  if (S.mergedOrg) return;
+  Object.values(S.players).forEach(p => { if (p.inv && !p.started) p.started = {inorg:1}; });
+  let O = null; try { O = JSON.parse(localStorage.getItem("chemicolor-organic-v1")); } catch (e) {}
+  S.mergedOrg = 1;
+  if (O && O.players) {
+    const add = (a, b) => { Object.entries(b || {}).forEach(([k, v]) => a[k] = (a[k] || 0) + v); return a; };
+    for (const [n, q] of Object.entries(O.players)) {
+      if (q.inv && !q.started) q.started = {org:1};
+      const p = S.players[n];
+      if (!p) { S.players[n] = q; continue; }
+      ["coins", "xp", "plays", "earned"].forEach(k => p[k] = (p[k] || 0) + (q[k] || 0));
+      p.streak = Math.max(p.streak || 0, q.streak || 0);
+      p.badges = {...q.badges, ...p.badges}; p.best = p.best || {};
+      Object.entries(q.best || {}).forEach(([k, v]) => p.best[k] = Math.max(p.best[k] || 0, v));
+      if (q.inv) { p.inv = add(p.inv || {}, q.inv); p.made = add(p.made || {}, q.made); p.recipes = {...q.recipes, ...p.recipes}; p.started = {...q.started, ...p.started}; }
+    }
+    Object.entries(O.rank || {}).forEach(([id, L]) => S.rank[id] = [...(S.rank[id] || []), ...L].sort((a, b) => b.s - a.s).slice(0, 30));
+  }
+  saveS();
+})();
+// --- 分野（#org などの URL で指定できる。前回の分野を覚えておく）
+setField(FIELD_OF[location.hash.slice(1)] ? location.hash.slice(1) : S.field);
+
+// --- 合言葉（4けた）。この端末に保存するのはハッシュだけ
+const pinHash = (name, pin) => { let h = 2166136261; for (const c of `chemicolor|${name}|${pin}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); };
+const isReg = n => !!(S.players[n] && S.players[n].pin);
+// クラス全体のランキングの送り先（未設定）。サーバーを決めたら submit / fetch を実装する
+const CLASS_RANK = null;
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 const lvOfXp = xp => Math.floor(Math.sqrt(xp / 300)) + 1;
 const xpFor = lv => (lv - 1) * (lv - 1) * 300;
 let pts = 0, runMax = 0;
 
-function newPlayer(name) {
+function newPlayer(name, pin) {
   S.players[name] = S.players[name] || {coins:0, xp:0, plays:0, badges:{}, best:{}, streak:0, lastDay:"", earned:0};
+  if (pin) S.players[name].pin = pinHash(name, pin);
   ensureInv(S.players[name]);
   S.cur = name; saveS();
 }
@@ -38,16 +70,17 @@ const BADGES = [
   {id:"combo5",  e:"⚡", nm:"5コンボ",        tx:"5問連続正解"},
   {id:"combo10", e:"🔥", nm:"コンボマスター", tx:"10問連続正解"},
   {id:"score2k", e:"💯", nm:"2000点突破",     tx:"1回で2000点以上"},
-  {id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"5単元すべてクリア"},
+  {id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"どれかの分野の全単元をクリア"},
   {id:"plays10", e:"🎮", nm:"常連さん",       tx:"10回プレイ"},
   {id:"streak3", e:"📅", nm:"3日連続",        tx:"3日連続ログイン"},
   {id:"craft1",  e:"⚗️", nm:"はじめての合成", tx:"物質を1つ合成"},
   {id:"craft10", e:"🧪", nm:"合成マスター",   tx:"10種類の物質を合成"},
-  {id:"craftAll",e:"🏅", nm:"全レシピ発見",   tx:"すべてのレシピを発見"},
+  {id:"craftAll",e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見"},
+  {id:"compAll", e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見"},
   {id:"top1",    e:"🥇", nm:"ランキング1位",  tx:"どれかの単元で1位"},
   {id:"lv5",     e:"⭐", nm:"Lv.5到達",       tx:"レベル5になる"},
   {id:"rich",    e:"🪙", nm:"コイン長者",     tx:"合計1000コイン獲得"},
-  ...LAB_BADGES,
+  ...FIELDS.flatMap(f => f.LAB_BADGES),
 ];
 function unlock(ids) { const p = P(), got = []; ids.forEach(id => { if (!p.badges[id]) { p.badges[id] = today(); got.push(BADGES.find(b => b.id === id)); } }); return got; }
 
@@ -58,8 +91,8 @@ function addRank(id, score) {
   L.sort((a, b) => b.s - a.s); S.rank[id] = L.slice(0, 30);
   return S.rank[id].findIndex(e => e.n === S.cur && e.s === score) + 1;
 }
-function totalRank() {
-  return Object.entries(S.players).map(([n, p]) => ({n, s:Object.values(p.best).reduce((a, b) => a + b, 0)})).filter(e => e.s > 0).sort((a, b) => b.s - a.s);
+function totalRank() {   // 今の分野の各単元のベストの合計（登録ユーザーのみ）
+  return Object.entries(S.players).filter(([n]) => isReg(n)).map(([n, p]) => ({n, s:CH.reduce((a, c) => a + (p.best[c.id] || 0), 0)})).filter(e => e.s > 0).sort((a, b) => b.s - a.s);
 }
 
 // --- 1回分の精算
@@ -85,15 +118,17 @@ function finishRun() {
 function rewardPanel(R) {
   const p = P();
   return `<div class="card-share">
-      <small>${cur.no} ${cur.title}｜${S.cur}</small>
+      <small>${FIELD.name}｜${cur.no} ${cur.title}｜${esc(S.cur)}</small>
       <div class="s">${pts.toLocaleString()} pt</div>
       <small>${score}/${Q.length}問正解・最大${runMax}コンボ・${today()}</small><br>
       ${R.newRec ? `<span class="newrec">NEW RECORD!</span>` : `<small>自己ベスト ${R.prevBest.toLocaleString()} pt</small>`}
     </div>
     <div class="rw">
-      🏆 この端末のランキング <b>${R.pos}位</b><br>
+      🏆 この端末のランキング <b>${R.pos}位</b>${isReg(S.cur) ? "" : `<small>（合言葉を登録すると表示）</small>`}<br>
       🪙 コイン <b>+${R.coins}</b>（所持 ${p.coins}）<br>
-      🧪 素材ドロップ <b>${R.mats.map(m => m.fm).join(" ")}</b>　→ 合成ラボで使おう<br>
+      🧪 素材ドロップ <b>${R.mats.got.map(m => m.nm).join("・")}</b><br>
+      ${R.mats.help.length ? `🤝 おたすけ素材 <b>${R.mats.help.map(m => m.nm).join("・")}</b>（まだ作っていないレシピ用）<br>` : ""}
+      　→ 合成ラボで使おう<br>
       ⭐ EXP <b>+${pts}</b>${R.lvUp ? `　<span style="color:var(--pink);font-weight:900">レベルアップ！ Lv.${R.lvUp}</span>` : ""}
       ${R.badges.length ? `<br>🎖️ 新しいバッジ：${R.badges.map(b => `<b>${b.e}${b.nm}</b>`).join("、")}` : ""}
     </div>
@@ -121,11 +156,14 @@ startSwipe = function (ch) { pts = 0; runMax = 0; const r = _startSwipe(ch); hud
 // --- メニュー拡張
 const _menu = menu;
 menu = function () {
-  if (!S.cur) return nameEntry();
+  if (!S.cur || !S.players[S.cur]) return nameEntry();
   _menu();
   ensureInv(P());
   const p = P(), lv = lvOfXp(p.xp), pr = (p.xp - xpFor(lv)) / (xpFor(lv + 1) - xpFor(lv)) * 100;
-  stage.querySelector(".logo").insertAdjacentHTML("beforebegin", `<div class="pbar">
+  stage.querySelector(".logo").insertAdjacentHTML("beforebegin", `<div class="ftabs">${FIELDS.map(f => { ensureInv(p, f);
+      const pc = Math.floor(fieldDone(p, f) / f.RECIPES.length * 100);
+      return `<button data-f="${f.id}" class="${f === FIELD ? "on" : ""}"><span>${f.em}</span>${f.name}<small>${pc === 100 ? "👑 COMP" : `コンプ ${pc}%`}</small></button>`; }).join("")}</div>`);
+  stage.querySelector(".ftabs").insertAdjacentHTML("beforebegin", `<div class="pbar">
       <div class="av">${["🧑‍🔬","⚗️","🧪","🔬","🌟"][Math.min(4, Math.floor((lv - 1) / 2))]}</div>
       <div class="nm2">${esc(S.cur)}<small>Lv.${lv}　次まで ${xpFor(lv + 1) - p.xp} EXP</small><div class="xpb"><i style="width:${pr}%"></i></div></div>
       <div class="coin">🪙 ${p.coins}</div></div>`);
@@ -134,28 +172,73 @@ menu = function () {
       <button class="nv" id="nGacha"><span class="e">🎁</span>素材ガチャ</button>
       <button class="nv" id="nLab"><span class="e">⚗️</span>合成ラボ</button>
       <button class="nv" id="nMy"><span class="e">🎖️</span>バッジ・図鑑</button></div>`);
-  $("nRank").onclick = () => ranking(cur?.id || "total"); $("nGacha").onclick = gacha; $("nMy").onclick = () => mypage(); $("nLab").onclick = () => lab();
+  stage.querySelectorAll(".ftabs button").forEach(b => b.onclick = () => { setField(b.dataset.f); S.field = FIELD.id; saveS(); slot = {}; recTab = null; menu(); });
+  $("nRank").onclick = () => ranking(cur && CH.includes(cur) ? cur.id : "total"); $("nGacha").onclick = gacha; $("nMy").onclick = () => mypage(); $("nLab").onclick = () => lab();
   stage.querySelectorAll(".cc").forEach(b => { const c = CH[+b.dataset.i], s = p.best[c.id]; if (s) { b.querySelector(".best")?.remove(); b.insertAdjacentHTML("afterbegin", `<span class="best">${s.toLocaleString()}pt</span>`); } });
   dailyBonus();
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function nameEntry() {
+// ================= プレイヤー登録（ニックネーム＋4けたの合言葉） =================
+function nameEntry(msg = "") {
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const names = Object.keys(S.players);
   stage.innerHTML = `<div class="panel" style="text-align:center">
     <div class="logo pop" style="font-size:32px">ケミカラ！</div>
-    <h2>ニックネームを入力</h2>
-    <div style="font-size:12px;color:var(--sub)">ランキングに表示されます（本名はさけよう）</div>
-    <input class="inp" id="nmIn" maxlength="8" placeholder="8文字まで">
-    <button class="btn" id="nmOk">はじめる</button>
-    ${names.length ? `<div style="margin-top:14px;font-size:12px;color:var(--sub);font-weight:700">この端末のプレイヤー</div>
-      <div class="tabs" style="margin-top:6px">${names.map(n => `<button class="pl">${esc(n)}</button>`).join("")}</div>` : ""}
+    ${names.length ? `<h2>だれが遊ぶ？</h2>
+      <div class="plist">${names.map(n => `<button class="pl" data-n="${esc(n)}">${isReg(n) ? "🔒" : "👤"} ${esc(n)}</button>`).join("")}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:4px">🔒＝合言葉を登録ずみ</div>` : `<h2>ようこそ！</h2>`}
+    <div class="lmsg">${msg}</div>
+    <button class="btn" id="reg">＋ 新しく登録する</button>
   </div>`;
-  const go = n => { n = n.trim().slice(0, 8); if (!n) { $("nmIn").focus(); return; } newPlayer(n); menu(); };
-  $("nmOk").onclick = () => go($("nmIn").value);
-  $("nmIn").onkeydown = e => { if (e.key === "Enter") go($("nmIn").value); };
-  stage.querySelectorAll(".pl").forEach(b => b.onclick = () => go(b.textContent));
+  stage.querySelectorAll(".pl").forEach(b => b.onclick = () => pinEntry(b.dataset.n));
+  $("reg").onclick = () => regEntry();
+}
+const pinInput = (id, ph = "4けたの数字") => `<input class="inp pin" id="${id}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="${ph}" autocomplete="off">`;
+const pinOk = v => /^\d{4}$/.test(v);
+function regEntry(msg = "") {
+  stage.innerHTML = `<div class="panel" style="text-align:center">
+    <h2>新しく登録</h2>
+    <div class="flab">ニックネーム <small>（ランキングに出ます。本名はさけよう）</small></div>
+    <input class="inp" id="nmIn" maxlength="8" placeholder="8文字まで" autocomplete="off">
+    <div class="flab">合言葉 <small>（4けたの数字。わすれないようにメモ！）</small></div>
+    ${pinInput("pin1")}${pinInput("pin2", "もう一度")}
+    <div class="lmsg" id="rmsg">${msg}</div>
+    <button class="btn" id="ok">登録してはじめる</button>
+    <button class="btn sub" id="bk">もどる</button></div>`;
+  $("bk").onclick = () => nameEntry();
+  $("ok").onclick = () => {
+    const n = $("nmIn").value.trim().slice(0, 8), a = $("pin1").value, b = $("pin2").value;
+    const err = !n ? "ニックネームを入れてね" : S.players[n] ? "その名前はこの端末で使われています" : !pinOk(a) ? "合言葉は4けたの数字にしてね" : a !== b ? "合言葉が一致しません" : "";
+    if (err) { $("rmsg").textContent = err; SE.ng(); return; }
+    newPlayer(n, a); menu();
+  };
+}
+function pinEntry(n) {
+  const reg = isReg(n);
+  stage.innerHTML = `<div class="panel" style="text-align:center">
+    <h2>${esc(n)}</h2>
+    ${reg ? `<div class="flab">合言葉を入れてね</div>${pinInput("pin1")}`
+      : `<div class="flab">合言葉（4けたの数字）を決めよう<br><small>登録するとランキングにのります</small></div>${pinInput("pin1")}${pinInput("pin2", "もう一度")}`}
+    <div class="lmsg" id="rmsg"></div>
+    <button class="btn" id="ok">${reg ? "はじめる" : "登録してはじめる"}</button>
+    <button class="btn sub" id="bk">もどる</button></div>`;
+  $("pin1").focus();
+  $("bk").onclick = () => nameEntry();
+  const go = () => {
+    const a = $("pin1").value;
+    if (reg) {
+      if (pinHash(n, a) !== S.players[n].pin) { $("rmsg").textContent = "合言葉がちがいます"; SE.ng(); $("pin1").value = ""; return; }
+      newPlayer(n);
+    } else {
+      const err = !pinOk(a) ? "合言葉は4けたの数字にしてね" : a !== $("pin2").value ? "合言葉が一致しません" : "";
+      if (err) { $("rmsg").textContent = err; SE.ng(); return; }
+      newPlayer(n, a);
+    }
+    menu();
+  };
+  $("ok").onclick = go;
+  stage.querySelectorAll(".pin").forEach(i => i.onkeydown = e => { if (e.key === "Enter") go(); });
 }
 
 function dailyBonus() {
@@ -165,35 +248,43 @@ function dailyBonus() {
   const yd = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
   p.streak = p.lastDay === yd ? p.streak + 1 : 1; p.lastDay = t;
   ensureInv(p);
-  const bonus = 300 + Math.min(p.streak, 7) * 50; p.coins += bonus; p.earned += bonus;
-  const gift = p.streak % 7 === 0 ? pull("SR") : pull("R"); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
+  const bonus = loginCoins(p.streak); p.coins += bonus; p.earned += bonus;
+  // おたすけ素材：まだ作っていないレシピがいちばん多く残っている分野へ
+  const F = [...FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
+  const help = giveNeeded(p, F, loginHelp());
+  const gift = p.streak % 7 === 0 ? pull("SR", F) : pull("R", F); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
   const b = p.streak >= 3 ? unlock(["streak3"]) : [];
   saveS();
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box"><div style="font-size:48px">🎁</div><h2 class="pop" style="margin:4px 0">ログインボーナス</h2>
     <div style="font-weight:900">${p.streak}日連続ログイン！</div>
     <div style="font-family:Quicksand;font-size:34px;color:var(--pink)">🪙 +${bonus}</div>
-    <div style="font-weight:900;margin-top:4px">おまけ素材：${gift.fm}（${gift.r}）</div>
-    <div style="font-size:12px;color:var(--sub)">連続日数が多いほどボーナスアップ（7日ごとにSR素材！）</div>
+    <div style="font-weight:900;margin-top:4px">おまけ素材（${F.name}）：${gift.nm}（${gift.r}）</div>
+    ${help.length ? `<div style="font-weight:900;margin-top:4px">🤝 おたすけ素材（${F.name}）：${help.map(x => x.nm).join("・")}</div>` : ""}
+    <div style="font-size:12px;color:var(--sub)">毎日ログインすると素材が集まる！（7日ごとにSR素材）</div>
     ${b.length ? `<div style="margin-top:6px;font-weight:900">🎖️ バッジ「${b[0].nm}」ゲット！</div>` : ""}
     <button class="btn" id="mOk">うけとる</button></div>`;
   document.body.appendChild(m); bell([1046, 1318, 1568]);
   m.querySelector("#mOk").onclick = () => { m.remove(); menu(); };
 }
 
-function ranking(tab) {
+// ================= ランキング（登録ユーザー） =================
+function ranking(tab, mode = "local") {
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
-  const L = tab === "total" ? totalRank() : (S.rank[tab] || []).slice(0, 10);
+  const L = tab === "total" ? totalRank() : (S.rank[tab] || []).filter(e => isReg(e.n)).slice(0, 10);
   const medal = i => i < 3 ? `<span class="medal${i + 1}">${["🥇","🥈","🥉"][i]}</span>` : i + 1;
   stage.innerHTML = `<div class="panel">
-    <h2 class="pop">🏆 ランキング</h2>
+    <h2 class="pop">🏆 ランキング <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
+    <div class="tog" style="margin:0 auto 10px"><button data-m="local" class="${mode === "local" ? "on" : ""}">この端末</button><button data-m="class" class="${mode === "class" ? "on" : ""}">クラス全体</button></div>
     <div class="tabs"><button data-t="total" class="${tab === "total" ? "on" : ""}">総合</button>${CH.map(c => `<button data-t="${c.id}" class="${tab === c.id ? "on" : ""}">${c.no}</button>`).join("")}</div>
-    <div style="text-align:center;font-weight:900;font-size:14px;margin-bottom:4px">${tab === "total" ? "各単元のベストの合計" : CH.find(c => c.id === tab).title}</div>
-    ${L.length ? `<table class="rk">${L.map((e, i) => `<tr class="${e.n === S.cur ? "me" : ""}"><td class="no">${medal(i)}</td><td>${esc(e.n)}${e.d ? `<br><small style="color:var(--sub)">${e.d}</small>` : ""}</td><td class="sc">${e.s.toLocaleString()}</td></tr>`).join("")}</table>`
+    <div style="text-align:center;font-weight:900;font-size:14px;margin-bottom:4px">${tab === "total" ? `${FIELD.name}の各単元のベストの合計` : CH.find(c => c.id === tab).title}</div>
+    ${mode === "class" ? `<div class="empty">🛠️ クラス全体のランキングは準備中です<br><small>先生が記録の送り先を設定すると、ここに表示されます</small></div>`
+      : L.length ? `<table class="rk">${L.map((e, i) => `<tr class="${e.n === S.cur ? "me" : ""}"><td class="no">${medal(i)}</td><td>${esc(e.n)}${e.d ? `<br><small style="color:var(--sub)">${e.d}</small>` : ""}</td><td class="sc">${e.s.toLocaleString()}</td></tr>`).join("")}</table>`
       : `<div class="empty">まだ記録がありません</div>`}
-    <div style="font-size:11px;color:var(--sub);text-align:center;margin-top:8px">※ この端末で遊んだ人のランキングです</div>
+    <div style="font-size:11px;color:var(--sub);text-align:center;margin-top:8px">※ 合言葉を登録したプレイヤーだけがのります${isReg(S.cur) ? "" : "（あなたはまだ未登録：プレイヤー切替から登録できます）"}</div>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
-  stage.querySelectorAll(".tabs button").forEach(b => b.onclick = () => ranking(b.dataset.t));
+  stage.querySelectorAll(".tabs button").forEach(b => b.onclick = () => ranking(b.dataset.t, mode));
+  stage.querySelectorAll("[data-m]").forEach(b => b.onclick = () => ranking(tab, b.dataset.m));
   $("bk").onclick = menu;
 }
 
@@ -203,8 +294,8 @@ function gacha() {
   const p = P(); ensureInv(p);
   const can = n => p.coins >= GACHA_COST * n;
   stage.innerHTML = `<div class="panel" style="text-align:center">
-    <h2 class="pop">🎁 素材ガチャ</h2>
-    <div style="font-size:13px;color:var(--sub);font-weight:700">1回で素材カードが${PER_PULL}枚！ 合成ラボで物質を作ろう</div>
+    <h2 class="pop">🎁 素材ガチャ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
+    <div style="font-size:13px;color:var(--sub);font-weight:700">1回で素材カードが${PER_PULL}枚！ ${FIELD.POOL_FROM.length ? "無機・有機の素材も出るよ" : `${FIELD.name}の素材が出るよ`}</div>
     <div class="gacha"><div class="machine" id="cap">🫧</div></div>
     <div class="coin" style="margin-bottom:6px">所持 🪙 <span id="cn">${p.coins}</span></div>
     <div style="display:flex;gap:8px"><button class="btn" id="p1">1回（🪙${GACHA_COST}）</button><button class="btn" id="p10" style="background:var(--lav);box-shadow:0 5px 0 #2557c9">10連（🪙${GACHA_COST * 10}）</button></div>
@@ -246,15 +337,15 @@ const canMake = (p, r) => Object.entries(r.inp).every(([k, n]) => (p.inv[k] || 0
 function lab(msg = "") {
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const p = P(); ensureInv(p);
-  const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0);
+  const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0 && FIELD.used.has(k));   // この分野のレシピで使うものだけ
   const found = RECIPES.filter(r => p.recipes[r.id]).length;
   const slotHTML = Object.keys(slot).length
     ? Object.entries(slot).map(([k, n]) => `<button class="slot" data-k="${k}">${n > 1 ? `<b>${n}</b>` : ""}${ITEM[k].fm}</button>`).join(`<span class="plus">＋</span>`)
     : `<span style="color:var(--sub);font-size:13px">下の素材をタップして入れよう<br>（同じ素材を2回タップ＝係数2）</span>`;
-  recTab = recTab || LAB_TABS[0];
+  if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
   const list = RECIPES.filter(r => recCat(r) === recTab);
   stage.innerHTML = `<div class="panel">
-    <h2 class="pop">⚗️ 合成ラボ</h2>
+    <h2 class="pop">⚗️ 合成ラボ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
     <div class="flask">${slotHTML}</div>
     <div style="display:flex;gap:8px"><button class="btn" id="mix" ${Object.keys(slot).length ? "" : "disabled style='opacity:.5'"}>合成する！</button><button class="btn sub" id="clr" style="flex:none;width:96px;white-space:nowrap">クリア</button></div>
     <div id="lmsg" class="lmsg">${msg}</div>
@@ -297,6 +388,7 @@ async function mix() {
   if (first) { p.coins += 50; p.earned += 50; }
   const ids = ["craft1"]; if (PROD.filter(x => p.made[x.k]).length >= 10) ids.push("craft10");
   if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
+  if (FIELDS.every(f => f.RECIPES.every(x => p.recipes[x.id]))) ids.push("compAll");
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
   const b = unlock(ids); saveS(); slot = {};
   await mixFx(r, used, first);
@@ -350,12 +442,12 @@ function mypage(tab = "badge") {
   const bn = Object.keys(p.badges).length;
   const book = c => PROD.filter(x => x.cat === c), cnt = c => book(c).filter(x => p.made[x.k]).length;
   stage.innerHTML = `<div class="panel">
-    <h2 class="pop">${esc(S.cur)} のコレクション</h2>
+    <h2 class="pop">${esc(S.cur)} のコレクション <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
     <div class="tabs"><button data-t="badge" class="${tab === "badge" ? "on" : ""}">バッジ ${bn}/${BADGES.length}</button>
       ${LAB_TABS.map(t => `<button data-t="${t}" class="${tab === t ? "on" : ""}">${t} ${cnt(t)}/${book(t).length}</button>`).join("")}
       <button data-t="mat" class="${tab === "mat" ? "on" : ""}">素材</button></div>
     ${tab === "badge" ? `<div class="bgs">${BADGES.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`
-      : tab === "mat" ? `<div class="stk">${MATS.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
+      : tab === "mat" ? `<div class="stk">${POOL.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
       : `<div class="stk">${book(tab).map(x => p.made[x.k] ? itemCard(x.k, null, `data-d="${x.k}" role="button"`) : `<div class="st no">?</div>`).join("")}</div>`}
     ${tab !== "badge" ? `<div style="font-size:11px;color:var(--sub);margin-top:6px">カードをタップすると解説が見られます</div>` : ""}
     <div style="display:flex;gap:8px;margin-top:6px"><button class="btn sub" id="sw" style="font-size:13px">プレイヤー切替</button><button class="btn sub" id="bk">メニューへ</button></div></div>`;

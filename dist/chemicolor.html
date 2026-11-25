@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ケミカラ！ランキング＆ごほうび版</title>
+<title>ケミカラ！総合版（無機・有機・高分子）</title>
 <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700;900&family=Quicksand:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#22314f;--pink:#ff6b5b;--lav:#3d7cff;--mint:#18b6a4;--sub:#6b7a99;--sun:#ffc93c}
@@ -57,7 +57,7 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .small-n{font-size:12px;color:var(--sub);font-weight:700;margin-top:2px}
 .ansrow{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;width:100%}
 .cw{font-size:56px;line-height:1.1;white-space:nowrap;position:relative;padding:0 4px}
-.cw.s{font-size:42px}.cw.xs{font-size:30px}
+.cw.s{font-size:42px}.cw.xs{font-size:30px}.cw.xxs{font-size:22px;white-space:normal;text-align:center}
 .cw::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:16px;border-radius:8px;background:var(--hl);opacity:.75;z-index:-1}
 .cw span{position:relative;z-index:1}
 .hint{margin-top:16px;background:#fff3cf;color:#22314f;border-radius:14px;font-size:12.5px;font-weight:900;padding:7px 12px;text-align:center;line-height:1.5}
@@ -69,6 +69,7 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .ch svg{flex:none}
 .ch.right{background:#d8f7ec;box-shadow:0 5px 0 #8fdcc3}.ch.wrong{background:#ffe1dd;color:#c9483a;box-shadow:0 5px 0 #f5b8b0}
 .ch:disabled{cursor:default}
+.ch.lg{font-size:15px}.ch.xl{font-size:12.5px;line-height:1.2;padding:13px 8px}
 /* fx */
 .splash{position:fixed;width:30px;height:30px;border-radius:50%;z-index:0;transform:translate(-50%,-50%) scale(0);transition:transform .6s ease-out,opacity .6s}
 .pt{position:fixed;z-index:8;pointer-events:none;font-size:20px;animation:burst .9s ease-out forwards}
@@ -267,6 +268,17 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .rc{border:none;text-align:left;font:inherit;color:var(--ink);cursor:default}
 .rc.ok{cursor:pointer}.rc.short{opacity:.6}
 .sec small{font-weight:500;color:var(--sub);font-size:11px}
+/* 分野タブ（無機・有機・高分子） */
+.ftabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.ftabs button{border:3px solid var(--ink);background:#fff;border-radius:16px;font:inherit;font-weight:900;font-size:14px;padding:6px 2px;cursor:pointer;color:var(--ink);box-shadow:0 3px 0 var(--ink);line-height:1.2}
+.ftabs button span{display:block;font-size:20px}
+.ftabs button small{display:block;font-size:10px;color:var(--sub);font-family:Quicksand,sans-serif}
+.ftabs button.on{background:var(--sun);transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+/* 登録 */
+.plist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.plist .pl{border:2px solid #c9d6ea;background:#fff;border-radius:999px;font:inherit;font-weight:900;font-size:15px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.flab{font-weight:900;font-size:14px;margin-top:10px}.flab small{font-size:11px;color:var(--sub)}
+.inp.pin{letter-spacing:.4em;margin:6px 0}
 </style>
 </head>
 <body>
@@ -332,6 +344,8 @@ function kyotsuBadge() {
   return n > 0 ? `共通テスト（${d.getMonth() + 1}/${d.getDate()}）まで あと<b>${n}</b>日` : "今日は共通テスト！ がんばれ！";
 }
 
+const FIELDS = [];
+FIELDS.push((() => {
 // ================= ケミカラ 無機版：クイズデータ =================
 const APP = {logo:"ケミカラ！", sub:"無機の色クイズ", tag:"無機の定番カラーをまとめてマスター！", saveKey:"chemicolor-rank-v1"};
 // ================= 単元データ =================
@@ -527,7 +541,7 @@ function smellArt(c) {
 }
 CH.push({id:"smell", no:"♯7", title:"気体・物質のにおい", em:"👃", kind:"smell", isNew:1, prompt:"どんなにおい？", prompts:["どんなにおい？","においは？","においを答えよ！"],
   bg:"#efe3ff", allow:Object.keys(SMELL), cap:{"刺激臭":3, "無臭":3}, noSim:1,
-  icon:o => `<span style="font-size:18px">${SMELL[o].e}</span>`, tints:Object.fromEntries(Object.entries(SMELL).map(([k, v]) => [k, v.t])),
+  icon:o => `<span style="font-size:18px">${SMELL[o].e}</span>`, art:smellArt, tints:Object.fromEntries(Object.entries(SMELL).map(([k, v]) => [k, v.t])),
   q:[
   {fm:"NH<sub>3</sub>",nm:"アンモニア",c:"刺激臭",d:1,hint:"鼻をつく刺激臭。水によく溶ける"},
   {fm:"H<sub>2</sub>S",nm:"硫化水素",c:"腐卵臭",d:1,hint:"卵が腐ったようなにおい（有毒）"},
@@ -588,6 +602,30 @@ CH.push({id:"store", no:"♯8", title:"試薬の保存方法：どっち？", em
   {nm:"臭素",fm:"Br<sub>2</sub>",gc:"赤褐",pair:["ゴム栓","ガラス栓"],ans:"ガラス栓",d:3,trap:1,prop:"反応性が高くゴムを侵す",why2:"ゴムを侵す"},
   {nm:"フッ化水素酸",fm:"HF aq",gc:"無色",pair:["ガラスびん","ポリ容器"],ans:"ポリ容器",d:3,boss:1,prop:"ガラス（SiO₂）を溶かす",why2:"ガラスを溶かす"},
  ].map(q => ({...q, at:1, desc:"どうやって保存する？"}))});
+
+// ================= ♯9 工業的製法と触媒（4択） =================
+// 答えは触媒の化学式。色は粉末の見た目（Fe₃O₄・MnO₂ は黒、V₂O₅ は橙黄、Pt・Ni は銀色）
+const CATCOL = {"Fe₃O₄":"黒", "V₂O₅":"橙黄", "Pt":"銀", "MnO₂":"黒", "Ni":"銀"};
+CH.push({id:"cat", no:"♯9", title:"工業的製法と触媒", em:"🏭", kind:"cat", isNew:1, prompt:"触媒は？", prompts:["触媒は？","使う触媒は？","触媒を答えよ！"],
+  bg:"#e6ecf5", allow:Object.keys(CATCOL), cap:{}, capAll:3, noSim:1,
+  icon:o => drop(CATCOL[o], 20), art:c => illust("solid", CATCOL[c]),
+  tints:{"Fe₃O₄":"#dfe3ea", "V₂O₅":"#ffe7c2", "Pt":"#eef1f6", "MnO₂":"#dfe3ea", "Ni":"#eef1f6"},
+  q:[
+  {fm:"ハーバー・ボッシュ法",nm:"アンモニアの工業的製法",c:"Fe₃O₄",d:1,sz:"w",hint:"四酸化三鉄 Fe₃O₄ を主成分とする鉄触媒"},
+  {fm:"接触法",nm:"硫酸の工業的製法",c:"V₂O₅",d:1,sz:"w",hint:"SO₂ → SO₃ の酸化に酸化バナジウム(Ⅴ)"},
+  {fm:"オストワルト法",nm:"硝酸の工業的製法",c:"Pt",d:1,sz:"w",hint:"NH₃ → NO の酸化に白金"},
+  {fm:"過酸化水素の分解",nm:"実験室での酸素の発生",c:"MnO₂",d:1,sz:"w",hint:"酸化マンガン(Ⅳ)。反応の前後で変化しない"},
+  {fm:"N<sub>2</sub> ＋ 3H<sub>2</sub> ⇄ 2NH<sub>3</sub>",nm:"ハーバー・ボッシュ法",c:"Fe₃O₄",d:2,sz:"l",trap:"Pt",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
+  {fm:"2SO<sub>2</sub> ＋ O<sub>2</sub> ⇄ 2SO<sub>3</sub>",nm:"接触法（硫酸の製造）",c:"V₂O₅",d:2,sz:"l",trap:"Pt"},
+  {fm:"4NH<sub>3</sub> ＋ 5O<sub>2</sub> → 4NO ＋ 6H<sub>2</sub>O",nm:"オストワルト法（硝酸の製造）",c:"Pt",d:2,sz:"w",trap:"V₂O₅",hint:"接触法 → V₂O₅ ／ オストワルト法 → Pt"},
+  {fm:"2KClO<sub>3</sub> → 2KCl ＋ 3O<sub>2</sub>",nm:"塩素酸カリウムの分解",c:"MnO₂",d:2,sz:"l",hint:"酸素の発生。H₂O₂ の分解と同じ MnO₂"},
+  {fm:"2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O ＋ O<sub>2</sub>",nm:"過酸化水素の分解",c:"MnO₂",d:2,sz:"l",hint:"濃塩酸と MnO₂ で Cl₂ を出すときは、MnO₂ は触媒ではなく酸化剤"},
+  {fm:"アンモニアの工業的製法",nm:"N₂ と H₂ から直接合成",c:"Fe₃O₄",d:3,sz:"w",trap:"Pt",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
+  {fm:"硫酸の工業的製法",nm:"SO₂ を酸化して SO₃ に",c:"V₂O₅",d:3,sz:"w",trap:"Pt",hint:"接触法 → V₂O₅"},
+  {fm:"硝酸の工業的製法",nm:"NH₃ を酸化して NO に",c:"Pt",d:3,sz:"w",trap:"Fe₃O₄",hint:"NH₃ をつくる → Fe₃O₄ ／ NH₃ を酸化する → Pt"},
+  {fm:"硬化油の製造",nm:"油脂の二重結合に H₂ を付加",c:"Ni",d:3,sz:"w",trap:"Pt",hint:"ニッケル触媒で水素を付加（マーガリンなど）"},
+  {fm:"C<sub>6</sub>H<sub>6</sub> ＋ 3H<sub>2</sub> → C<sub>6</sub>H<sub>12</sub>",nm:"ベンゼン → シクロヘキサン",c:"Ni",d:3,sz:"l",hint:"Ni 触媒・高温高圧で付加"},
+ ]});
 
 // ================= 素材・物質データ（高校化学レベルの解説つき） =================
 // [key, 化学式, 名前, 色, レア度, 状態, 解説3行]
@@ -704,28 +742,450 @@ const LAB_BADGES = [
 const LAB_TABS = ["無機", "有機"];
 const STARTER = {H2:6, O2:6, C:4, N2:2, S:2, Cl2:2, Fe:2, Cu:2, H2O:4};
 
-// ================= 合成ラボ：共通の部品 =================
-const ITEM = Object.fromEntries([...MATS, ...PROD].map(x => [x.k, x]));
+return {id:"inorg", name:"無機", em:"🧪", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
+  POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};
+})());
+FIELDS.push((() => {
+// ================= ケミカラ 有機版：クイズデータ =================
+const APP = {logo:"ケミカラ！", sub:"有機化学クエスト", tag:"呈色反応・抽出・反応の種類をマスター！", saveKey:"chemicolor-organic-v1"};
+const METH = {};
+
+// 分液漏斗のアイコン（どちらの層かを色で示す）
+const funnel = (layer, col) => s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+  <path d="M10 6 H38 L28 32 V44 H20 V32 Z" fill="#fff" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M${layer === "上" ? "10 6 H38 L33.4 18 H14.6 Z" : "14.6 18 H33.4 L28 32 H20 Z"}" fill="${col}" opacity=".45"/>
+  <path d="M14.6 18 H33.4" stroke="${col}" stroke-width="2" stroke-dasharray="3 2"/></svg>`;
+const sym = (t, col) => s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48"><text x="24" y="33" text-anchor="middle" font-size="26" font-weight="900" fill="${col}">${t}</text></svg>`;
+
+const CH = [
+ {id:"color", no:"♯1", title:"呈色・検出反応の色", em:"🎨", kind:"ion", prompt:"何色になる？", prompts:["何色になる？","何色に変化する？","色はどれ？"], bg:"#efe3ff",
+  allow:["紫","赤紫","青紫","黄","淡黄","橙赤","赤","黒","白","銀","無色","青","緑","赤褐","橙黄"], cap:{"無色":1},
+  q:[
+  {fm:"フェノール ＋ FeCl<sub>3</sub>",nm:"塩化鉄(Ⅲ)水溶液で呈色",c:"紫",d:1,sz:"w",hint:"フェノール性 -OH の検出"},
+  {fm:"アニリン ＋ さらし粉",nm:"さらし粉水溶液で呈色",c:"赤紫",d:1,sz:"w"},
+  {fm:"ヨードホルム反応",nm:"CH₃CO- をもつ物質 ＋ I₂ ＋ NaOH",c:"黄",d:1,sz:"w",hint:"CHI₃（ヨードホルム）の黄色沈殿"},
+  {fm:"フェーリング液の還元",nm:"アルデヒドで加熱",c:"赤",d:1,sz:"w",hint:"Cu₂O の赤色沈殿"},
+  {fm:"ヨウ素デンプン反応",nm:"デンプン ＋ ヨウ素液",c:"青紫",d:1,sz:"w"},
+  {fm:"銀鏡反応",nm:"アルデヒド ＋ アンモニア性硝酸銀",c:"銀",d:1,sz:"w",hint:"Ag が析出して鏡のようになる"},
+  {fm:"キサントプロテイン反応",nm:"ベンゼン環をもつタンパク質 ＋ 濃硝酸",c:"黄",d:2,sz:"w",trap:"橙黄",hint:"加熱で黄色 → アンモニア水で塩基性にすると橙黄色"},
+  {fm:"ビウレット反応",nm:"タンパク質 ＋ NaOH ＋ CuSO₄",c:"赤紫",d:2,sz:"w",trap:"紫",hint:"ビウレット：赤紫 ／ ニンヒドリン：赤紫〜青紫"},
+  {fm:"ニンヒドリン反応",nm:"アミノ酸 ＋ ニンヒドリン",c:"紫",d:2,sz:"w",trap:"黄",hint:"アミノ基の検出。赤紫〜青紫になる"},
+  {fm:"アニリン ＋ K<sub>2</sub>Cr<sub>2</sub>O<sub>7</sub>",nm:"硫酸酸性で酸化",c:"黒",d:2,sz:"w",trap:"赤紫",hint:"アニリンブラック ／ さらし粉なら赤紫"},
+  {fm:"臭素水 ＋ エチレン",nm:"不飽和結合の検出",c:"無色",d:2,sz:"w",trap:"赤褐",hint:"Br₂ が付加して赤褐色が消える（脱色）"},
+  {fm:"C<sub>6</sub>H<sub>5</sub>NO<sub>2</sub>",nm:"ニトロベンゼン",c:"淡黄",d:2,sz:"m",trap:"黄"},
+  {fm:"サリチル酸 ＋ FeCl<sub>3</sub>",nm:"塩化鉄(Ⅲ)水溶液で呈色",c:"赤紫",d:3,sz:"w",trap:"紫",hint:"フェノール：紫 ／ サリチル酸：赤紫"},
+  {fm:"アセチルサリチル酸 ＋ FeCl<sub>3</sub>",nm:"塩化鉄(Ⅲ)水溶液",c:"無色",d:3,sz:"w",trap:"紫",hint:"フェノール性 -OH がないので呈色しない"},
+  {fm:"ピクリン酸",nm:"2,4,6-トリニトロフェノール",c:"黄",d:3,sz:"m",trap:"淡黄"},
+  {fm:"p-ヒドロキシアゾベンゼン",nm:"ジアゾカップリングでできる染料",c:"橙赤",d:3,sz:"w",trap:"赤"},
+  {fm:"フェノール ＋ 臭素水",nm:"2,4,6-トリブロモフェノール",c:"白",d:3,sz:"w",trap:"黄",hint:"白色沈殿が生じる（置換反応）"},
+ ]},
+ {id:"extract", no:"♯2", title:"抽出：水層 or エーテル層", em:"🧫", mode:"swipe", prompt:"どっちの層？", bg:"#dff0ff", cap:{},
+  swipe:{title:"抽出スワイプ", big:"抽出", note:"層を選ぶ",
+    opts:{"水層":{col:"#3d7cff", icon:funnel("下", "#3d7cff")}, "エーテル層":{col:"#ff8a3d", icon:funnel("上", "#ff8a3d")}},
+    pick:() => ["水層", "エーテル層"], /* 左右は固定 */ badge:q => q.tag,
+    chips:[["性質は？", q => q.k1], ["反応すると？", q => q.k2]], why:q => `${q.k1} → ${q.k2}`},
+  q:[
+  {nm:"フェノール",fm:"＋ NaOH水溶液",ans:"水層",d:1,tag:"弱酸",desc:"ベンゼン環に -OH がついた化合物",k1:"弱酸（炭酸より弱い）",k2:"中和して塩（ナトリウムフェノキシド）になる"},
+  {nm:"安息香酸",fm:"＋ NaHCO₃水溶液",ans:"水層",d:1,tag:"カルボン酸",desc:"ベンゼン環に -COOH",k1:"炭酸より強い酸",k2:"CO₂ を出して塩（安息香酸ナトリウム）になる"},
+  {nm:"アニリン",fm:"＋ 塩酸",ans:"水層",d:1,tag:"弱塩基",desc:"ベンゼン環に -NH₂",k1:"弱塩基",k2:"中和して塩（アニリン塩酸塩）になる"},
+  {nm:"トルエン",fm:"＋ NaOH水溶液",ans:"エーテル層",d:1,tag:"中性",desc:"ベンゼン環に -CH₃",k1:"中性（酸でも塩基でもない）",k2:"反応しない"},
+  {nm:"ニトロベンゼン",fm:"＋ 塩酸",ans:"エーテル層",d:2,tag:"中性",desc:"ベンゼン環に -NO₂",k1:"中性",k2:"反応しない"},
+  {nm:"アニリン",fm:"＋ NaOH水溶液",ans:"エーテル層",d:2,tag:"弱塩基",desc:"ベンゼン環に -NH₂",k1:"弱塩基",k2:"塩基どうしなので反応しない"},
+  {nm:"安息香酸",fm:"＋ NaOH水溶液",ans:"水層",d:2,tag:"カルボン酸",desc:"ベンゼン環に -COOH",k1:"酸",k2:"中和して塩になる"},
+  {nm:"サリチル酸",fm:"＋ NaHCO₃水溶液",ans:"水層",d:2,tag:"-COOH と -OH",desc:"-COOH とフェノール性 -OH をもつ",k1:"-COOH は炭酸より強い酸",k2:"-COOH が反応して塩になる"},
+  {nm:"フェノール",fm:"＋ NaHCO₃水溶液",ans:"エーテル層",d:3,boss:1,tag:"弱酸",desc:"ベンゼン環に -OH",k1:"炭酸より弱い酸",k2:"NaHCO₃ とは反応しない",hint:"フェノールは炭酸より弱い酸 → NaHCO₃ では塩にならない"},
+  {nm:"ナトリウムフェノキシド",fm:"＋ CO₂（水溶液）",ans:"エーテル層",d:3,tag:"フェノールの塩",desc:"C₆H₅ONa",k1:"弱酸の塩",k2:"弱酸の遊離 → フェノールにもどる"},
+  {nm:"アニリン塩酸塩",fm:"＋ NaOH水溶液",ans:"エーテル層",d:3,tag:"弱塩基の塩",desc:"C₆H₅NH₃Cl",k1:"弱塩基の塩",k2:"弱塩基の遊離 → アニリンにもどる"},
+  {nm:"安息香酸ナトリウム",fm:"＋ 塩酸",ans:"エーテル層",d:3,tag:"カルボン酸の塩",desc:"C₆H₅COONa",k1:"弱酸の塩",k2:"弱酸の遊離 → 安息香酸にもどる"},
+  {nm:"サリチル酸メチル",fm:"＋ NaHCO₃水溶液",ans:"エーテル層",d:3,boss:1,tag:"エステル",desc:"湿布薬の成分。-COOCH₃ とフェノール性 -OH",k1:"-COOH がない（フェノール性 -OH は炭酸より弱い）",k2:"NaHCO₃ とは反応しない",hint:"-COOH がないので NaHCO₃ では塩にならない"},
+ ].map(q => ({...q, gc:"無色", ring:1}))},
+ {id:"react", no:"♯3", title:"反応の種類：置換 or 付加", em:"🔁", mode:"swipe", prompt:"どっちの反応？", bg:"#dcf7ef", cap:{},
+  swipe:{title:"反応スワイプ", big:"置換？付加？", note:"反応の種類を選ぶ",
+    opts:{"置換":{col:"#14a37a", icon:sym("⇄", "#14a37a")}, "付加":{col:"#b2338c", icon:sym("＋", "#b2338c")}},
+    pick:() => ["置換", "付加"], /* 左右は固定 */ badge:q => q.cond,
+    chips:[["結合は？", q => q.bond], ["できるものは？", q => q.prod]], why:q => `${q.bond} → ${q.prod}`},
+  q:[
+  {nm:"メタン ＋ Cl₂",fm:"",cond:"光",ans:"置換",d:1,bond:"単結合だけ",prod:"クロロメタン ＋ HCl",desc:"アルカンの反応"},
+  {nm:"エチレン ＋ Br₂",fm:"",cond:"常温",ans:"付加",d:1,bond:"二重結合",prod:"1,2-ジブロモエタン",desc:"臭素水の色が消える"},
+  {nm:"アセチレン ＋ H₂",fm:"",cond:"触媒",ans:"付加",d:1,bond:"三重結合",prod:"エチレン → エタン",desc:"水素を付け加える"},
+  {nm:"ベンゼン ＋ 濃硝酸",fm:"",cond:"濃硫酸",ans:"置換",d:1,bond:"ベンゼン環",prod:"ニトロベンゼン ＋ 水（ニトロ化）",desc:"混酸を使う",ring:1},
+  {nm:"ベンゼン ＋ Cl₂",fm:"",cond:"Fe 触媒",ans:"置換",d:2,bond:"ベンゼン環",prod:"クロロベンゼン ＋ HCl",desc:"ハロゲン化",ring:1},
+  {nm:"ベンゼン ＋ H₂",fm:"",cond:"Ni・高温高圧",ans:"付加",d:2,bond:"ベンゼン環",prod:"シクロヘキサン",desc:"ベンゼン環でも条件次第で付加",ring:1},
+  {nm:"ベンゼン ＋ 濃硫酸",fm:"",cond:"加熱",ans:"置換",d:2,bond:"ベンゼン環",prod:"ベンゼンスルホン酸（スルホン化）",desc:"-SO₃H がつく",ring:1},
+  {nm:"アセチレン ＋ HCl",fm:"",cond:"触媒",ans:"付加",d:2,bond:"三重結合",prod:"塩化ビニル",desc:"ポリ塩化ビニルの原料"},
+  {nm:"フェノール ＋ 臭素水",fm:"",cond:"常温",ans:"置換",d:2,bond:"ベンゼン環（-OH で反応しやすい）",prod:"2,4,6-トリブロモフェノール（白色沈殿）",desc:"o位・p位が置換される",ring:1},
+  {nm:"エチレン ＋ H₂O",fm:"",cond:"触媒",ans:"付加",d:2,bond:"二重結合",prod:"エタノール",desc:"工業的なエタノールの製法"},
+  {nm:"トルエン ＋ Cl₂",fm:"",cond:"光",ans:"置換",d:3,boss:1,bond:"側鎖の -CH₃（単結合）",prod:"側鎖の H が Cl に置き換わる",desc:"光のときは側鎖が反応",ring:1,hint:"光でも、反応するのは側鎖のメチル基 → 置換"},
+  {nm:"アセチレン ＋ H₂O",fm:"",cond:"HgSO₄ 触媒",ans:"付加",d:3,bond:"三重結合",prod:"ビニルアルコール → アセトアルデヒド",desc:"不安定な中間体を経る"},
+  {nm:"ベンゼン ＋ Cl₂",fm:"",cond:"光（紫外線）",ans:"付加",d:3,boss:1,bond:"ベンゼン環",prod:"ヘキサクロロシクロヘキサン",desc:"同じ組み合わせでも条件で変わる！",ring:1,hint:"Fe 触媒 → 置換 ／ 光 → 付加"},
+ ].map(q => ({gc:"無色", at:3, ...q}))},
+];
+
+// ================= ケミカラ 有機版：合成ラボのデータ =================
+// [key, 化学式, 名前, 色, レア度, 状態, 解説3行]
+const MATS = [
+ ["H2","H<sub>2</sub>","水素","無色","N","気体",["最も軽い気体","Ni や Pt を触媒に不飽和結合へ付加する","ニトロ基の還元にも使える"]],
+ ["O2","O<sub>2</sub>","酸素","無色","N","気体",["酸化剤としてはたらく","有機物が完全燃焼すると CO₂ と H₂O","クメンの酸化に使われる"]],
+ ["H2O","H<sub>2</sub>O","水","無色","N","液体",["付加反応（水和）の材料","エステルの加水分解にも関わる","多くの反応で生成物として出てくる"]],
+ ["C2H2","C<sub>2</sub>H<sub>2</sub>","アセチレン","無色","N","気体",["三重結合をもつアルキン","CaC₂ ＋ 水 で発生","3分子が重合するとベンゼンになる"]],
+ ["Cl2","Cl<sub>2</sub>","塩素","黄緑","N","気体",["Fe 触媒でベンゼンと置換反応","光ではベンゼン環に付加","アルカンとは光で置換反応"]],
+ ["HCl","HCl","塩酸","無色","N","水溶液",["強酸","アニリンと中和して塩をつくる","弱酸の塩から弱酸を遊離させる"]],
+ ["NaOH","NaOH","水酸化ナトリウム","白","N","固体",["強塩基","フェノールやカルボン酸と中和","アルカリ融解・けん化に使う"]],
+ ["CO2","CO<sub>2</sub>","二酸化炭素","無色","N","気体",["水に溶けると炭酸（弱酸）","フェノキシドからフェノールを遊離","高温高圧でサリチル酸の合成に"]],
+ ["H2SO4","H<sub>2</sub>SO<sub>4</sub>","濃硫酸","無色","N","液体",["スルホン化の試薬","ニトロ化・エステル化の触媒","脱水作用（エタノールからエチレン・エーテル）"]],
+ ["HNO3","HNO<sub>3</sub>","濃硝酸","無色","N","液体",["ニトロ化の試薬（濃硫酸と混酸に）","強い酸化力","タンパク質と黄色（キサントプロテイン反応）"]],
+ ["CH3OH","CH<sub>3</sub>OH","メタノール","無色","R","液体",["最も簡単なアルコール。有毒","酸化するとホルムアルデヒド","サリチル酸メチルの原料"]],
+ ["C3H6","C<sub>3</sub>H<sub>6</sub>","プロペン","無色","R","気体",["二重結合をもつアルケン","ベンゼンと反応してクメンになる","ポリプロピレンの原料"]],
+ ["Tol","C<sub>6</sub>H<sub>5</sub>CH<sub>3</sub>","トルエン","無色","R","液体",["ベンゼン環に -CH₃","側鎖を酸化すると安息香酸","o・p 位で置換が起こりやすい"]],
+ ["NaNO2","NaNO<sub>2</sub>","亜硝酸ナトリウム","白","R","固体",["ジアゾ化の試薬","塩酸と一緒に使う（5℃以下）","アニリン → 塩化ベンゼンジアゾニウム"]],
+ ["Fe","Fe","鉄（触媒）","銀白","R","固体",["ベンゼンの塩素化の触媒","実際には FeCl₃ がはたらく","反応の前後で変化しない"]],
+ ["Na","Na","ナトリウム","銀白","R","固体",["アルコールの -OH と反応して H₂","エーテルとは反応しない → 区別に使う","石油中に保存"]],
+ ["Br2","Br<sub>2</sub>","臭素","赤褐","R","液体",["不飽和結合に付加して脱色","フェノールとは置換して白色沈殿","赤褐色の液体"]],
+ ["Ac2O","(CH<sub>3</sub>CO)<sub>2</sub>O","無水酢酸","無色","SR","液体",["酢酸2分子から水がとれた酸無水物","アセチル化の試薬","アスピリン・アセトアニリドの合成に"]],
+ ["Ni","Ni","ニッケル（触媒）","銀白","SR","固体",["水素付加（水素化）の触媒","ベンゼンを高温高圧でシクロヘキサンに","反応の前後で変化しない"]],
+].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
+
+// [key, 化学式, 名前, 色, 分類, 状態, 解説3行]
+const PROD = [
+ // ---- 脂肪族
+ ["C2H4","C<sub>2</sub>H<sub>4</sub>","エチレン","無色","脂肪族","気体",["二重結合をもつアルケン → 付加反応","臭素水を脱色する","植物ホルモン。ポリエチレンの原料"]],
+ ["C2H6","C<sub>2</sub>H<sub>6</sub>","エタン","無色","脂肪族","気体",["単結合のみのアルカン","付加はせず、光で置換反応","天然ガスにふくまれる"]],
+ ["C2H5OH","C<sub>2</sub>H<sub>5</sub>OH","エタノール","無色","脂肪族","液体",["第一級アルコール（-OH）","Na と反応して H₂","酸化 → アセトアルデヒド → 酢酸"]],
+ ["CH3CHO","CH<sub>3</sub>CHO","アセトアルデヒド","無色","脂肪族","液体",["ホルミル基（-CHO）→ 還元性","銀鏡反応・フェーリング液の還元が陽性","ヨードホルム反応も陽性"]],
+ ["CH3COOH","CH<sub>3</sub>COOH","酢酸","無色","脂肪族","液体",["カルボキシ基をもつ弱酸（炭酸より強い）","食酢の成分","純粋なものは冬に凍る（氷酢酸）"]],
+ ["EtOAc","CH<sub>3</sub>COOC<sub>2</sub>H<sub>5</sub>","酢酸エチル","無色","脂肪族","液体",["果実のような香りのエステル","濃硫酸を触媒にエステル化","NaOH でけん化される"]],
+ ["HCHO","HCHO","ホルムアルデヒド","無色","脂肪族","気体",["水溶液はホルマリン","還元性あり（銀鏡反応陽性）","フェノール樹脂の原料"]],
+ ["C2H3Cl","CH<sub>2</sub>=CHCl","塩化ビニル","無色","脂肪族","気体",["アセチレンに HCl が付加","付加重合でポリ塩化ビニル","無色の気体"]],
+ ["C2H4Br2","CH<sub>2</sub>BrCH<sub>2</sub>Br","1,2-ジブロモエタン","無色","脂肪族","液体",["エチレンに Br₂ が付加してできる","臭素水の赤褐色が消える（脱色）","不飽和結合の検出に関係"]],
+ ["C2H5ONa","C<sub>2</sub>H<sub>5</sub>ONa","ナトリウムエトキシド","白","脂肪族","固体",["エタノール ＋ Na で H₂ とともにできる","-OH の検出（エーテルは反応しない）","強い塩基"]],
+ ["Et2O","C<sub>2</sub>H<sub>5</sub>OC<sub>2</sub>H<sub>5</sub>","ジエチルエーテル","無色","脂肪族","液体",["エタノールを濃硫酸と 130℃ で分子間脱水","揮発性・引火性が高い","抽出の溶媒（水より軽く上層）"]],
+ ["Acetone","CH<sub>3</sub>COCH<sub>3</sub>","アセトン","無色","脂肪族","液体",["最も簡単なケトン","ヨードホルム反応が陽性","クメン法でフェノールと同時にできる"]],
+ ["PE","(-CH<sub>2</sub>-CH<sub>2</sub>-)<sub>n</sub>","ポリエチレン","白","脂肪族","固体",["エチレンの付加重合","熱可塑性樹脂。袋や容器","炭素と水素だけでできている"]],
+ ["PVC","(-CH<sub>2</sub>-CHCl-)<sub>n</sub>","ポリ塩化ビニル","白","脂肪族","固体",["塩化ビニルの付加重合","水道管・ホースなど","燃やすと HCl が出る"]],
+ ["C6H12","C<sub>6</sub>H<sub>12</sub>","シクロヘキサン","無色","脂肪族","液体",["ベンゼンに H₂ が付加（Ni・高温高圧）","環式だが芳香族ではない（脂環式）","単結合のみ"]],
+ ["BHC","C<sub>6</sub>H<sub>6</sub>Cl<sub>6</sub>","ヘキサクロロシクロヘキサン","白","脂肪族","固体",["ベンゼンに光で Cl₂ が付加","もう芳香族ではない","かつて殺虫剤（BHC）に使われた"]],
+ // ---- 芳香族
+ ["C6H6","C<sub>6</sub>H<sub>6</sub>","ベンゼン","無色","芳香族","液体",["正六角形の平面分子","付加より置換が起こりやすい","アセチレン3分子からもできる"]],
+ ["PhNO2","C<sub>6</sub>H<sub>5</sub>NO<sub>2</sub>","ニトロベンゼン","淡黄","芳香族","液体",["淡黄色・油状。水より重い","ベンゼン ＋ 混酸でニトロ化","還元するとアニリン"]],
+ ["PhSO3H","C<sub>6</sub>H<sub>5</sub>SO<sub>3</sub>H","ベンゼンスルホン酸","無色","芳香族","固体",["ベンゼン ＋ 濃硫酸でスルホン化","強酸","アルカリ融解でフェノールへ"]],
+ ["PhCl","C<sub>6</sub>H<sub>5</sub>Cl","クロロベンゼン","無色","芳香族","液体",["ベンゼン ＋ Cl₂（Fe 触媒）で置換","高温高圧で NaOH と反応 → フェノキシド","無色の液体"]],
+ ["PhNH2","C<sub>6</sub>H<sub>5</sub>NH<sub>2</sub>","アニリン","無色","芳香族","液体",["弱塩基。酸と塩をつくる","さらし粉で赤紫色に呈色","教科書ではスズと塩酸でニトロベンゼンを還元"]],
+ ["PhNH3Cl","C<sub>6</sub>H<sub>5</sub>NH<sub>3</sub>Cl","アニリン塩酸塩","白","芳香族","固体",["アニリン ＋ 塩酸でできる塩","水に溶ける","NaOH を加えるとアニリンが遊離"]],
+ ["PhN2Cl","C<sub>6</sub>H<sub>5</sub>N<sub>2</sub>Cl","塩化ベンゼンジアゾニウム","無色","芳香族","水溶液",["アニリンのジアゾ化（5℃以下）","温めると分解して N₂ とフェノール","カップリングでアゾ化合物に"]],
+ ["Azo","C<sub>6</sub>H<sub>5</sub>N=NC<sub>6</sub>H<sub>4</sub>OH","p-ヒドロキシアゾベンゼン","橙赤","芳香族","固体",["ジアゾカップリングでできるアゾ化合物","-N=N-（アゾ基）をもつ","橙赤色の染料"]],
+ ["PhOH","C<sub>6</sub>H<sub>5</sub>OH","フェノール","無色","芳香族","固体",["炭酸より弱い酸","FeCl₃ 水溶液で紫色","臭素水で白色沈殿（置換）"]],
+ ["PhSO3Na","C<sub>6</sub>H<sub>5</sub>SO<sub>3</sub>Na","ベンゼンスルホン酸ナトリウム","白","芳香族","固体",["ベンゼンスルホン酸の塩","NaOH とアルカリ融解 → フェノキシド","洗剤（スルホン酸塩）のなかま"]],
+ ["PhONa","C<sub>6</sub>H<sub>5</sub>ONa","ナトリウムフェノキシド","白","芳香族","固体",["フェノールの塩。水に溶ける","CO₂ を通すとフェノールが遊離","高温高圧で CO₂ と → サリチル酸Na"]],
+ ["Cumene","C<sub>6</sub>H<sub>5</sub>CH(CH<sub>3</sub>)<sub>2</sub>","クメン","無色","芳香族","液体",["ベンゼン ＋ プロペン","クメン法の出発物質","O₂ で酸化 → クメンヒドロペルオキシド"]],
+ ["CHP","C<sub>6</sub>H<sub>5</sub>C(CH<sub>3</sub>)<sub>2</sub>OOH","クメンヒドロペルオキシド","無色","芳香族","液体",["クメンの酸化でできる","希硫酸で分解 → フェノール ＋ アセトン","クメン法（工業的なフェノールの製法）"]],
+ ["SalNa","C<sub>6</sub>H<sub>4</sub>(OH)COONa","サリチル酸ナトリウム","白","芳香族","固体",["フェノキシド ＋ CO₂（高温高圧）","コルベ・シュミット反応","酸を加えるとサリチル酸"]],
+ ["Sal","C<sub>6</sub>H<sub>4</sub>(OH)COOH","サリチル酸","白","芳香族","固体",["-COOH とフェノール性 -OH をもつ","FeCl₃ で赤紫色","アスピリン・サリチル酸メチルの原料"]],
+ ["Aspirin","C<sub>6</sub>H<sub>4</sub>(OCOCH<sub>3</sub>)COOH","アセチルサリチル酸","白","芳香族","固体",["解熱鎮痛剤（アスピリン）","サリチル酸 ＋ 無水酢酸でアセチル化","FeCl₃ で呈色しない"]],
+ ["MeSal","C<sub>6</sub>H<sub>4</sub>(OH)COOCH<sub>3</sub>","サリチル酸メチル","無色","芳香族","液体",["湿布薬の成分（消炎鎮痛剤）","サリチル酸 ＋ メタノールでエステル化","FeCl₃ で呈色する（-OH が残る）"]],
+ ["BzOH","C<sub>6</sub>H<sub>5</sub>COOH","安息香酸","白","芳香族","固体",["トルエンの側鎖を KMnO₄ で酸化","炭酸より強い酸","NaHCO₃ と反応して CO₂ を出す"]],
+ ["BzONa","C<sub>6</sub>H<sub>5</sub>COONa","安息香酸ナトリウム","白","芳香族","固体",["安息香酸の塩。水に溶ける","塩酸で安息香酸が遊離","食品の保存料"]],
+ ["MeBz","C<sub>6</sub>H<sub>5</sub>COOCH<sub>3</sub>","安息香酸メチル","無色","芳香族","液体",["安息香酸 ＋ メタノールのエステル","濃硫酸が触媒","芳香をもつ液体"]],
+ ["Acetanilide","C<sub>6</sub>H<sub>5</sub>NHCOCH<sub>3</sub>","アセトアニリド","白","芳香族","固体",["アニリンのアセチル化","アミド結合（-NHCO-）をもつ","かつて解熱剤に使われた"]],
+ ["TBP","C<sub>6</sub>H<sub>2</sub>Br<sub>3</sub>OH","2,4,6-トリブロモフェノール","白","芳香族","固体",["フェノール ＋ 臭素水 → 白色沈殿","o・p 位が置換される","フェノールの検出"]],
+ ["Picric","C<sub>6</sub>H<sub>2</sub>(NO<sub>2</sub>)<sub>3</sub>OH","ピクリン酸","黄","芳香族","固体",["フェノールのニトロ化でできる","黄色の結晶","フェノールより強い酸"]],
+ // ---- 副生成物
+ ["NaCl","NaCl","塩化ナトリウム","白","その他","固体",["中和や遊離で出てくる塩","食塩","—"]],
+ ["Na2SO3","Na<sub>2</sub>SO<sub>3</sub>","亜硫酸ナトリウム","白","その他","固体",["アルカリ融解で出てくる","—","—"]],
+ ["NaHCO3","NaHCO<sub>3</sub>","炭酸水素ナトリウム","白","その他","固体",["重曹。弱塩基性","カルボン酸と反応して CO₂","フェノールとは反応しない"]],
+ ["N2","N<sub>2</sub>","窒素","無色","その他","気体",["ジアゾニウム塩の分解で出る","—","—"]],
+ ["HBr","HBr","臭化水素","無色","その他","気体",["臭素の置換反応で出てくる","強酸","—"]],
+].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info: info.filter(t => t !== "—")}));
+
+// [材料, できるもの（主生成物を先に）, ヒント]　触媒は「入れて出てくる」ので変化しないことがわかる
+const RECIPES = [
+ // 脂肪族
+ [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加"],
+ [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"お酒がすっぱくなる"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
+ [{CH3COOH:1,C2H5OH:1,H2SO4:1},{EtOAc:1,H2O:1,H2SO4:1},"エステル化（濃硫酸は触媒）"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加"],
+ [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加"],
+ [{C2H4:1,Br2:1},{C2H4Br2:1},"臭素水の脱色"], [{C2H5OH:2,Na:2},{C2H5ONa:2,H2:1},"アルコールとナトリウム"],
+ [{C2H5OH:2,H2SO4:1},{Et2O:1,H2O:1,H2SO4:1},"130℃：分子間で脱水"], [{C2H5OH:1,H2SO4:1},{C2H4:1,H2O:1,H2SO4:1},"170℃：分子内で脱水"],
+ [{C2H4:5},{PE:1},"たくさんつながる（付加重合）"], [{C2H3Cl:5},{PVC:1},"たくさんつながる（付加重合）"],
+ [{C6H6:1,H2:3,Ni:1},{C6H12:1,Ni:1},"ベンゼン環に水素付加（高温高圧）"], [{C6H6:1,Cl2:3},{BHC:1},"光でベンゼン環に付加"],
+ // 芳香族
+ [{C2H2:3},{C6H6:1},"3分子が環状につながる"], [{C6H6:1,HNO3:1,H2SO4:1},{PhNO2:1,H2O:1,H2SO4:1},"ニトロ化（混酸）"],
+ [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化"], [{C6H6:1,Cl2:1,Fe:1},{PhCl:1,HCl:1,Fe:1},"Fe 触媒で置換"],
+ [{PhNO2:1,H2:3},{PhNH2:1,H2O:2},"ニトロ基の還元"], [{PhNH2:1,HCl:1},{PhNH3Cl:1},"弱塩基 ＋ 強酸"],
+ [{PhNH3Cl:1,NaOH:1},{PhNH2:1,NaCl:1,H2O:1},"弱塩基の遊離"], [{PhNH2:1,NaNO2:1,HCl:2},{PhN2Cl:1,NaCl:1,H2O:2},"ジアゾ化（5℃以下）"],
+ [{PhN2Cl:1,PhONa:1},{Azo:1,NaCl:1},"ジアゾカップリング"], [{PhN2Cl:1,H2O:1},{PhOH:1,N2:1,HCl:1},"ジアゾニウム塩を温める"],
+ [{PhSO3H:1,NaOH:1},{PhSO3Na:1,H2O:1},"スルホン酸の中和"], [{PhSO3Na:1,NaOH:2},{PhONa:1,Na2SO3:1,H2O:1},"アルカリ融解"],
+ [{PhCl:1,NaOH:2},{PhONa:1,NaCl:1,H2O:1},"高温高圧で NaOH と"], [{PhONa:1,CO2:1,H2O:1},{PhOH:1,NaHCO3:1},"弱酸の遊離"],
+ [{PhOH:1,NaOH:1},{PhONa:1,H2O:1},"フェノールの中和"], [{C6H6:1,C3H6:1},{Cumene:1},"クメン法①"],
+ [{Cumene:1,O2:1},{CHP:1},"クメン法②（酸化）"], [{CHP:1,H2SO4:1},{PhOH:1,Acetone:1,H2SO4:1},"クメン法③（分解）"],
+ [{PhONa:1,CO2:1},{SalNa:1},"高温高圧（コルベ・シュミット反応）"], [{SalNa:1,HCl:1},{Sal:1,NaCl:1},"弱酸の遊離"],
+ [{Sal:1,Ac2O:1},{Aspirin:1,CH3COOH:1},"アセチル化 → 解熱鎮痛剤"], [{Sal:1,CH3OH:1,H2SO4:1},{MeSal:1,H2O:1,H2SO4:1},"エステル化 → 湿布薬"],
+ [{Tol:2,O2:3},{BzOH:2,H2O:2},"側鎖の酸化（実際は KMnO₄）"], [{BzOH:1,NaHCO3:1},{BzONa:1,H2O:1,CO2:1},"炭酸より強い酸"],
+ [{BzOH:1,CH3OH:1,H2SO4:1},{MeBz:1,H2O:1,H2SO4:1},"エステル化"], [{PhNH2:1,Ac2O:1},{Acetanilide:1,CH3COOH:1},"アミノ基のアセチル化"],
+ [{PhOH:1,Br2:3},{TBP:1,HBr:3},"臭素水で白色沈殿"], [{PhOH:1,HNO3:3},{Picric:1,H2O:3},"フェノールのニトロ化"],
+].map(([inp, out, hint], i) => ({id:"o" + (i + 1), inp, out, hint}));
+
+const LAB_TABS = ["脂肪族", "芳香族"];
+const STARTER = {C2H2:6, H2:6, O2:4, H2O:4, HNO3:2, H2SO4:3, Cl2:2, HCl:3, NaOH:3, CO2:2};
+const LAB_BADGES = [
+  {id:"arom",    e:"⬡",  nm:"芳香族デビュー", tx:"ベンゼンを合成",           test:p => p.made.C6H6},
+  {id:"aspirin", e:"💊", nm:"薬学への一歩",   tx:"アセチルサリチル酸を合成", test:p => p.made.Aspirin},
+  {id:"azo",     e:"🎨", nm:"染料職人",       tx:"アゾ化合物を合成",         test:p => p.made.Azo},
+  {id:"cumene",  e:"🏭", nm:"クメン法マスター", tx:"フェノールとアセトンを合成", test:p => p.made.Acetone},
+];
+
+return {id:"org", name:"有機", em:"⚗️", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
+  POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};
+})());
+FIELDS.push((() => {
+// ================= ケミカラ 高分子版：クイズデータ =================
+const APP = {logo:"ケミカラ！", sub:"高分子クエスト", tag:"合成高分子・天然高分子をマスター！"};
+const METH = {};
+
+// 鎖のアイコン（ビーズがつながった形）
+const chain = (col, n = 3) => s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+  <path d="M6 30 Q16 14 24 26 T42 22" fill="none" stroke="${col}" stroke-width="3" opacity=".5"/>
+  ${Array.from({length: n}, (_, i) => `<circle cx="${8 + i * 32 / (n - 1)}" cy="${[30, 22, 26, 22][i % 4]}" r="6" fill="#fff" stroke="${col}" stroke-width="3"/>`).join("")}</svg>`;
+const mark = (t, col, fs = 22) => s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48"><text x="24" y="${24 + fs * .36}" text-anchor="middle" font-size="${fs}" font-weight="900" fill="${col}">${t}</text></svg>`;
+// 4択の答えの絵：単量体（ビーズ1つ）／繊維（糸巻き）
+const beadArt = c => `<svg width="96" height="96" viewBox="0 0 96 96">
+  <circle cx="48" cy="50" r="30" fill="#e6f0ff" stroke="#3d7cff" stroke-width="4"/>
+  <circle cx="38" cy="40" r="8" fill="#fff" opacity=".8"/>
+  <path d="M8 50 H18 M78 50 H88" stroke="#3d7cff" stroke-width="4" stroke-linecap="round" stroke-dasharray="4 4"/></svg>`;
+const FIBER = {"植物繊維":{e:"🌿", t:"#dcf7ef"}, "動物繊維":{e:"🐑", t:"#fff0c2"}, "再生繊維":{e:"♻️", t:"#d9ecff"},
+  "半合成繊維":{e:"🧪", t:"#efe3ff"}, "合成繊維":{e:"🏭", t:"#ffe1d6"}};
+const fiberArt = c => `<svg width="96" height="104" viewBox="0 0 96 104">
+  <rect x="22" y="10" width="52" height="12" rx="4" fill="#c9d6ea"/><rect x="22" y="82" width="52" height="12" rx="4" fill="#c9d6ea"/>
+  <rect x="30" y="22" width="36" height="60" fill="${FIBER[c] ? FIBER[c].t : "#eef3fb"}" stroke="#6b7a99" stroke-width="2"/>
+  ${[30, 40, 50, 60, 70].map(y => `<path d="M30 ${y} Q48 ${y + 6} 66 ${y}" stroke="#6b7a99" stroke-width="2" fill="none" opacity=".5"/>`).join("")}
+  <text x="48" y="60" text-anchor="middle" font-size="22">${FIBER[c] ? FIBER[c].e : ""}</text></svg>`;
+
+const MONO = ["エチレン","プロペン","塩化ビニル","スチレン","酢酸ビニル","アクリロニトリル","メタクリル酸メチル","テトラフルオロエチレン",
+  "イソプレン","1,3-ブタジエン","クロロプレン","ε-カプロラクタム","α-グルコース","β-グルコース","乳酸"];
+
+const CH = [
+ {id:"mono", no:"♯1", title:"単量体（モノマー）はどれ？", em:"🔗", kind:"mono", prompt:"単量体は？", prompts:["単量体は？","原料の単量体は？","何が重合した？"], bg:"#e3ecff",
+  allow:MONO, cap:{}, noSim:1, icon:() => `<span style="font-size:16px">🔵</span>`, art:beadArt,
+  q:[
+  {fm:"ポリエチレン",nm:"(-CH₂-CH₂-)ₙ　袋・容器",c:"エチレン",d:1,sz:"w"},
+  {fm:"ポリ塩化ビニル",nm:"(-CH₂-CHCl-)ₙ　水道管・ホース",c:"塩化ビニル",d:1,sz:"w"},
+  {fm:"ポリスチレン",nm:"発泡スチロールの原料",c:"スチレン",d:1,sz:"w"},
+  {fm:"ポリプロピレン",nm:"(-CH₂-CH(CH₃)-)ₙ　容器・繊維",c:"プロペン",d:1,sz:"w",hint:"プロペンはプロピレンともいう"},
+  {fm:"ポリ酢酸ビニル",nm:"接着剤・ビニロンの原料",c:"酢酸ビニル",d:2,sz:"w",trap:"塩化ビニル"},
+  {fm:"ポリアクリロニトリル",nm:"アクリル繊維の主成分",c:"アクリロニトリル",d:2,sz:"w",trap:"メタクリル酸メチル"},
+  {fm:"ポリメタクリル酸メチル",nm:"アクリル樹脂（有機ガラス）",c:"メタクリル酸メチル",d:2,sz:"w",trap:"アクリロニトリル",hint:"アクリル樹脂 → メタクリル酸メチル ／ アクリル繊維 → アクリロニトリル"},
+  {fm:"ポリテトラフルオロエチレン",nm:"フライパンのコーティング（テフロン）",c:"テトラフルオロエチレン",d:2,sz:"w",trap:"エチレン"},
+  {fm:"天然ゴム",nm:"ポリイソプレン（シス形）",c:"イソプレン",d:2,sz:"w",trap:"1,3-ブタジエン"},
+  {fm:"ブタジエンゴム",nm:"合成ゴム",c:"1,3-ブタジエン",d:2,sz:"w",trap:"イソプレン"},
+  {fm:"ナイロン6",nm:"環状の単量体が開いてつながる",c:"ε-カプロラクタム",d:2,sz:"w",hint:"開環重合でできるポリアミド"},
+  {fm:"クロロプレンゴム",nm:"合成ゴム（耐油性）",c:"クロロプレン",d:3,sz:"w",trap:"塩化ビニル",hint:"Cl をもつゴム → クロロプレン"},
+  {fm:"デンプン",nm:"米・いもにふくまれる多糖",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"デンプン → α-グルコース ／ セルロース → β-グルコース"},
+  {fm:"セルロース",nm:"植物の細胞壁の主成分",c:"β-グルコース",d:3,sz:"w",trap:"α-グルコース",hint:"デンプン → α-グルコース ／ セルロース → β-グルコース"},
+  {fm:"グリコーゲン",nm:"動物の肝臓・筋肉にたくわえる多糖",c:"α-グルコース",d:3,sz:"w",trap:"β-グルコース",hint:"アミロペクチンに似た構造（α-グルコース）"},
+  {fm:"ポリ乳酸",nm:"微生物に分解される（生分解性）",c:"乳酸",d:3,sz:"w",hint:"乳酸が縮合重合したポリエステル"},
+ ]},
+ {id:"poly", no:"♯2", title:"重合の種類：どっち？", em:"⛓️", mode:"swipe", prompt:"どの重合？", bg:"#dcf7ef", cap:{},
+  swipe:{title:"重合スワイプ", big:"どの重合？", note:"重合の種類を選ぶ",
+    opts:{"付加重合":{col:"#b2338c", icon:mark("＋", "#b2338c", 26)}, "縮合重合":{col:"#14a37a", icon:mark("−H₂O", "#14a37a", 13)},
+      "開環重合":{col:"#3d7cff", icon:mark("◯→", "#3d7cff", 16)}, "付加縮合":{col:"#ff8a3d", icon:mark("＋−", "#ff8a3d", 20)}},
+    pick:q => q.pair || ["付加重合", "縮合重合"],   // 左右は固定（問題ごとに組が変わるときは pair）
+    badge:q => q.use, chips:[["単量体は？", q => q.mono], ["つながり方は？", q => q.how]], why:q => `${q.mono}：${q.how}`},
+  q:[
+  {nm:"ポリエチレン",ans:"付加重合",d:1,mono:"エチレン",how:"二重結合が開いてつながる",use:"袋・容器"},
+  {nm:"ポリ塩化ビニル",ans:"付加重合",d:1,mono:"塩化ビニル",how:"二重結合が開いてつながる",use:"水道管"},
+  {nm:"ポリスチレン",ans:"付加重合",d:1,mono:"スチレン",how:"二重結合が開いてつながる",use:"発泡スチロール",ring:1},
+  {nm:"ナイロン66",ans:"縮合重合",d:1,mono:"アジピン酸 ＋ ヘキサメチレンジアミン",how:"水がとれてアミド結合",use:"繊維"},
+  {nm:"ポリエチレンテレフタラート",ans:"縮合重合",d:1,mono:"テレフタル酸 ＋ エチレングリコール",how:"水がとれてエステル結合",use:"PET ボトル",ring:1},
+  {nm:"ポリプロピレン",ans:"付加重合",d:2,mono:"プロペン",how:"二重結合が開いてつながる",use:"容器"},
+  {nm:"ポリ酢酸ビニル",ans:"付加重合",d:2,mono:"酢酸ビニル",how:"二重結合が開いてつながる",use:"接着剤"},
+  {nm:"デンプン",ans:"縮合重合",d:2,mono:"α-グルコース",how:"水がとれてグリコシド結合",use:"天然高分子"},
+  {nm:"タンパク質",ans:"縮合重合",d:2,mono:"α-アミノ酸",how:"水がとれてペプチド結合",use:"天然高分子"},
+  {nm:"ポリ乳酸",ans:"縮合重合",d:2,mono:"乳酸",how:"水がとれてエステル結合",use:"生分解性"},
+  {nm:"スチレン-ブタジエンゴム",ans:"付加重合",d:3,trap:1,mono:"スチレン ＋ 1,3-ブタジエン",how:"2種類の単量体が付加重合（共重合）",use:"タイヤ",ring:1,
+   hint:"単量体が2種類でも、二重結合が開くなら付加重合（共重合）"},
+  {nm:"ナイロン6",ans:"開環重合",pair:["開環重合","縮合重合"],d:3,trap:1,boss:1,mono:"ε-カプロラクタム",how:"環状のアミドが開いてつながる",use:"繊維",
+   hint:"ナイロン66 は縮合重合 ／ ナイロン6 は開環重合"},
+  {nm:"フェノール樹脂",ans:"付加縮合",pair:["付加重合","付加縮合"],d:3,trap:1,boss:1,mono:"フェノール ＋ ホルムアルデヒド",how:"付加と縮合をくり返す",use:"熱硬化性樹脂",ring:1,
+   hint:"フェノール樹脂・尿素樹脂・メラミン樹脂は付加縮合"},
+  {nm:"尿素樹脂",ans:"付加縮合",pair:["付加縮合","縮合重合"],d:3,mono:"尿素 ＋ ホルムアルデヒド",how:"付加と縮合をくり返す",use:"熱硬化性樹脂",
+   hint:"フェノール樹脂・尿素樹脂・メラミン樹脂は付加縮合"},
+ ].map(q => ({fm:"", gc:"白", at:3, desc:`単量体：${q.mono}`, ...q}))},
+ {id:"thermo", no:"♯3", title:"熱可塑性？熱硬化性？", em:"🔥", mode:"swipe", prompt:"どっちの樹脂？", bg:"#ffe3dc", cap:{},
+  swipe:{title:"樹脂スワイプ", big:"加熱すると<br>やわらかくなる？", note:"樹脂の性質を選ぶ",
+    opts:{"熱可塑性":{col:"#3d7cff", icon:mark("〰", "#3d7cff", 26)}, "熱硬化性":{col:"#c9483a", icon:mark("▦", "#c9483a", 26)}},
+    pick:() => ["熱可塑性", "熱硬化性"], /* 左右は固定 */ badge:q => q.use, balance:1,
+    chips:[["構造は？", q => q.str], ["重合は？", q => q.how]],
+    right:q => `${q.nm} → ${q.ans}樹脂`, why:q => `${q.str} → ${q.ans}`},
+  q:[
+  {nm:"ポリエチレン",ans:"熱可塑性",d:1,str:"鎖状構造",how:"付加重合",use:"袋・容器"},
+  {nm:"ポリ塩化ビニル",ans:"熱可塑性",d:1,str:"鎖状構造",how:"付加重合",use:"水道管"},
+  {nm:"ポリスチレン",ans:"熱可塑性",d:1,str:"鎖状構造",how:"付加重合",use:"発泡スチロール"},
+  {nm:"ポリプロピレン",ans:"熱可塑性",d:1,str:"鎖状構造",how:"付加重合",use:"容器"},
+  {nm:"フェノール樹脂",ans:"熱硬化性",d:1,str:"立体網目状構造",how:"付加縮合",use:"電気部品（ベークライト）"},
+  {nm:"尿素樹脂",ans:"熱硬化性",d:2,str:"立体網目状構造",how:"付加縮合",use:"電気器具・接着剤"},
+  {nm:"アクリル樹脂",ans:"熱可塑性",d:2,str:"鎖状構造",how:"付加重合",use:"水槽・レンズ"},
+  {nm:"ポリ酢酸ビニル",ans:"熱可塑性",d:2,str:"鎖状構造",how:"付加重合",use:"接着剤"},
+  {nm:"ポリエチレンテレフタラート",ans:"熱可塑性",d:3,trap:1,str:"鎖状構造",how:"縮合重合",use:"PET ボトル",
+   hint:"縮合重合でも、鎖状なら熱可塑性"},
+  {nm:"アルキド樹脂",ans:"熱硬化性",d:3,trap:1,boss:1,str:"立体網目状構造",how:"縮合重合（無水フタル酸 ＋ グリセリン）",use:"塗料",
+   hint:"3価アルコールのグリセリンを使うので網目状 → 熱硬化性"},
+  {nm:"メラミン樹脂",ans:"熱硬化性",d:3,boss:1,str:"立体網目状構造",how:"付加縮合",use:"食器",hint:"加熱しても軟らかくならない → 食器にも使える"},
+ ].map(q => ({fm:"", gc:q.ans === "熱硬化性" ? "黄褐" : "白", at:4, desc:q.ans === "熱硬化性" ? "成形したあとの性質は？" : "加熱するとどうなる？", ...q}))},
+ {id:"fiber", no:"♯4", title:"繊維の分類", em:"🧵", kind:"fiber", isNew:1, prompt:"何繊維？", prompts:["何繊維？","繊維の分類は？","どの繊維？"], bg:"#fff0c2",
+  allow:Object.keys(FIBER), cap:{}, capAll:3, noSim:1, art:fiberArt,
+  icon:o => `<span style="font-size:18px">${FIBER[o].e}</span>`, tints:Object.fromEntries(Object.entries(FIBER).map(([k, v]) => [k, v.t])),
+  q:[
+  {fm:"綿（木綿）",nm:"主成分：セルロース",c:"植物繊維",d:1,sz:"w"},
+  {fm:"羊毛",nm:"主成分：タンパク質（ケラチン）",c:"動物繊維",d:1,sz:"w"},
+  {fm:"絹",nm:"主成分：タンパク質（フィブロイン）",c:"動物繊維",d:1,sz:"w"},
+  {fm:"ナイロン66",nm:"ポリアミド系",c:"合成繊維",d:1,sz:"w"},
+  {fm:"ポリエステル",nm:"ポリエチレンテレフタラート",c:"合成繊維",d:1,sz:"w"},
+  {fm:"麻",nm:"主成分：セルロース",c:"植物繊維",d:2,sz:"w"},
+  {fm:"ビスコースレーヨン",nm:"セルロースを溶かして再び繊維に",c:"再生繊維",d:2,sz:"w",trap:"合成繊維",hint:"天然のセルロースを溶かして再生 → 再生繊維"},
+  {fm:"アセテート",nm:"セルロースの -OH の一部をアセチル化",c:"半合成繊維",d:2,sz:"w",trap:"再生繊維",hint:"化学変化させたセルロース → 半合成繊維"},
+  {fm:"ビニロン",nm:"ポリビニルアルコールをアセタール化",c:"合成繊維",d:2,sz:"w",hint:"日本で開発された合成繊維。吸湿性がある"},
+  {fm:"アクリル繊維",nm:"ポリアクリロニトリルが主成分",c:"合成繊維",d:2,sz:"w"},
+  {fm:"銅アンモニアレーヨン",nm:"シュバイツァー試薬にセルロースを溶かす（キュプラ）",c:"再生繊維",d:3,sz:"w",trap:"半合成繊維",hint:"溶かして再生しただけ → 再生繊維"},
+  {fm:"トリアセチルセルロース",nm:"セルロースの -OH をすべてアセチル化",c:"半合成繊維",d:3,sz:"w",trap:"再生繊維",hint:"アセチル化（化学変化）→ 半合成"},
+  {fm:"アラミド繊維",nm:"芳香族のポリアミド（防弾チョッキ）",c:"合成繊維",d:3,sz:"w",trap:"半合成繊維"},
+ ]},
+];
+
+// ================= ケミカラ 高分子版：合成ラボのデータ =================
+// 高分子の化学式は (…)ₙ で書く。チェックスクリプトでは n＝5 として原子の数を数えるので、
+// 重合のレシピは「単量体 5 枚 → 高分子 1 枚」（縮合重合なら水も 5 枚・10 枚）にする。
+// ガチャには、この表の素材に加えて無機・有機の素材も出る（POOL_FROM）。
+
+// [key, 化学式, 名前, 色, レア度, 状態, 解説3行]
+const MATS = [
+ ["C2H4","C<sub>2</sub>H<sub>4</sub>","エチレン","無色","N","気体",["二重結合をもつ最も簡単なアルケン","付加重合でポリエチレンになる","石油（ナフサ）の熱分解でつくる"]],
+ ["C3H6","C<sub>3</sub>H<sub>6</sub>","プロペン","無色","N","気体",["プロピレンともいう","付加重合でポリプロピレンになる","二重結合をもつアルケン"]],
+ ["Sty","CH<sub>2</sub>=CH(C<sub>6</sub>H<sub>5</sub>)","スチレン","無色","N","液体",["ベンゼン環をもつビニル化合物","付加重合でポリスチレンになる","ブタジエンと共重合して SBR"]],
+ ["EG","HO(CH<sub>2</sub>)<sub>2</sub>OH","エチレングリコール","無色","N","液体",["2価アルコール","テレフタル酸と縮合重合して PET","不凍液にも使われる"]],
+ ["aGlc","C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>","α-グルコース","白","N","固体",["ブドウ糖。還元性がある","α-グルコースがつながるとデンプン","光合成でつくられる"]],
+ ["Gly","H<sub>2</sub>N-CH<sub>2</sub>-COOH","グリシン","白","N","固体",["最も簡単な α-アミノ酸","鏡像異性体がない","ペプチド結合でつながる"]],
+ ["Bd","CH<sub>2</sub>=CH-CH=CH<sub>2</sub>","1,3-ブタジエン","無色","R","気体",["二重結合を2つもつ","付加重合でブタジエンゴム","重合すると鎖の中に二重結合が残る"]],
+ ["Iso","CH<sub>2</sub>=C(CH<sub>3</sub>)-CH=CH<sub>2</sub>","イソプレン","無色","R","液体",["天然ゴムの単量体","付加重合でポリイソプレン","シス形の構造が弾性を生む"]],
+ ["VAc","CH<sub>2</sub>=CHOCOCH<sub>3</sub>","酢酸ビニル","無色","R","液体",["アセチレンと酢酸からつくる","付加重合でポリ酢酸ビニル","ビニロンの出発物質"]],
+ ["AN","CH<sub>2</sub>=CHCN","アクリロニトリル","無色","R","液体",["シアノ基 -CN をもつ","付加重合でアクリル繊維","合成ゴム（NBR）の原料にも"]],
+ ["MMA","CH<sub>2</sub>=C(CH<sub>3</sub>)COOCH<sub>3</sub>","メタクリル酸メチル","無色","R","液体",["エステル結合をもつビニル化合物","付加重合でアクリル樹脂","透明度が高い樹脂になる"]],
+ ["TPA","C<sub>6</sub>H<sub>4</sub>(COOH)<sub>2</sub>","テレフタル酸","白","R","固体",["p-キシレンの酸化でつくる","2価カルボン酸","エチレングリコールと縮合重合して PET"]],
+ ["AdA","HOOC(CH<sub>2</sub>)<sub>4</sub>COOH","アジピン酸","白","R","固体",["2価カルボン酸","ヘキサメチレンジアミンと縮合重合","ナイロン66 の原料"]],
+ ["HMDA","H<sub>2</sub>N(CH<sub>2</sub>)<sub>6</sub>NH<sub>2</sub>","ヘキサメチレンジアミン","無色","R","固体",["アミノ基を2つもつ","アジピン酸と縮合重合","ナイロン66 の原料"]],
+ ["Lac","CH<sub>3</sub>CH(OH)COOH","乳酸","無色","R","液体",["-OH と -COOH をもつヒドロキシ酸","不斉炭素原子をもつ","縮合重合でポリ乳酸"]],
+ ["bGlc","C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>","β-グルコース","白","R","固体",["α-グルコースの立体異性体","β-グルコースがつながるとセルロース","水溶液中では α・β・鎖状が平衡"]],
+ ["PhOH","C<sub>6</sub>H<sub>5</sub>OH","フェノール","無色","R","固体",["ベンゼン環に -OH","ホルムアルデヒドと付加縮合","フェノール樹脂の原料"]],
+ ["HCHO","HCHO","ホルムアルデヒド","無色","R","気体",["最も簡単なアルデヒド","水溶液はホルマリン","フェノール樹脂・尿素樹脂の原料"]],
+ ["Capro","C<sub>6</sub>H<sub>11</sub>NO","ε-カプロラクタム","白","SR","固体",["環状のアミド","環が開いてつながる（開環重合）","ナイロン6 の原料"]],
+ ["C2F4","CF<sub>2</sub>=CF<sub>2</sub>","テトラフルオロエチレン","無色","SR","気体",["エチレンの H がすべて F","付加重合でテフロン","C-F 結合はとても強い"]],
+ ["CP","CH<sub>2</sub>=CCl-CH=CH<sub>2</sub>","クロロプレン","無色","SR","液体",["イソプレンの -CH₃ が -Cl","付加重合でクロロプレンゴム","耐油性・耐候性のあるゴムになる"]],
+].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
+
+// [key, 化学式, 名前, 色, 分類, 状態, 解説3行]
+const PROD = [
+ // ---- 樹脂
+ ["PE","(-CH<sub>2</sub>-CH<sub>2</sub>-)<sub>n</sub>","ポリエチレン","白","樹脂","固体",["エチレンの付加重合","熱可塑性樹脂。袋や容器","炭素と水素だけでできている"]],
+ ["PP","(-CH<sub>2</sub>-CH(CH<sub>3</sub>)-)<sub>n</sub>","ポリプロピレン","白","樹脂","固体",["プロペンの付加重合","熱可塑性樹脂","容器・ロープ・繊維に"]],
+ ["C2H3Cl","CH<sub>2</sub>=CHCl","塩化ビニル","無色","樹脂","気体",["アセチレンに HCl が付加","付加重合でポリ塩化ビニル","無色の気体"]],
+ ["PVC","(-CH<sub>2</sub>-CHCl-)<sub>n</sub>","ポリ塩化ビニル","白","樹脂","固体",["塩化ビニルの付加重合","水道管・ホースなど","燃やすと HCl が出る"]],
+ ["PS","(-CH<sub>2</sub>-CH(C<sub>6</sub>H<sub>5</sub>)-)<sub>n</sub>","ポリスチレン","白","樹脂","固体",["スチレンの付加重合","発泡させると発泡スチロール","熱可塑性樹脂"]],
+ ["PMMA","(-CH<sub>2</sub>-C(CH<sub>3</sub>)(COOCH<sub>3</sub>)-)<sub>n</sub>","ポリメタクリル酸メチル","無色","樹脂","固体",["アクリル樹脂（有機ガラス）","透明度が高い","水槽・レンズ・風防に"]],
+ ["PTFE","(-CF<sub>2</sub>-CF<sub>2</sub>-)<sub>n</sub>","ポリテトラフルオロエチレン","白","樹脂","固体",["テフロンともいう","熱や薬品に強く、すべりやすい","フライパンのコーティング"]],
+ ["PVAc","(-CH<sub>2</sub>-CH(OCOCH<sub>3</sub>)-)<sub>n</sub>","ポリ酢酸ビニル","白","樹脂","固体",["酢酸ビニルの付加重合","接着剤・チューインガムのベース","けん化するとポリビニルアルコール"]],
+ ["PET","(-OC-C<sub>6</sub>H<sub>4</sub>-COO-(CH<sub>2</sub>)<sub>2</sub>-O-)<sub>n</sub>","ポリエチレンテレフタラート","無色","樹脂","固体",["テレフタル酸とエチレングリコールの縮合重合","エステル結合でつながる（ポリエステル）","PET ボトル・衣料の繊維"]],
+ ["PLA","(-O-CH(CH<sub>3</sub>)-CO-)<sub>n</sub>","ポリ乳酸","白","樹脂","固体",["乳酸の縮合重合（ポリエステル）","微生物に分解される生分解性高分子","手術用の縫合糸にも使う"]],
+ ["PF","(-C<sub>6</sub>H<sub>3</sub>(OH)-CH<sub>2</sub>-)<sub>n</sub>","フェノール樹脂","黄褐","樹脂","固体",["フェノールとホルムアルデヒドの付加縮合","実際は立体網目状 → 熱硬化性樹脂","ベークライトとも呼ばれ電気部品に"]],
+ // ---- 繊維・ゴム
+ ["N66","(-CO(CH<sub>2</sub>)<sub>4</sub>CO-NH(CH<sub>2</sub>)<sub>6</sub>NH-)<sub>n</sub>","ナイロン66","白","繊維・ゴム","固体",["アジピン酸とヘキサメチレンジアミンの縮合重合","アミド結合でつながる（ポリアミド）","世界初の合成繊維（カロザース）"]],
+ ["N6","(-NH(CH<sub>2</sub>)<sub>5</sub>CO-)<sub>n</sub>","ナイロン6","白","繊維・ゴム","固体",["ε-カプロラクタムの開環重合","ポリアミド系の合成繊維","日本で工業化された"]],
+ ["PAN","(-CH<sub>2</sub>-CH(CN)-)<sub>n</sub>","ポリアクリロニトリル","白","繊維・ゴム","固体",["アクリロニトリルの付加重合","アクリル繊維の主成分","羊毛に似た風合い"]],
+ ["PVA","(-CH<sub>2</sub>-CH(OH)-)<sub>n</sub>","ポリビニルアルコール","白","繊維・ゴム","固体",["ポリ酢酸ビニルをけん化してつくる","-OH が多く水に溶ける","ホルムアルデヒドでアセタール化 → ビニロン"]],
+ ["CH3COONa","CH<sub>3</sub>COONa","酢酸ナトリウム","白","繊維・ゴム","固体",["酢酸のナトリウム塩","けん化で一緒にできる","水溶液は弱塩基性"]],
+ ["BR","(-CH<sub>2</sub>-CH=CH-CH<sub>2</sub>-)<sub>n</sub>","ブタジエンゴム","黒","繊維・ゴム","固体",["1,3-ブタジエンの付加重合","鎖に二重結合が残る","硫黄を加えると弾性が増す（加硫）"]],
+ ["CR","(-CH<sub>2</sub>-CCl=CH-CH<sub>2</sub>-)<sub>n</sub>","クロロプレンゴム","黒","繊維・ゴム","固体",["クロロプレンの付加重合","耐油性・耐候性にすぐれる","ウェットスーツにも使われる"]],
+ ["SBR","(-CH<sub>2</sub>-CH=CH-CH<sub>2</sub>-CH<sub>2</sub>-CH(C<sub>6</sub>H<sub>5</sub>)-)<sub>n</sub>","スチレン-ブタジエンゴム","黒","繊維・ゴム","固体",["スチレンと 1,3-ブタジエンの共重合","最も多く生産される合成ゴム","自動車のタイヤに"]],
+ // ---- 天然高分子
+ ["NR","(-CH<sub>2</sub>-C(CH<sub>3</sub>)=CH-CH<sub>2</sub>-)<sub>n</sub>","天然ゴム（ポリイソプレン）","淡黄","天然高分子","固体",["イソプレンが付加重合した構造","ゴムの木の樹液（ラテックス）から","二重結合はシス形"]],
+ ["Starch","(C<sub>6</sub>H<sub>10</sub>O<sub>5</sub>)<sub>n</sub>","デンプン","白","天然高分子","固体",["α-グルコースの縮合重合体","ヨウ素デンプン反応で青紫色","アミロースとアミロペクチンからなる"]],
+ ["Cell","(C<sub>6</sub>H<sub>10</sub>O<sub>5</sub>)<sub>n</sub>","セルロース","白","天然高分子","固体",["β-グルコースの縮合重合体","植物の細胞壁の主成分（綿・紙）","ヨウ素デンプン反応は示さない"]],
+ ["Pep","(-NH-CH<sub>2</sub>-CO-)<sub>n</sub>","ポリペプチド","白","天然高分子","固体",["アミノ酸がペプチド結合でつながる","ここではグリシンだけでつないだ例","タンパク質はポリペプチドからなる"]],
+].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info}));
+
+// [材料, できるもの, ヒント]（係数＝必要なカードの枚数）
+const RECIPES = [
+ // 樹脂
+ [{C2H4:5},{PE:1},"エチレンの付加重合"], [{C3H6:5},{PP:1},"プロペンの付加重合"],
+ [{C2H2:1,HCl:1},{C2H3Cl:1},"アセチレンに HCl を付加"], [{C2H3Cl:5},{PVC:1},"塩化ビニルの付加重合"],
+ [{Sty:5},{PS:1},"ベンゼン環をもつ単量体の付加重合"], [{MMA:5},{PMMA:1},"アクリル樹脂をつくる"],
+ [{C2F4:5},{PTFE:1},"フッ素をふくむ単量体の付加重合"], [{VAc:5},{PVAc:1},"接着剤になる高分子"],
+ [{TPA:5,EG:5},{PET:1,H2O:10},"ペットボトルの縮合重合"], [{Lac:5},{PLA:1,H2O:5},"生分解性プラスチック"],
+ [{PhOH:5,HCHO:5},{PF:1,H2O:5},"付加縮合でできる熱硬化性樹脂"],
+ // 繊維・ゴム
+ [{AdA:5,HMDA:5},{N66:1,H2O:10},"ジカルボン酸とジアミンの縮合重合"], [{Capro:5},{N6:1},"環が開いてつながる（開環重合）"],
+ [{AN:5},{PAN:1},"アクリル繊維をつくる"], [{PVAc:1,NaOH:5},{PVA:1,CH3COONa:5},"ポリ酢酸ビニルのけん化"],
+ [{Bd:5},{BR:1},"二重結合が2つの単量体の付加重合"], [{CP:5},{CR:1},"Cl をもつ合成ゴム"],
+ [{Bd:5,Sty:5},{SBR:1},"2種類の単量体の共重合"],
+ // 天然高分子
+ [{Iso:5},{NR:1},"ゴムの木がつくる高分子"], [{aGlc:5},{Starch:1,H2O:5},"α-グルコースがつながる"],
+ [{bGlc:5},{Cell:1,H2O:5},"β-グルコースがつながる"], [{Gly:5},{Pep:1,H2O:5},"ペプチド結合でつながる"],
+].map(([inp, out, hint], i) => ({id:"p" + (i + 1), inp, out, hint}));
+
+const LAB_TABS = ["樹脂", "繊維・ゴム", "天然高分子"];
+const STARTER = {C2H4:5, aGlc:5, C2H2:2, HCl:2};
+const POOL_FROM = ["inorg", "org"];   // ガチャに混ぜるほかの分野の素材
+const LAB_BADGES = [
+  {id:"nylon",   e:"🧵", nm:"ナイロン職人",   tx:"ナイロン66 を合成",   test:p => p.made.N66},
+  {id:"rubber",  e:"🛞", nm:"ゴム博士",       tx:"SBR を合成",          test:p => p.made.SBR},
+  {id:"natural", e:"🌾", nm:"天然高分子マスター", tx:"デンプン・セルロース・ポリペプチドを合成", test:p => p.made.Starch && p.made.Cell && p.made.Pep},
+];
+
+return {id:"poly", name:"高分子", em:"🧬", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
+  POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};
+})());
+let APP = {...FIELDS[0].APP, saveKey:"chemicolor-rank-v1"}, CH = FIELDS[0].CH, METH = FIELDS[0].METH;
+// ================= 合成ラボ：共通の部品（総合版：分野ごとに切り替え） =================
+// FIELDS（無機・有機・高分子）は build.py が作る。それぞれ CH・MATS・PROD・RECIPES などをもつ。
+// setField() で今の分野の表を CH・MATS・PROD・RECIPES・ITEM などにセットする。
+let FIELD, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES, ITEM = {}, POOL = [];
+const FIELD_OF = Object.fromEntries(FIELDS.map(f => [f.id, f]));
+const ALL_ITEM = {};
+FIELDS.forEach(f => [...f.MATS, ...f.PROD].forEach(x => { if (!ALL_ITEM[x.k]) ALL_ITEM[x.k] = x; }));
+FIELDS.forEach(f => {
+  // ガチャに出る素材：自分の分野の素材 ＋ POOL_FROM の分野の素材
+  const own = new Set(f.MATS.map(m => m.k));
+  f.pool = [...f.MATS, ...f.POOL_FROM.flatMap(id => FIELD_OF[id].MATS).filter(m => !own.has(m.k) && own.add(m.k))];
+  f.matSet = new Set(f.pool.map(m => m.k));
+  f.item = Object.fromEntries([...f.pool, ...f.PROD].map(x => [x.k, x]));
+  f.used = new Set(f.RECIPES.flatMap(r => [...Object.keys(r.inp), ...Object.keys(r.out)]));
+  f.used.forEach(k => { if (!f.item[k]) f.item[k] = ALL_ITEM[k]; });
+});
+function setField(id) {
+  FIELD = FIELD_OF[id] || FIELDS[0];
+  ({CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES} = FIELD);
+  APP = {...FIELD.APP, saveKey: APP.saveKey};
+  ITEM = FIELD.item; POOL = FIELD.pool;
+}
 
 const sideHTML = o => Object.entries(o).map(([k, n]) => `${n > 1 ? `<b style="color:var(--pink)">${n}</b>` : ""}${ITEM[k].fm}`).join(" ＋ ");
 const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
 const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]); return (o.find(x => !x.mat) || o[0]).cat; };
 
-// --- ガチャ設定（たくさん引けるように）
+// --- ガチャ設定（たくさん引けるように）。素材は今の分野のもの（高分子は無機・有機の素材も出る）
 const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 100, PER_PULL = 5;
-function pull(forceR) {
+function pull(forceR, F = FIELD) {
   const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
-  const pool = MATS.filter(s => s.r === r); return pool[Math.random() * pool.length | 0];
+  const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
 }
-function ensureInv(p) {
-  if (!p.inv) { p.inv = {...STARTER}; p.made = {}; p.recipes = {}; p.coins = (p.coins || 0) + 300; }
+function ensureInv(p, F = FIELD) {
+  if (!p.inv) { p.inv = {}; p.made = {}; p.recipes = {}; p.coins = (p.coins || 0) + 300; p.started = {}; }
+  p.started = p.started || {inorg:1};   // 分野を分ける前の記録は無機のスタートセットをもらい済み
+  if (F && !p.started[F.id]) { p.started[F.id] = 1; Object.entries(F.STARTER).forEach(([k, n]) => p.inv[k] = (p.inv[k] || 0) + n); }
 }
 function itemCard(k, n, extra = "") {
-  const it = ITEM[k];
+  const it = ITEM[k] || ALL_ITEM[k];
   return `<div class="st ${it.r || "P"}" ${extra}>${it.r ? `<span class="rr">${it.r}</span>` : it.cat !== LAB_TABS[0] && it.cat !== "素材" ? `<span class="rr" style="color:var(--mint)">${it.cat}</span>` : ""}${n != null ? `<span class="cnt">×${n}</span>` : ""}${drop(it.c, 16)}<div class="f">${it.fm}</div>${it.nm.length > 7 ? it.nm.slice(0, 7) + "…" : it.nm}</div>`;
 }
 function detailHTML(k) {
-  const it = ITEM[k];
+  const it = ITEM[k] || ALL_ITEM[k];
   return `<div class="det">
     <div class="det-h">${drop(it.c, 26)}<div><div class="det-f">${it.fm}</div><b>${it.nm}</b></div></div>
     <div class="tags"><span>${it.cat}</span><span>${it.st}</span><span style="background:${HEX[it.c] ? pastel(it.c) : "#eef3fb"}">${it.c}</span></div>
@@ -736,13 +1196,54 @@ function showDetail(k) {
   m.innerHTML = `<div class="box">${detailHTML(k)}<button class="btn sub" id="dOk">とじる</button></div>`;
   document.body.appendChild(m); m.querySelector("#dOk").onclick = () => m.remove();
 }
+
+// ================= コンプまでの目安（素材の配り方） =================
+// 「全単元を GOAL_LAPS 周」または「毎日ログインで GOAL_DAYS 日」で、全分野のレシピがそろうように、
+// 未発見のレシピに足りない素材（おたすけ素材）を、クリアごと・ログインごとに配る。
+// 配る枚数はデータから自動で計算するので、レシピや単元を増やしても目安は変わらない。
+// 実際のペースは tools/sim_collect.js で確かめられる。
+const GOAL_LAPS = 4, GOAL_DAYS = 28;
+// ガチャ（コイン）でも素材が集まるので、おたすけの量は少なめにかける（tools/sim_collect.js で調整した値）
+const HELP = {drop:.3, login:.15};
+const loginCoins = streak => 150 + Math.min(streak, 7) * 30;   // ログインボーナスのコイン（連続日数で増える）
+
+// 未発見のレシピを順に作るとしたら、足りない素材は何か（中間体は作り方までさかのぼる）
+function planNeed(F, inv0, found0) {
+  const inv = {...inv0}, found = {...found0}, need = [];
+  const prodBy = k => F.RECIPES.find(r => r.out[k] && !r.inp[k]);
+  const lackOf = (k, n) => { for (let i = 0; i < n; i++) need.push(k); };
+  const get = (k, n, d) => {
+    const have = inv[k] || 0;
+    if (have >= n) { inv[k] = have - n; return; }
+    inv[k] = 0; let lack = n - have;
+    const r = F.matSet.has(k) || d > 6 ? null : prodBy(k);
+    if (!r) return lackOf(k, lack);
+    while (lack > 0) { make(r, d + 1); const g = Math.min(lack, inv[k] || 0); inv[k] -= g; lack -= g; }
+  };
+  const make = (r, d) => {
+    Object.entries(r.inp).forEach(([k, n]) => get(k, n, d));
+    Object.entries(r.out).forEach(([k, n]) => inv[k] = (inv[k] || 0) + n); found[r.id] = 1;
+  };
+  F.RECIPES.forEach(r => { if (!found[r.id]) make(r, 0); });
+  return need.filter(k => F.matSet.has(k));
+}
+const needNow = (p, F = FIELD) => planNeed(F, p.inv || {}, p.recipes || {});
+const totalNeed = F => F._total ?? (F._total = planNeed(F, F.STARTER, {}).length);
+const dropHelp = F => Math.ceil(totalNeed(F) / (F.CH.length * GOAL_LAPS) * HELP.drop);          // クリア1回あたり
+const loginHelp = () => Math.ceil(FIELDS.reduce((a, f) => a + totalNeed(f), 0) / GOAL_DAYS * HELP.login); // ログイン1日あたり
+const fieldDone = (p, F) => F.RECIPES.filter(r => p.recipes && p.recipes[r.id]).length;
+function giveNeeded(p, F, n) {
+  const got = needNow(p, F).slice(0, n);
+  got.forEach(k => p.inv[k] = (p.inv[k] || 0) + 1);
+  return got.map(k => F.item[k]);
+}
+// クリアの報酬：ランダム素材 ＋ おたすけ素材（未発見レシピに足りないもの）
 function dropMats(r) {
   const p = P(); ensureInv(p); const n = {S:8, A:5, B:3}[r], got = [];
   for (let i = 0; i < n; i++) { const m = pull(); p.inv[m.k] = (p.inv[m.k] || 0) + 1; got.push(m); }
-  return got;
+  const h = dropHelp(FIELD), help = giveNeeded(p, FIELD, r === "B" ? Math.ceil(h / 2) : h);
+  return {got, help};
 }
-
-
 
 // ================= ユーティリティ =================
 const $ = id => document.getElementById(id);
@@ -790,7 +1291,7 @@ function drawDrops() {
 
 // ================= イラスト =================
 function illust(kind, c) {
-  if (kind === "smell") return smellArt(c);
+  if (cur && cur.art && kind === cur.kind) return cur.art(c);   // 色以外の答え（触媒・単量体など）は単元ごとの絵
   const col = HEX[c], none = c === "無色", white = c === "白";
   if (kind === "solid") return `<svg width="110" height="96" viewBox="0 0 110 96">
     <ellipse cx="55" cy="80" rx="48" ry="11" fill="#eef3fb" stroke="#c9d6ea" stroke-width="2"/>
@@ -913,7 +1414,7 @@ function ask(q, lv, my) {
         <div class="qm pop">?</div>
         <div class="timer"><i id="tb"></i></div>
       </div>
-      ${AUTO ? "" : `<div class="choices">${opts.map(o => `<button class="ch" data-c="${o}">${cur.icon ? cur.icon(o) : drop(o, 20)}${o}</button>`).join("")}</div>`}`;
+      ${AUTO ? "" : `<div class="choices">${opts.map(o => `<button class="ch ${o.length > 9 ? "xl" : o.length > 5 ? "lg" : ""}" data-c="${o}">${cur.icon ? cur.icon(o) : drop(o, 20)}${o}</button>`).join("")}</div>`}`;
     $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIMIT, fill:"forwards"});
     let done = false, tid;
     const finish = async (pick, el) => {
@@ -970,7 +1471,7 @@ function reveal(q, ok) {
   card.innerHTML = `
     <div class="res pop ${ok ? "ok" : "ng"}">${AUTO ? "正解！" : ok ? "せいかい！" : "おしい…！"}</div>
     <div class="small-f">${q.fm}</div><div class="small-n">${q.nm}</div>
-    <div class="ansrow">${illust(q.k || cur.kind, q.c)}<div class="cw pop ${q.c.length >= 4 ? "xs" : q.c.length >= 2 ? "s" : ""}" style="--hl:${HEX[q.c] || !(q.c in HEX) ? pastel(q.c) : "#e9eef7"}"><span>${q.c}</span></div></div>
+    <div class="ansrow">${illust(q.k || cur.kind, q.c)}<div class="cw pop ${q.c.length >= 8 ? "xxs" : q.c.length >= 4 ? "xs" : q.c.length >= 2 ? "s" : ""}" style="--hl:${HEX[q.c] || !(q.c in HEX) ? pastel(q.c) : "#e9eef7"}"><span>${q.c}</span></div></div>
     ${q.hint ? `<div class="hint">💡 ${q.hint}</div>` : ""}`;
 }
 
@@ -1143,13 +1644,45 @@ const SAVE_KEY = APP.saveKey;
 let S = (() => { try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || null; } catch (e) { return null; } })() || {players:{}, rank:{}, cur:null};
 const saveS = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} };
 const P = () => S.players[S.cur];
+
+// --- 以前の「有機版」（別ファイル）の記録を、総合版に一度だけ引き継ぐ（元の記録は消さない）
+(function mergeOrganic() {
+  if (S.mergedOrg) return;
+  Object.values(S.players).forEach(p => { if (p.inv && !p.started) p.started = {inorg:1}; });
+  let O = null; try { O = JSON.parse(localStorage.getItem("chemicolor-organic-v1")); } catch (e) {}
+  S.mergedOrg = 1;
+  if (O && O.players) {
+    const add = (a, b) => { Object.entries(b || {}).forEach(([k, v]) => a[k] = (a[k] || 0) + v); return a; };
+    for (const [n, q] of Object.entries(O.players)) {
+      if (q.inv && !q.started) q.started = {org:1};
+      const p = S.players[n];
+      if (!p) { S.players[n] = q; continue; }
+      ["coins", "xp", "plays", "earned"].forEach(k => p[k] = (p[k] || 0) + (q[k] || 0));
+      p.streak = Math.max(p.streak || 0, q.streak || 0);
+      p.badges = {...q.badges, ...p.badges}; p.best = p.best || {};
+      Object.entries(q.best || {}).forEach(([k, v]) => p.best[k] = Math.max(p.best[k] || 0, v));
+      if (q.inv) { p.inv = add(p.inv || {}, q.inv); p.made = add(p.made || {}, q.made); p.recipes = {...q.recipes, ...p.recipes}; p.started = {...q.started, ...p.started}; }
+    }
+    Object.entries(O.rank || {}).forEach(([id, L]) => S.rank[id] = [...(S.rank[id] || []), ...L].sort((a, b) => b.s - a.s).slice(0, 30));
+  }
+  saveS();
+})();
+// --- 分野（#org などの URL で指定できる。前回の分野を覚えておく）
+setField(FIELD_OF[location.hash.slice(1)] ? location.hash.slice(1) : S.field);
+
+// --- 合言葉（4けた）。この端末に保存するのはハッシュだけ
+const pinHash = (name, pin) => { let h = 2166136261; for (const c of `chemicolor|${name}|${pin}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); };
+const isReg = n => !!(S.players[n] && S.players[n].pin);
+// クラス全体のランキングの送り先（未設定）。サーバーを決めたら submit / fetch を実装する
+const CLASS_RANK = null;
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 const lvOfXp = xp => Math.floor(Math.sqrt(xp / 300)) + 1;
 const xpFor = lv => (lv - 1) * (lv - 1) * 300;
 let pts = 0, runMax = 0;
 
-function newPlayer(name) {
+function newPlayer(name, pin) {
   S.players[name] = S.players[name] || {coins:0, xp:0, plays:0, badges:{}, best:{}, streak:0, lastDay:"", earned:0};
+  if (pin) S.players[name].pin = pinHash(name, pin);
   ensureInv(S.players[name]);
   S.cur = name; saveS();
 }
@@ -1178,16 +1711,17 @@ const BADGES = [
   {id:"combo5",  e:"⚡", nm:"5コンボ",        tx:"5問連続正解"},
   {id:"combo10", e:"🔥", nm:"コンボマスター", tx:"10問連続正解"},
   {id:"score2k", e:"💯", nm:"2000点突破",     tx:"1回で2000点以上"},
-  {id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"5単元すべてクリア"},
+  {id:"all",     e:"🗺️", nm:"全単元制覇",     tx:"どれかの分野の全単元をクリア"},
   {id:"plays10", e:"🎮", nm:"常連さん",       tx:"10回プレイ"},
   {id:"streak3", e:"📅", nm:"3日連続",        tx:"3日連続ログイン"},
   {id:"craft1",  e:"⚗️", nm:"はじめての合成", tx:"物質を1つ合成"},
   {id:"craft10", e:"🧪", nm:"合成マスター",   tx:"10種類の物質を合成"},
-  {id:"craftAll",e:"🏅", nm:"全レシピ発見",   tx:"すべてのレシピを発見"},
+  {id:"craftAll",e:"🏅", nm:"全レシピ発見",   tx:"どれかの分野の全レシピを発見"},
+  {id:"compAll", e:"🌈", nm:"全分野コンプリート", tx:"無機・有機・高分子の全レシピを発見"},
   {id:"top1",    e:"🥇", nm:"ランキング1位",  tx:"どれかの単元で1位"},
   {id:"lv5",     e:"⭐", nm:"Lv.5到達",       tx:"レベル5になる"},
   {id:"rich",    e:"🪙", nm:"コイン長者",     tx:"合計1000コイン獲得"},
-  ...LAB_BADGES,
+  ...FIELDS.flatMap(f => f.LAB_BADGES),
 ];
 function unlock(ids) { const p = P(), got = []; ids.forEach(id => { if (!p.badges[id]) { p.badges[id] = today(); got.push(BADGES.find(b => b.id === id)); } }); return got; }
 
@@ -1198,8 +1732,8 @@ function addRank(id, score) {
   L.sort((a, b) => b.s - a.s); S.rank[id] = L.slice(0, 30);
   return S.rank[id].findIndex(e => e.n === S.cur && e.s === score) + 1;
 }
-function totalRank() {
-  return Object.entries(S.players).map(([n, p]) => ({n, s:Object.values(p.best).reduce((a, b) => a + b, 0)})).filter(e => e.s > 0).sort((a, b) => b.s - a.s);
+function totalRank() {   // 今の分野の各単元のベストの合計（登録ユーザーのみ）
+  return Object.entries(S.players).filter(([n]) => isReg(n)).map(([n, p]) => ({n, s:CH.reduce((a, c) => a + (p.best[c.id] || 0), 0)})).filter(e => e.s > 0).sort((a, b) => b.s - a.s);
 }
 
 // --- 1回分の精算
@@ -1225,15 +1759,17 @@ function finishRun() {
 function rewardPanel(R) {
   const p = P();
   return `<div class="card-share">
-      <small>${cur.no} ${cur.title}｜${S.cur}</small>
+      <small>${FIELD.name}｜${cur.no} ${cur.title}｜${esc(S.cur)}</small>
       <div class="s">${pts.toLocaleString()} pt</div>
       <small>${score}/${Q.length}問正解・最大${runMax}コンボ・${today()}</small><br>
       ${R.newRec ? `<span class="newrec">NEW RECORD!</span>` : `<small>自己ベスト ${R.prevBest.toLocaleString()} pt</small>`}
     </div>
     <div class="rw">
-      🏆 この端末のランキング <b>${R.pos}位</b><br>
+      🏆 この端末のランキング <b>${R.pos}位</b>${isReg(S.cur) ? "" : `<small>（合言葉を登録すると表示）</small>`}<br>
       🪙 コイン <b>+${R.coins}</b>（所持 ${p.coins}）<br>
-      🧪 素材ドロップ <b>${R.mats.map(m => m.fm).join(" ")}</b>　→ 合成ラボで使おう<br>
+      🧪 素材ドロップ <b>${R.mats.got.map(m => m.nm).join("・")}</b><br>
+      ${R.mats.help.length ? `🤝 おたすけ素材 <b>${R.mats.help.map(m => m.nm).join("・")}</b>（まだ作っていないレシピ用）<br>` : ""}
+      　→ 合成ラボで使おう<br>
       ⭐ EXP <b>+${pts}</b>${R.lvUp ? `　<span style="color:var(--pink);font-weight:900">レベルアップ！ Lv.${R.lvUp}</span>` : ""}
       ${R.badges.length ? `<br>🎖️ 新しいバッジ：${R.badges.map(b => `<b>${b.e}${b.nm}</b>`).join("、")}` : ""}
     </div>
@@ -1261,11 +1797,14 @@ startSwipe = function (ch) { pts = 0; runMax = 0; const r = _startSwipe(ch); hud
 // --- メニュー拡張
 const _menu = menu;
 menu = function () {
-  if (!S.cur) return nameEntry();
+  if (!S.cur || !S.players[S.cur]) return nameEntry();
   _menu();
   ensureInv(P());
   const p = P(), lv = lvOfXp(p.xp), pr = (p.xp - xpFor(lv)) / (xpFor(lv + 1) - xpFor(lv)) * 100;
-  stage.querySelector(".logo").insertAdjacentHTML("beforebegin", `<div class="pbar">
+  stage.querySelector(".logo").insertAdjacentHTML("beforebegin", `<div class="ftabs">${FIELDS.map(f => { ensureInv(p, f);
+      const pc = Math.floor(fieldDone(p, f) / f.RECIPES.length * 100);
+      return `<button data-f="${f.id}" class="${f === FIELD ? "on" : ""}"><span>${f.em}</span>${f.name}<small>${pc === 100 ? "👑 COMP" : `コンプ ${pc}%`}</small></button>`; }).join("")}</div>`);
+  stage.querySelector(".ftabs").insertAdjacentHTML("beforebegin", `<div class="pbar">
       <div class="av">${["🧑‍🔬","⚗️","🧪","🔬","🌟"][Math.min(4, Math.floor((lv - 1) / 2))]}</div>
       <div class="nm2">${esc(S.cur)}<small>Lv.${lv}　次まで ${xpFor(lv + 1) - p.xp} EXP</small><div class="xpb"><i style="width:${pr}%"></i></div></div>
       <div class="coin">🪙 ${p.coins}</div></div>`);
@@ -1274,28 +1813,73 @@ menu = function () {
       <button class="nv" id="nGacha"><span class="e">🎁</span>素材ガチャ</button>
       <button class="nv" id="nLab"><span class="e">⚗️</span>合成ラボ</button>
       <button class="nv" id="nMy"><span class="e">🎖️</span>バッジ・図鑑</button></div>`);
-  $("nRank").onclick = () => ranking(cur?.id || "total"); $("nGacha").onclick = gacha; $("nMy").onclick = () => mypage(); $("nLab").onclick = () => lab();
+  stage.querySelectorAll(".ftabs button").forEach(b => b.onclick = () => { setField(b.dataset.f); S.field = FIELD.id; saveS(); slot = {}; recTab = null; menu(); });
+  $("nRank").onclick = () => ranking(cur && CH.includes(cur) ? cur.id : "total"); $("nGacha").onclick = gacha; $("nMy").onclick = () => mypage(); $("nLab").onclick = () => lab();
   stage.querySelectorAll(".cc").forEach(b => { const c = CH[+b.dataset.i], s = p.best[c.id]; if (s) { b.querySelector(".best")?.remove(); b.insertAdjacentHTML("afterbegin", `<span class="best">${s.toLocaleString()}pt</span>`); } });
   dailyBonus();
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function nameEntry() {
+// ================= プレイヤー登録（ニックネーム＋4けたの合言葉） =================
+function nameEntry(msg = "") {
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const names = Object.keys(S.players);
   stage.innerHTML = `<div class="panel" style="text-align:center">
     <div class="logo pop" style="font-size:32px">ケミカラ！</div>
-    <h2>ニックネームを入力</h2>
-    <div style="font-size:12px;color:var(--sub)">ランキングに表示されます（本名はさけよう）</div>
-    <input class="inp" id="nmIn" maxlength="8" placeholder="8文字まで">
-    <button class="btn" id="nmOk">はじめる</button>
-    ${names.length ? `<div style="margin-top:14px;font-size:12px;color:var(--sub);font-weight:700">この端末のプレイヤー</div>
-      <div class="tabs" style="margin-top:6px">${names.map(n => `<button class="pl">${esc(n)}</button>`).join("")}</div>` : ""}
+    ${names.length ? `<h2>だれが遊ぶ？</h2>
+      <div class="plist">${names.map(n => `<button class="pl" data-n="${esc(n)}">${isReg(n) ? "🔒" : "👤"} ${esc(n)}</button>`).join("")}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:4px">🔒＝合言葉を登録ずみ</div>` : `<h2>ようこそ！</h2>`}
+    <div class="lmsg">${msg}</div>
+    <button class="btn" id="reg">＋ 新しく登録する</button>
   </div>`;
-  const go = n => { n = n.trim().slice(0, 8); if (!n) { $("nmIn").focus(); return; } newPlayer(n); menu(); };
-  $("nmOk").onclick = () => go($("nmIn").value);
-  $("nmIn").onkeydown = e => { if (e.key === "Enter") go($("nmIn").value); };
-  stage.querySelectorAll(".pl").forEach(b => b.onclick = () => go(b.textContent));
+  stage.querySelectorAll(".pl").forEach(b => b.onclick = () => pinEntry(b.dataset.n));
+  $("reg").onclick = () => regEntry();
+}
+const pinInput = (id, ph = "4けたの数字") => `<input class="inp pin" id="${id}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="${ph}" autocomplete="off">`;
+const pinOk = v => /^\d{4}$/.test(v);
+function regEntry(msg = "") {
+  stage.innerHTML = `<div class="panel" style="text-align:center">
+    <h2>新しく登録</h2>
+    <div class="flab">ニックネーム <small>（ランキングに出ます。本名はさけよう）</small></div>
+    <input class="inp" id="nmIn" maxlength="8" placeholder="8文字まで" autocomplete="off">
+    <div class="flab">合言葉 <small>（4けたの数字。わすれないようにメモ！）</small></div>
+    ${pinInput("pin1")}${pinInput("pin2", "もう一度")}
+    <div class="lmsg" id="rmsg">${msg}</div>
+    <button class="btn" id="ok">登録してはじめる</button>
+    <button class="btn sub" id="bk">もどる</button></div>`;
+  $("bk").onclick = () => nameEntry();
+  $("ok").onclick = () => {
+    const n = $("nmIn").value.trim().slice(0, 8), a = $("pin1").value, b = $("pin2").value;
+    const err = !n ? "ニックネームを入れてね" : S.players[n] ? "その名前はこの端末で使われています" : !pinOk(a) ? "合言葉は4けたの数字にしてね" : a !== b ? "合言葉が一致しません" : "";
+    if (err) { $("rmsg").textContent = err; SE.ng(); return; }
+    newPlayer(n, a); menu();
+  };
+}
+function pinEntry(n) {
+  const reg = isReg(n);
+  stage.innerHTML = `<div class="panel" style="text-align:center">
+    <h2>${esc(n)}</h2>
+    ${reg ? `<div class="flab">合言葉を入れてね</div>${pinInput("pin1")}`
+      : `<div class="flab">合言葉（4けたの数字）を決めよう<br><small>登録するとランキングにのります</small></div>${pinInput("pin1")}${pinInput("pin2", "もう一度")}`}
+    <div class="lmsg" id="rmsg"></div>
+    <button class="btn" id="ok">${reg ? "はじめる" : "登録してはじめる"}</button>
+    <button class="btn sub" id="bk">もどる</button></div>`;
+  $("pin1").focus();
+  $("bk").onclick = () => nameEntry();
+  const go = () => {
+    const a = $("pin1").value;
+    if (reg) {
+      if (pinHash(n, a) !== S.players[n].pin) { $("rmsg").textContent = "合言葉がちがいます"; SE.ng(); $("pin1").value = ""; return; }
+      newPlayer(n);
+    } else {
+      const err = !pinOk(a) ? "合言葉は4けたの数字にしてね" : a !== $("pin2").value ? "合言葉が一致しません" : "";
+      if (err) { $("rmsg").textContent = err; SE.ng(); return; }
+      newPlayer(n, a);
+    }
+    menu();
+  };
+  $("ok").onclick = go;
+  stage.querySelectorAll(".pin").forEach(i => i.onkeydown = e => { if (e.key === "Enter") go(); });
 }
 
 function dailyBonus() {
@@ -1305,35 +1889,43 @@ function dailyBonus() {
   const yd = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
   p.streak = p.lastDay === yd ? p.streak + 1 : 1; p.lastDay = t;
   ensureInv(p);
-  const bonus = 300 + Math.min(p.streak, 7) * 50; p.coins += bonus; p.earned += bonus;
-  const gift = p.streak % 7 === 0 ? pull("SR") : pull("R"); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
+  const bonus = loginCoins(p.streak); p.coins += bonus; p.earned += bonus;
+  // おたすけ素材：まだ作っていないレシピがいちばん多く残っている分野へ
+  const F = [...FIELDS].sort((a, b) => needNow(p, b).length - needNow(p, a).length)[0];
+  const help = giveNeeded(p, F, loginHelp());
+  const gift = p.streak % 7 === 0 ? pull("SR", F) : pull("R", F); p.inv[gift.k] = (p.inv[gift.k] || 0) + 1;
   const b = p.streak >= 3 ? unlock(["streak3"]) : [];
   saveS();
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box"><div style="font-size:48px">🎁</div><h2 class="pop" style="margin:4px 0">ログインボーナス</h2>
     <div style="font-weight:900">${p.streak}日連続ログイン！</div>
     <div style="font-family:Quicksand;font-size:34px;color:var(--pink)">🪙 +${bonus}</div>
-    <div style="font-weight:900;margin-top:4px">おまけ素材：${gift.fm}（${gift.r}）</div>
-    <div style="font-size:12px;color:var(--sub)">連続日数が多いほどボーナスアップ（7日ごとにSR素材！）</div>
+    <div style="font-weight:900;margin-top:4px">おまけ素材（${F.name}）：${gift.nm}（${gift.r}）</div>
+    ${help.length ? `<div style="font-weight:900;margin-top:4px">🤝 おたすけ素材（${F.name}）：${help.map(x => x.nm).join("・")}</div>` : ""}
+    <div style="font-size:12px;color:var(--sub)">毎日ログインすると素材が集まる！（7日ごとにSR素材）</div>
     ${b.length ? `<div style="margin-top:6px;font-weight:900">🎖️ バッジ「${b[0].nm}」ゲット！</div>` : ""}
     <button class="btn" id="mOk">うけとる</button></div>`;
   document.body.appendChild(m); bell([1046, 1318, 1568]);
   m.querySelector("#mOk").onclick = () => { m.remove(); menu(); };
 }
 
-function ranking(tab) {
+// ================= ランキング（登録ユーザー） =================
+function ranking(tab, mode = "local") {
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
-  const L = tab === "total" ? totalRank() : (S.rank[tab] || []).slice(0, 10);
+  const L = tab === "total" ? totalRank() : (S.rank[tab] || []).filter(e => isReg(e.n)).slice(0, 10);
   const medal = i => i < 3 ? `<span class="medal${i + 1}">${["🥇","🥈","🥉"][i]}</span>` : i + 1;
   stage.innerHTML = `<div class="panel">
-    <h2 class="pop">🏆 ランキング</h2>
+    <h2 class="pop">🏆 ランキング <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
+    <div class="tog" style="margin:0 auto 10px"><button data-m="local" class="${mode === "local" ? "on" : ""}">この端末</button><button data-m="class" class="${mode === "class" ? "on" : ""}">クラス全体</button></div>
     <div class="tabs"><button data-t="total" class="${tab === "total" ? "on" : ""}">総合</button>${CH.map(c => `<button data-t="${c.id}" class="${tab === c.id ? "on" : ""}">${c.no}</button>`).join("")}</div>
-    <div style="text-align:center;font-weight:900;font-size:14px;margin-bottom:4px">${tab === "total" ? "各単元のベストの合計" : CH.find(c => c.id === tab).title}</div>
-    ${L.length ? `<table class="rk">${L.map((e, i) => `<tr class="${e.n === S.cur ? "me" : ""}"><td class="no">${medal(i)}</td><td>${esc(e.n)}${e.d ? `<br><small style="color:var(--sub)">${e.d}</small>` : ""}</td><td class="sc">${e.s.toLocaleString()}</td></tr>`).join("")}</table>`
+    <div style="text-align:center;font-weight:900;font-size:14px;margin-bottom:4px">${tab === "total" ? `${FIELD.name}の各単元のベストの合計` : CH.find(c => c.id === tab).title}</div>
+    ${mode === "class" ? `<div class="empty">🛠️ クラス全体のランキングは準備中です<br><small>先生が記録の送り先を設定すると、ここに表示されます</small></div>`
+      : L.length ? `<table class="rk">${L.map((e, i) => `<tr class="${e.n === S.cur ? "me" : ""}"><td class="no">${medal(i)}</td><td>${esc(e.n)}${e.d ? `<br><small style="color:var(--sub)">${e.d}</small>` : ""}</td><td class="sc">${e.s.toLocaleString()}</td></tr>`).join("")}</table>`
       : `<div class="empty">まだ記録がありません</div>`}
-    <div style="font-size:11px;color:var(--sub);text-align:center;margin-top:8px">※ この端末で遊んだ人のランキングです</div>
+    <div style="font-size:11px;color:var(--sub);text-align:center;margin-top:8px">※ 合言葉を登録したプレイヤーだけがのります${isReg(S.cur) ? "" : "（あなたはまだ未登録：プレイヤー切替から登録できます）"}</div>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
-  stage.querySelectorAll(".tabs button").forEach(b => b.onclick = () => ranking(b.dataset.t));
+  stage.querySelectorAll(".tabs button").forEach(b => b.onclick = () => ranking(b.dataset.t, mode));
+  stage.querySelectorAll("[data-m]").forEach(b => b.onclick = () => ranking(tab, b.dataset.m));
   $("bk").onclick = menu;
 }
 
@@ -1343,8 +1935,8 @@ function gacha() {
   const p = P(); ensureInv(p);
   const can = n => p.coins >= GACHA_COST * n;
   stage.innerHTML = `<div class="panel" style="text-align:center">
-    <h2 class="pop">🎁 素材ガチャ</h2>
-    <div style="font-size:13px;color:var(--sub);font-weight:700">1回で素材カードが${PER_PULL}枚！ 合成ラボで物質を作ろう</div>
+    <h2 class="pop">🎁 素材ガチャ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
+    <div style="font-size:13px;color:var(--sub);font-weight:700">1回で素材カードが${PER_PULL}枚！ ${FIELD.POOL_FROM.length ? "無機・有機の素材も出るよ" : `${FIELD.name}の素材が出るよ`}</div>
     <div class="gacha"><div class="machine" id="cap">🫧</div></div>
     <div class="coin" style="margin-bottom:6px">所持 🪙 <span id="cn">${p.coins}</span></div>
     <div style="display:flex;gap:8px"><button class="btn" id="p1">1回（🪙${GACHA_COST}）</button><button class="btn" id="p10" style="background:var(--lav);box-shadow:0 5px 0 #2557c9">10連（🪙${GACHA_COST * 10}）</button></div>
@@ -1386,15 +1978,15 @@ const canMake = (p, r) => Object.entries(r.inp).every(([k, n]) => (p.inv[k] || 0
 function lab(msg = "") {
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const p = P(); ensureInv(p);
-  const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0);
+  const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0 && FIELD.used.has(k));   // この分野のレシピで使うものだけ
   const found = RECIPES.filter(r => p.recipes[r.id]).length;
   const slotHTML = Object.keys(slot).length
     ? Object.entries(slot).map(([k, n]) => `<button class="slot" data-k="${k}">${n > 1 ? `<b>${n}</b>` : ""}${ITEM[k].fm}</button>`).join(`<span class="plus">＋</span>`)
     : `<span style="color:var(--sub);font-size:13px">下の素材をタップして入れよう<br>（同じ素材を2回タップ＝係数2）</span>`;
-  recTab = recTab || LAB_TABS[0];
+  if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
   const list = RECIPES.filter(r => recCat(r) === recTab);
   stage.innerHTML = `<div class="panel">
-    <h2 class="pop">⚗️ 合成ラボ</h2>
+    <h2 class="pop">⚗️ 合成ラボ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
     <div class="flask">${slotHTML}</div>
     <div style="display:flex;gap:8px"><button class="btn" id="mix" ${Object.keys(slot).length ? "" : "disabled style='opacity:.5'"}>合成する！</button><button class="btn sub" id="clr" style="flex:none;width:96px;white-space:nowrap">クリア</button></div>
     <div id="lmsg" class="lmsg">${msg}</div>
@@ -1437,6 +2029,7 @@ async function mix() {
   if (first) { p.coins += 50; p.earned += 50; }
   const ids = ["craft1"]; if (PROD.filter(x => p.made[x.k]).length >= 10) ids.push("craft10");
   if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
+  if (FIELDS.every(f => f.RECIPES.every(x => p.recipes[x.id]))) ids.push("compAll");
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
   const b = unlock(ids); saveS(); slot = {};
   await mixFx(r, used, first);
@@ -1490,12 +2083,12 @@ function mypage(tab = "badge") {
   const bn = Object.keys(p.badges).length;
   const book = c => PROD.filter(x => x.cat === c), cnt = c => book(c).filter(x => p.made[x.k]).length;
   stage.innerHTML = `<div class="panel">
-    <h2 class="pop">${esc(S.cur)} のコレクション</h2>
+    <h2 class="pop">${esc(S.cur)} のコレクション <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
     <div class="tabs"><button data-t="badge" class="${tab === "badge" ? "on" : ""}">バッジ ${bn}/${BADGES.length}</button>
       ${LAB_TABS.map(t => `<button data-t="${t}" class="${tab === t ? "on" : ""}">${t} ${cnt(t)}/${book(t).length}</button>`).join("")}
       <button data-t="mat" class="${tab === "mat" ? "on" : ""}">素材</button></div>
     ${tab === "badge" ? `<div class="bgs">${BADGES.map(b => `<div class="bg ${p.badges[b.id] ? "" : "lock"}"><span class="e">${b.e}</span>${b.nm}<br><span style="font-weight:500;color:var(--sub)">${b.tx}</span></div>`).join("")}</div>`
-      : tab === "mat" ? `<div class="stk">${MATS.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
+      : tab === "mat" ? `<div class="stk">${POOL.map(x => itemCard(x.k, p.inv[x.k] || 0, `data-d="${x.k}" role="button"`)).join("")}</div>`
       : `<div class="stk">${book(tab).map(x => p.made[x.k] ? itemCard(x.k, null, `data-d="${x.k}" role="button"`) : `<div class="st no">?</div>`).join("")}</div>`}
     ${tab !== "badge" ? `<div style="font-size:11px;color:var(--sub);margin-top:6px">カードをタップすると解説が見られます</div>` : ""}
     <div style="display:flex;gap:8px;margin-top:6px"><button class="btn sub" id="sw" style="font-size:13px">プレイヤー切替</button><button class="btn sub" id="bk">メニューへ</button></div></div>`;
