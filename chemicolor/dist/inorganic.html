@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ケミカラ！無機の色クイズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700;900&family=Quicksand:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#22314f;--pink:#ff6b5b;--lav:#3d7cff;--mint:#18b6a4;--sub:#6b7a99;--sun:#ffc93c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
+  background:linear-gradient(160deg,#fff6dc 0%,#e6f3ff 55%,#dcf7ef 100%);user-select:none;-webkit-user-select:none}
+.pop{font-family:"Mochiy Pop One","Zen Maru Gothic",sans-serif;font-weight:400}
+#tint{position:fixed;inset:0;opacity:0;transition:opacity .5s;z-index:0}
+#deco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#deco span{position:absolute;bottom:-40px;opacity:.55;animation:float linear infinite}
+@keyframes float{to{transform:translateY(-115vh) rotate(200deg)}}
+#app{position:relative;z-index:1;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 14px)}
+/* header */
+.hdr{background:#fffc;backdrop-filter:blur(6px);border-radius:22px;padding:10px 14px;box-shadow:0 6px 18px #3d7cff22}
+.hrow{display:flex;align-items:center;gap:8px}
+.chap{flex:1;font-size:15px;font-weight:900;line-height:1.2}
+.chap small{display:block;color:var(--pink);font-size:11px;font-family:Quicksand}
+.home{border:none;background:#eef3fb;color:var(--ink);border-radius:999px;font:inherit;font-weight:900;font-size:12px;padding:6px 10px;cursor:pointer}
+.drops{display:flex;gap:4px;margin-top:8px;justify-content:space-between}
+.drops svg{flex:1;max-width:26px;height:auto;transition:transform .3s}
+.drops svg.now{transform:translateY(-3px) scale(1.15)}
+/* stage */
+.stage{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:0;perspective:900px}
+.card{position:relative;width:100%;max-width:350px;min-height:300px;border-radius:30px;background:#fff;
+  box-shadow:0 12px 0 #d6e4f7,0 20px 34px #22314f22;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 18px 40px}
+.card::before{content:"";position:absolute;inset:10px;border:3px solid #22314f;border-radius:22px;pointer-events:none}
+.card.lv3::before{border-color:#ff6b5b}
+.ribbon{position:absolute;top:-12px;left:16px;background:var(--lav);color:#fff;font-family:Quicksand;font-size:15px;padding:5px 14px;border-radius:12px;transform:rotate(-6deg);box-shadow:0 3px 0 #2557c9}
+.ribbon.l1{background:var(--mint);box-shadow:0 3px 0 #0f8a7c}.ribbon.l2{background:var(--lav);box-shadow:0 3px 0 #2557c9}.ribbon.l3{background:var(--pink);box-shadow:0 3px 0 #c9483a}
+.ribbon.last{background:#ffbf3c;box-shadow:0 3px 0 #d9951a}
+.prompt{position:absolute;top:22px;left:50%;transform:translateX(-50%);background:var(--sun);color:var(--ink);font-weight:900;font-size:14px;padding:4px 14px;border-radius:999px;white-space:nowrap}
+.formula{font-family:Quicksand,sans-serif;font-size:62px;line-height:1.05;white-space:nowrap;letter-spacing:-.01em}
+.formula.m{font-size:44px}.formula.l{font-size:32px}
+.formula.w{font-size:28px;white-space:normal;text-align:center;line-height:1.25;font-family:"Zen Maru Gothic",Quicksand,sans-serif;font-weight:900}
+.formula sub,.formula sup{font-size:.55em}
+.ss{display:inline-flex;flex-direction:column;vertical-align:middle;font-size:.55em;line-height:1;margin-left:1px}
+.ss sup,.ss sub{font-size:1em;position:static}.ss sup{transform:translateY(-.3em)}.ss sub{transform:translateY(.3em)}
+.nm{margin-top:12px;font-weight:900;font-size:16px;color:var(--sub)}
+.qm{font-size:40px;color:#c9d6ea;margin-top:6px}
+.timer{position:absolute;bottom:22px;left:30px;right:30px;height:10px;border-radius:5px;background:#eef3fb;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;transform-origin:left;border-radius:5px;
+  background:repeating-linear-gradient(-45deg,#22314f 0 8px,#3d4f75 8px 16px)}
+/* reveal */
+.flip{animation:flip .5s ease-out}
+@keyframes flip{0%{transform:rotateY(90deg) scale(.9)}100%{transform:rotateY(0) scale(1)}}
+.res{position:absolute;top:-18px;right:14px;font-size:20px;padding:6px 16px;border-radius:16px;transform:rotate(7deg);color:#fff;z-index:3}
+.res.ok{background:var(--mint);box-shadow:0 4px 0 #0f8a7c}.res.ng{background:#9aa0b8;box-shadow:0 4px 0 #6f748c}
+.small-f{font-family:Quicksand;font-size:18px;text-align:center}.small-f .ss{font-size:.6em}
+.small-n{font-size:12px;color:var(--sub);font-weight:700;margin-top:2px}
+.ansrow{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;width:100%}
+.cw{font-size:56px;line-height:1.1;white-space:nowrap;position:relative;padding:0 4px}
+.cw.s{font-size:42px}.cw.xs{font-size:30px}
+.cw::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:16px;border-radius:8px;background:var(--hl);opacity:.75;z-index:-1}
+.cw span{position:relative;z-index:1}
+.hint{margin-top:16px;background:#fff3cf;color:#22314f;border-radius:14px;font-size:12.5px;font-weight:900;padding:7px 12px;text-align:center;line-height:1.5}
+/* choices */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:350px}
+.ch{border:none;border-radius:18px;background:#fff;color:var(--ink);font:inherit;font-weight:900;font-size:19px;padding:13px 10px;
+  display:flex;align-items:center;gap:9px;box-shadow:0 5px 0 #d6e4f7;cursor:pointer;transition:transform .1s}
+.ch:active{transform:translateY(3px);box-shadow:0 2px 0 #d6e4f7}
+.ch svg{flex:none}
+.ch.right{background:#d8f7ec;box-shadow:0 5px 0 #8fdcc3}.ch.wrong{background:#ffe1dd;color:#c9483a;box-shadow:0 5px 0 #f5b8b0}
+.ch:disabled{cursor:default}
+/* fx */
+.splash{position:fixed;width:30px;height:30px;border-radius:50%;z-index:0;transform:translate(-50%,-50%) scale(0);transition:transform .6s ease-out,opacity .6s}
+.pt{position:fixed;z-index:8;pointer-events:none;font-size:20px;animation:burst .9s ease-out forwards}
+@keyframes burst{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r)) scale(.4);opacity:0}}
+.combo{position:absolute;top:6%;left:50%;transform:translateX(-50%);z-index:6;font-size:30px;color:#fff;
+  -webkit-text-stroke:6px var(--ink);paint-order:stroke fill;animation:bounce .7s cubic-bezier(.2,1.8,.4,1);white-space:nowrap;pointer-events:none}
+.combo small{font-size:18px}
+@keyframes bounce{0%{transform:translateX(-50%) scale(0) rotate(-10deg)}100%{transform:translateX(-50%) scale(1) rotate(-4deg)}}
+.wob{animation:wob .45s}
+@keyframes wob{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+.banner{display:flex;flex-direction:column;align-items:center;gap:10px;animation:bounce2 .7s cubic-bezier(.2,1.8,.4,1);text-align:center}
+.banner .big{font-size:56px;color:#fff;-webkit-text-stroke:9px var(--mint);paint-order:stroke fill}
+.banner .big.mid{font-size:36px;line-height:1.2}
+.banner .big.p{-webkit-text-stroke-color:var(--lav)}.banner .big.g{-webkit-text-stroke-color:var(--pink)}
+.banner .sub{background:#fff;border-radius:999px;padding:6px 18px;font-weight:900;font-size:15px;box-shadow:0 4px 0 #d6e4f7}
+@keyframes bounce2{0%{transform:scale(0)}100%{transform:scale(1)}}
+/* menu */
+.menu{width:100%;max-width:400px;text-align:center;overflow:auto;max-height:100%;padding:6px 2px 10px}
+.logo{font-size:40px;line-height:1.1;color:var(--sun);-webkit-text-stroke:8px var(--ink);paint-order:stroke fill;margin:6px 0 2px}
+.logo small{display:block;font-size:17px;color:#fff;-webkit-text-stroke:5px var(--lav)}
+.tag{font-size:13px;color:var(--sub);font-weight:700;margin:6px 0 16px}
+.chs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cc{position:relative;border:3px solid var(--ink);border-radius:24px;padding:16px 10px 14px;font:inherit;color:var(--ink);cursor:pointer;box-shadow:0 5px 0 var(--ink);text-align:center}
+.cc .em{font-size:34px}.cc b{display:block;font-size:16px;margin-top:4px}.cc small{font-family:Quicksand;color:#0006;font-size:12px}
+.cc .best{position:absolute;top:-8px;right:-4px;background:#fff;border-radius:999px;font-family:Quicksand;font-size:12px;padding:3px 8px;box-shadow:0 2px 6px #0002}
+.tog{display:flex;justify-content:center;gap:0;margin:18px auto 4px;background:#fff;border-radius:999px;padding:4px;width:max-content;box-shadow:0 4px 0 #d6e4f7}
+.tog button{border:none;background:none;font:inherit;font-weight:900;font-size:13px;padding:8px 14px;border-radius:999px;color:var(--sub);cursor:pointer}
+.tog button.on{background:var(--ink);color:#fff}
+.note{font-size:11px;color:var(--sub);margin-top:6px}
+/* result */
+.result{width:100%;max-width:360px;background:#fff;border-radius:30px;padding:22px 18px;text-align:center;box-shadow:0 12px 0 #d6e4f7,0 20px 34px #22314f22}
+.result h2{margin:0;font-size:22px}
+.score{font-family:Quicksand;font-size:54px;color:var(--pink);line-height:1.1}
+.score small{font-size:20px;color:var(--sub)}
+.title-b{display:inline-block;background:#fff3cf;color:var(--ink);font-weight:900;border-radius:999px;padding:5px 16px;margin:4px 0 10px}
+.palette{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:8px 0 14px}
+.ranks{font-size:20px;font-weight:900;line-height:2}
+.ranks .r{font-family:Quicksand;font-size:28px;margin-right:10px}
+.btn{display:block;width:100%;border:none;border-radius:18px;font:inherit;font-weight:900;font-size:17px;padding:13px;margin-top:10px;cursor:pointer;
+  background:var(--pink);color:#fff;box-shadow:0 5px 0 #c9483a}
+.btn.sub{background:#eef3fb;color:var(--ink);box-shadow:0 5px 0 #c9d6ea}
+/* ===== 捕集法スワイプ ===== */
+.tube-top{background:radial-gradient(circle at 50% 40%,#3d4f75,#22314f)}
+.ppt{opacity:0;transform:translateY(-46px);transition:opacity .5s,transform .8s cubic-bezier(.3,1.4,.5,1)}
+.ppt.on{opacity:1;transform:none}
+.pcol{position:absolute;right:14px;bottom:12px;background:#fff;border-radius:999px;font-weight:900;font-size:13px;padding:3px 12px;opacity:0;transform:scale(.6);transition:.3s .5s}
+.pcol.on{opacity:1;transform:none}
+.stamp2{white-space:nowrap}
+.tubecard .stamp2{top:auto;bottom:64px;left:auto;right:8px;transform:rotate(-10deg);font-size:24px;padding:2px 12px}
+.kyotsu{display:inline-block;background:#fff;color:var(--pink);border:3px solid var(--pink);font-weight:900;border-radius:999px;padding:4px 14px;font-size:15px;transform:rotate(-3deg)}
+.kyotsu b{font-family:Quicksand;font-size:22px}
+.cc{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 8px !important}
+.cc b{font-size:15px !important;line-height:1.3}
+.mtag{margin-top:4px;font-size:10px;font-weight:900;background:#fff9;border-radius:999px;padding:2px 8px}
+.cc .new{position:absolute;top:-9px;left:10px;background:var(--pink);color:#fff;font-family:Quicksand;font-size:11px;padding:2px 8px;border-radius:999px}
+.lives{color:var(--pink);font-size:15px;letter-spacing:1px;margin-left:6px}.lives .x{color:#cfd6e2}
+.bar10{display:flex;gap:3px;margin-top:8px}.bar10 i{flex:1;height:6px;border-radius:3px;background:#e3eaf5}
+.sw-wrap{position:relative;width:100%;max-width:350px}
+.scard{position:relative;width:100%;background:#fff;border-radius:26px;overflow:hidden;border:3px solid var(--ink);
+  box-shadow:0 8px 0 var(--ink);touch-action:none;cursor:grab;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s}
+.scard.drag{transition:none;cursor:grabbing}
+.scard.trick{border-color:#ff8a3d;box-shadow:0 8px 0 #ff8a3d}
+.scard.boss{border-color:var(--pink);box-shadow:0 8px 0 var(--pink)}
+.sc-top{height:140px;position:relative;overflow:hidden}
+.sc-top svg{position:absolute;inset:0}
+.mol{animation:molf 3s ease-in-out infinite alternate}
+@keyframes molf{to{transform:translate(var(--mx),var(--my))}}
+.sc-tag{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:2;font-weight:900;font-size:13px;padding:3px 12px;border-radius:999px;color:#fff;white-space:nowrap}
+.sc-body{padding:12px 16px 12px}
+.sc-name{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sc-name b{font-size:26px;font-weight:900}
+.sc-name .f{font-family:Quicksand;font-size:24px}.sc-name .f sub{font-size:.6em}
+.mw{margin-left:auto;font-size:12px;font-weight:900;background:#eef3fb;border-radius:8px;padding:2px 8px}
+.sc-desc{font-size:14px;font-weight:700;color:var(--sub);margin:4px 0 8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{white-space:nowrap;border:2px solid #c9d6ea;background:#fff;border-radius:999px;font:inherit;font-weight:900;font-size:13px;padding:5px 12px;color:var(--ink);cursor:pointer}
+.chip.open{background:#fff3cf;border-color:var(--sun)}
+.sc-timer{height:6px;border-radius:3px;background:#eef3fb;margin:10px 0 6px;overflow:hidden}
+.sc-timer i{display:block;height:100%;background:var(--ink);transform-origin:left}
+.sc-note{font-size:11px;color:var(--sub);text-align:center}
+.stamp2{position:absolute;top:40px;left:50%;transform:translateX(-50%) rotate(-12deg);font-size:34px;padding:4px 18px;border:5px solid;border-radius:14px;background:#fffd;z-index:3;animation:bounce2 .35s}
+.toast{min-height:44px;text-align:center;font-weight:900;font-size:14px;line-height:1.5;max-width:350px}
+.toast .ok{color:var(--mint)}.toast .ng{color:var(--pink)}.toast small{display:block;color:var(--sub);font-size:12px}
+.sides{display:flex;justify-content:space-between;width:100%;max-width:350px}
+.side{border:none;background:none;font:inherit;font-weight:900;font-size:14px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:130px}
+.side .ring{width:76px;height:76px;border-radius:50%;background:#fff;border:4px solid var(--c);display:grid;place-items:center;box-shadow:0 5px 0 var(--c);transition:transform .15s}
+.side .arrow{font-size:12px;color:var(--sub)}
+.side.hot .ring{transform:scale(1.12);background:color-mix(in srgb,var(--c) 18%,#fff)}
+.side.right .ring{background:#d8f7ec;border-color:var(--mint)}.side.wrong .ring{background:#ffe1dd;border-color:var(--pink)}
+.sum{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0 6px;text-align:left}
+.sum td{padding:5px 4px;border-bottom:1px dashed #d6e0ee}
+.sum td:first-child{width:22px;color:var(--sub);font-family:Quicksand}
+.sum .m{font-weight:900;text-align:right;white-space:nowrap}
+.sum .mk{width:20px;text-align:center;font-weight:900}
+.sum sub,.sum sup{font-size:.65em}
+.save{display:inline-block;background:var(--pink);color:#fff;font-weight:900;border-radius:999px;padding:5px 14px;font-size:13px;transform:rotate(-2deg);margin:4px 0}
+.result{max-height:100%;overflow:auto}
+</style>
+</head>
+<body>
+<div id="tint"></div>
+<div id="deco"></div>
+<div id="app">
+  <div class="hdr" id="hdr" style="display:none">
+    <div class="hrow"><div class="chap" id="chap"></div><button class="home" id="homeBtn">メニュー</button></div>
+    <div class="drops" id="drops"></div>
+  </div>
+  <div class="stage" id="stage"></div>
+</div>
+<script>
+// ================= 共通：色・ユーティリティ（全版で共有） =================
+// ================= 色データ =================
+const HEX = {"白":"#ffffff","無色":null,"黒":"#2b2b33","黒紫":"#3a2550","褐":"#7b4a2e","赤褐":"#a6432b","黄褐":"#c8952e",
+ "赤":"#e8394a","橙赤":"#ff6a3d","紅":"#d81b5a","赤橙":"#f0662a","淡桃":"#f7c4d6","黄":"#ffd23f","淡黄":"#fff1a6",
+ "緑":"#2fae5a","淡緑":"#bfe6b4","黄緑":"#b4d94a","緑白":"#dfeedb","青緑":"#19b3a6","青":"#3b82f6","淡青":"#bfe1ff",
+ "青白":"#cfe2f5","深青":"#1f3fae","紫":"#8b4fd8","赤紫":"#b2338c","青紫":"#5f52cc"};
+const FAM = {white:["白","無色","銀白"],black:["黒","黒紫"],brown:["褐","赤褐","黄褐"],red:["赤","橙赤","紅","赤橙"],pink:["淡桃"],
+ yellow:["黄","淡黄"],green:["緑","淡緑","黄緑","緑白","青緑"],blue:["青","淡青","青白","深青"],purple:["紫","赤紫","青紫"]};
+const famOf = c => Object.keys(FAM).find(k => FAM[k].includes(c));
+const SIMPLE = ["白","黒","赤","黄","緑","青","紫"];
+const fx = (b, sub, sup) => `${b}<span class="ss"><sup>${sup}</sup><sub>${sub}</sub></span>`;
+
+Object.assign(HEX, {"銀白":"#dfe3ea", "赤銅":"#c4683c", "灰":"#9aa0a8", "銀":"#c9ced8", "橙黄":"#ffa62b"});
+FAM.gray = ["銀","灰"]; FAM.yellow.push("橙黄");
+const keyOf = q => q.ans || q.c;
+function buildQ(ch) {
+  if (ch.swipe) {
+    const boss = pickOne(ch.q.filter(x => x.boss)), rest = ch.q.filter(x => x !== boss);  // ボスは候補から毎回ランダム
+    const pick = d => {
+      const g = shuffle(rest.filter(x => x.d === d));
+      if (!ch.swipe.balance) return g;
+      // 答えが偏らないように、答えごとに交互に並べる
+      const by = {}; g.forEach(x => (by[x.ans] = by[x.ans] || []).push(x));
+      const keys = shuffle(Object.keys(by)), out = [];
+      for (let i = 0; out.length < g.length; i++) keys.forEach(k => { if (by[k][i]) out.push(by[k][i]); });
+      return out;
+    };
+    return [...shuffle(pick(1).slice(0, 4)), ...shuffle(pick(2).slice(0, 3)), ...shuffle(pick(3).slice(0, 2)), boss];
+  }
+  return null;
+}
+
+const pickOne = a => a[Math.random() * a.length | 0];
+
+// ================= 共通テストのカウントダウン（毎年自動で更新） =================
+// 共通テスト本試験は「1月13日以降の最初の土曜日・日曜日」（2021〜2027年度すべてこの規則どおり）。
+// 公式発表と違う年があれば KYOTSU_FIXED に「年: [月-1, 日]」を足せば上書きできる。
+const KYOTSU_FIXED = {2027: [0, 16]};   // 2027年度：2027年1月16日(土)・17日(日)（大学入試センター発表）
+function kyotsuDay1(y) {
+  if (KYOTSU_FIXED[y]) return new Date(y, ...KYOTSU_FIXED[y]);
+  const d = new Date(y, 0, 13); while (d.getDay() !== 6) d.setDate(d.getDate() + 1); return d;
+}
+function nextKyotsu() {
+  const t = new Date(new Date().toDateString());
+  for (let y = t.getFullYear(); ; y++) { const d1 = kyotsuDay1(y), d2 = new Date(d1); d2.setDate(d1.getDate() + 1); if (d2 >= t) return d1; }
+}
+const daysToKyotsu = () => Math.round((nextKyotsu() - new Date(new Date().toDateString())) / 864e5);
+function kyotsuBadge() {
+  const n = daysToKyotsu(), d = nextKyotsu();
+  return n > 0 ? `共通テスト（${d.getMonth() + 1}/${d.getDate()}）まで あと<b>${n}</b>日` : "今日は共通テスト！ がんばれ！";
+}
+
+// ================= ケミカラ 無機版：クイズデータ =================
+const APP = {logo:"ケミカラ！", sub:"無機の色クイズ", tag:"無機の定番カラーをまとめてマスター！", saveKey:"chemicolor-rank-v1"};
+// ================= 単元データ =================
+const CH = [
+ {id:"subst", no:"♯1", title:"頻出物質の色", rpg:"頻出物質の洞窟", em:"🧪", kind:"solid", prompt:"何色？", prompts:["何色？","この物質の色は？","見た目は何色？","色を答えよ！"], bg:"#ffe1d6",
+  allow:["白","黒","黒紫","褐","赤褐","黄褐","赤","黄","淡黄","緑","緑白","青","青白","紫"], cap:{"白":3},
+  q:[
+  {fm:"AgCl",nm:"塩化銀",c:"白",d:1},
+  {fm:"AgBr",nm:"臭化銀",c:"淡黄",d:2,trap:"白",hint:"AgCl 白 → AgBr 淡黄 → AgI 黄"},
+  {fm:"AgI",nm:"ヨウ化銀",c:"黄",d:2,trap:"淡黄",hint:"AgCl 白 → AgBr 淡黄 → AgI 黄"},
+  {fm:"CuO",nm:"酸化銅(Ⅱ)",c:"黒",d:1},
+  {fm:"Cu<sub>2</sub>O",nm:"酸化銅(Ⅰ)",c:"赤",d:2,trap:"黒",hint:"CuO は黒 ／ Cu₂O は赤"},
+  {fm:"CuSO<sub>4</sub>·5H<sub>2</sub>O",nm:"硫酸銅(Ⅱ)五水和物",c:"青",d:1,sz:"l"},
+  {fm:"CuSO<sub>4</sub>",nm:"硫酸銅(Ⅱ)無水物",c:"白",d:3,trap:"青",hint:"五水和物は青 ／ 無水物は白"},
+  {fm:"Fe(OH)<sub>3</sub>",nm:"水酸化鉄(Ⅲ)",c:"赤褐",d:2,sz:"m"},
+  {fm:"Fe(OH)<sub>2</sub>",nm:"水酸化鉄(Ⅱ)",c:"緑白",d:3,trap:"赤褐",hint:"Fe(OH)₃ は赤褐 ／ Fe(OH)₂ は緑白",sz:"m"},
+  {fm:"Cu(OH)<sub>2</sub>",nm:"水酸化銅(Ⅱ)",c:"青白",d:2,trap:"青",sz:"m"},
+  {fm:"PbCrO<sub>4</sub>",nm:"クロム酸鉛(Ⅱ)",c:"黄",d:2,sz:"m"},
+  {fm:"Ag<sub>2</sub>CrO<sub>4</sub>",nm:"クロム酸銀",c:"赤褐",d:3,trap:"黄",hint:"PbCrO₄・BaCrO₄ は黄 ／ Ag₂CrO₄ は赤褐",sz:"m"},
+  {fm:"BaSO<sub>4</sub>",nm:"硫酸バリウム",c:"白",d:1,sz:"m"},
+  {fm:"CuS",nm:"硫化銅(Ⅱ)",c:"黒",d:1},
+  {fm:"ZnS",nm:"硫化亜鉛",c:"白",d:2,trap:"黒",hint:"硫化物はほぼ黒 ／ ZnS は白・CdS は黄"},
+  {fm:"CdS",nm:"硫化カドミウム",c:"黄",d:3,trap:"黒",hint:"硫化物はほぼ黒 ／ ZnS は白・CdS は黄"},
+  {fm:"MnO<sub>2</sub>",nm:"酸化マンガン(Ⅳ)",c:"黒",d:1},
+  {fm:"Ag<sub>2</sub>O",nm:"酸化銀",c:"褐",d:3,trap:"黒"},
+  {fm:"Fe<sub>2</sub>O<sub>3</sub>",nm:"酸化鉄(Ⅲ)",c:"赤褐",d:2},
+  {fm:"Fe<sub>3</sub>O<sub>4</sub>",nm:"四酸化三鉄",c:"黒",d:3,trap:"赤褐",hint:"Fe₂O₃ は赤褐 ／ Fe₃O₄ は黒"},
+  {fm:"PbI<sub>2</sub>",nm:"ヨウ化鉛(Ⅱ)",c:"黄",d:2},
+  {fm:"Al(OH)<sub>3</sub>",nm:"水酸化アルミニウム",c:"白",d:1,sz:"m"},
+  {fm:"S",nm:"硫黄（斜方硫黄）",c:"黄",d:1},
+  {fm:"I<sub>2</sub>",nm:"ヨウ素（固体）",c:"黒紫",d:2,trap:"紫"},
+ ]},
+ {id:"gas", no:"♯2", title:"気体・ハロゲンの色", rpg:"ハロゲンの塔", em:"💨", kind:"gas", prompt:"何色？", prompts:["何色？","この物質の色は？","色はどれ？"], bg:"#d9ecff",
+  allow:["無色","黄緑","淡黄","黄","赤褐","褐","淡青","青","青紫","紫","黒紫","赤","緑"], cap:{"無色":1},
+  q:[
+  {fm:"Cl<sub>2</sub>",nm:"塩素",c:"黄緑",d:1},
+  {fm:"NO<sub>2</sub>",nm:"二酸化窒素",c:"赤褐",d:1},
+  {fm:"HCl",nm:"塩化水素",c:"無色",d:1},
+  {fm:"NH<sub>3</sub>",nm:"アンモニア",c:"無色",d:1},
+  {fm:"O<sub>2</sub>",nm:"酸素",c:"無色",d:1},
+  {fm:"H<sub>2</sub>S",nm:"硫化水素",c:"無色",d:2},
+  {fm:"SO<sub>2</sub>",nm:"二酸化硫黄",c:"無色",d:2},
+  {fm:"F<sub>2</sub>",nm:"フッ素",c:"淡黄",d:2,trap:"黄緑",hint:"Cl₂ は黄緑 ／ F₂ は淡黄"},
+  {fm:"O<sub>3</sub>",nm:"オゾン",c:"淡青",d:2,trap:"無色",hint:"O₂ は無色 ／ O₃ は淡青"},
+  {fm:"NO",nm:"一酸化窒素",c:"無色",d:3,trap:"赤褐",hint:"NO₂ は赤褐 ／ NO は無色"},
+  {fm:"Br<sub>2</sub>",nm:"臭素（蒸気）",c:"赤褐",d:3,trap:"黄緑",hint:"Cl₂ 黄緑 ／ Br₂ 赤褐 ／ I₂（気体）紫"},
+  {fm:"I<sub>2</sub>",nm:"ヨウ素（気体）",c:"紫",d:3,trap:"黒紫",hint:"固体は黒紫 ／ 気体は紫"},
+  {fm:"I<sub>2</sub>",nm:"ヨウ素（固体）",c:"黒紫",d:1,k:"solid"},
+  {fm:"I<sub>2</sub> + デンプン",nm:"ヨウ素デンプン反応",c:"青紫",d:1,k:"ion",sz:"m"},
+  {fm:"KI + I<sub>2</sub>",nm:"ヨウ素ヨウ化カリウム水溶液",c:"褐",d:2,k:"ion",trap:"紫",sz:"m"},
+ ]},
+ {id:"flame", no:"♯3", title:"炎色反応", rpg:"炎色の火山", em:"🔥", kind:"flame", prompt:"炎色反応は？", prompts:["炎色反応は？","炎の色は？","炎に入れると何色？"], n:7, capAll:1, bg:"#fff0c2",
+  allow:["赤","橙赤","紅","黄","黄緑","緑","青緑","青","赤紫","紫"], cap:{},
+  q:[
+  {fm:"Li",nm:"リチウム",c:"赤",d:1},
+  {fm:"Na",nm:"ナトリウム",c:"黄",d:1},
+  {fm:"K",nm:"カリウム",c:"赤紫",d:2,trap:"紫"},
+  {fm:"Cu",nm:"銅",c:"青緑",d:2,trap:"緑"},
+  {fm:"Ba",nm:"バリウム",c:"黄緑",d:2,trap:"緑"},
+  {fm:"Ca",nm:"カルシウム",c:"橙赤",d:3,trap:"赤",hint:"Li 赤 ／ Ca 橙赤 ／ Sr 紅（深赤）"},
+  {fm:"Sr",nm:"ストロンチウム",c:"紅",d:3,trap:"橙赤",hint:"リアカー無きK村、動力借るとうするもくれない"},
+  {fm:"LiCl",nm:"塩化リチウム水溶液",c:"赤",d:1},
+  {fm:"Li<sub>2</sub>CO<sub>3</sub>",nm:"炭酸リチウム",c:"赤",d:1},
+  {fm:"NaCl",nm:"塩化ナトリウム水溶液",c:"黄",d:1},
+  {fm:"Na<sub>2</sub>CO<sub>3</sub>",nm:"炭酸ナトリウム",c:"黄",d:1},
+  {fm:"KCl",nm:"塩化カリウム水溶液",c:"赤紫",d:2,trap:"紫"},
+  {fm:"KNO<sub>3</sub>",nm:"硝酸カリウム",c:"赤紫",d:2,trap:"紫"},
+  {fm:"CuSO<sub>4</sub>",nm:"硫酸銅(Ⅱ)水溶液",c:"青緑",d:2,trap:"緑"},
+  {fm:"CuCl<sub>2</sub>",nm:"塩化銅(Ⅱ)水溶液",c:"青緑",d:2,trap:"緑"},
+  {fm:"BaCl<sub>2</sub>",nm:"塩化バリウム水溶液",c:"黄緑",d:2,trap:"緑"},
+  {fm:"CaCl<sub>2</sub>",nm:"塩化カルシウム水溶液",c:"橙赤",d:3,trap:"赤",hint:"Li 赤 ／ Ca 橙赤 ／ Sr 紅（深赤）"},
+  {fm:"SrCl<sub>2</sub>",nm:"塩化ストロンチウム水溶液",c:"紅",d:3,trap:"橙赤",hint:"Li 赤 ／ Ca 橙赤 ／ Sr 紅（深赤）"},
+ ]},
+ {id:"ion", no:"♯4", title:"イオンの色", rpg:"イオンの湖", em:"💧", kind:"ion", prompt:"水溶液は何色？", prompts:["水溶液は何色？","水溶液の色は？","溶かすと何色？"], bg:"#d3f3ea",
+  allow:["無色","青","深青","黄","淡黄","黄褐","淡緑","緑","赤橙","赤紫","淡桃","紫","赤"], cap:{"無色":1},
+  q:[
+  {fm:"Cu<sup>2+</sup>",nm:"銅(Ⅱ)イオン",c:"青",d:1},
+  {fm:"Fe<sup>3+</sup>",nm:"鉄(Ⅲ)イオン",c:"黄褐",d:1},
+  {fm:"Ni<sup>2+</sup>",nm:"ニッケル(Ⅱ)イオン",c:"緑",d:1},
+  {fm:fx("CrO","4","2−"),nm:"クロム酸イオン",c:"黄",d:1},
+  {fm:fx("MnO","4","−"),nm:"過マンガン酸イオン",c:"赤紫",d:1},
+  {fm:"Al<sup>3+</sup>",nm:"アルミニウムイオン",c:"無色",d:1},
+  {fm:fx("Cr<sub>2</sub>O","7","2−"),nm:"二クロム酸イオン",c:"赤橙",d:2,sz:"m"},
+  {fm:"Fe<sup>2+</sup>",nm:"鉄(Ⅱ)イオン",c:"淡緑",d:2,trap:"黄褐",hint:"Fe³⁺ は黄褐 ／ Fe²⁺ は淡緑"},
+  {fm:"[Cu(NH<sub>3</sub>)<sub>4</sub>]<sup>2+</sup>",nm:"テトラアンミン銅(Ⅱ)イオン",c:"深青",d:2,trap:"青",sz:"l"},
+  {fm:"[Ag(NH<sub>3</sub>)<sub>2</sub>]<sup>+</sup>",nm:"ジアンミン銀(Ⅰ)イオン",c:"無色",d:2,sz:"l"},
+  {fm:"Mn<sup>2+</sup>",nm:"マンガン(Ⅱ)イオン",c:"淡桃",d:3,trap:"赤紫",hint:"MnO₄⁻ は赤紫 ／ Mn²⁺ は淡桃"},
+  {fm:"Cr<sup>3+</sup>",nm:"クロム(Ⅲ)イオン",c:"緑",d:3,trap:"赤橙",hint:"Cr₂O₇²⁻ は赤橙 ／ Cr³⁺ は緑"},
+  {fm:"[Zn(NH<sub>3</sub>)<sub>4</sub>]<sup>2+</sup>",nm:"テトラアンミン亜鉛(Ⅱ)イオン",c:"無色",d:3,trap:"深青",hint:"Cu のアンミン錯イオンは深青 ／ Zn は無色",sz:"l"},
+  {fm:"[Fe(CN)<sub>6</sub>]<sup>4−</sup>",nm:"ヘキサシアニド鉄(Ⅱ)酸イオン",c:"淡黄",d:3,trap:"黄",hint:"[Fe(CN)₆]³⁻ は黄 ／ ⁴⁻ は淡黄",sz:"l"},
+ ]},
+];
+
+// ================= ♯5 気体の捕集法 =================
+const METH = {"水上置換":{col:"#3d7cff"},"上方置換":{col:"#ff8a3d"},"下方置換":{col:"#14a37a"}};
+CH.push({id:"collect", no:"♯5", title:"気体の捕集法", em:"🫧", mode:"collect", prompt:"どうやって集める？", bg:"#e3ecff", cap:{},
+ swipe:{title:"捕集法スワイプ", big:"捕集法", note:"捕集法を選ぶ", opts:METH,
+   pick:(q, lv) => collectOpts(q, lv).sort((a, b) => Object.keys(METH).indexOf(a) - Object.keys(METH).indexOf(b)), /* 左右は固定（水上→上方→下方の順） */ badge:q => `分子量 ${q.M}`,
+   chips:[["水に？", q => `水に：${q.sol}`], ["空気より？", q => `空気より：${airText(q)}`]],
+   why:q => `水に${q.sol}・空気より${airText(q)}`},
+ q:[
+  {fm:"H<sub>2</sub>",nm:"水素",M:2,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。いちばん軽い気体。"},
+  {fm:"O<sub>2</sub>",nm:"酸素",M:32,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。ものが燃えるのを助ける。"},
+  {fm:"N<sub>2</sub>",nm:"窒素",M:28,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:1,at:2,desc:"無色・無臭。空気の約8割をしめる。"},
+  {fm:"NH<sub>3</sub>",nm:"アンモニア",M:17,sol:"非常によく溶ける",gc:"無色",ans:"上方置換",d:1,at:4,desc:"刺激臭。水溶液は塩基性。"},
+  {fm:"HCl",nm:"塩化水素",M:36.5,sol:"非常によく溶ける",gc:"無色",ans:"下方置換",d:1,at:2,desc:"刺激臭。NH₃ と出会うと白煙。"},
+  {fm:"CO<sub>2</sub>",nm:"二酸化炭素",M:44,sol:"少し溶ける",gc:"無色",ans:"下方置換",alt:"上方置換",d:1,at:3,desc:"無色・無臭。石灰水を白くにごらせる。",hint:"CO₂ は下方置換（水上置換で集めることもある）"},
+  {fm:"CH<sub>4</sub>",nm:"メタン",M:16,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"上方置換",d:2,at:5,desc:"無色・無臭。天然ガスの主成分。",hint:"軽くても水に溶けにくければ水上置換"},
+  {fm:"CO",nm:"一酸化炭素",M:28,sol:"溶けにくい",gc:"無色",ans:"水上置換",d:2,at:2,desc:"無色・無臭。とても有毒。"},
+  {fm:"NO<sub>2</sub>",nm:"二酸化窒素",M:46,sol:"よく溶ける",gc:"赤褐",ans:"下方置換",trap:"水上置換",d:2,at:3,desc:"赤褐色・刺激臭。銅と濃硝酸から発生。",hint:"NO は水上置換 ／ NO₂ は水に溶けるので下方置換"},
+  {fm:"H<sub>2</sub>S",nm:"硫化水素",M:34,sol:"溶ける",gc:"無色",ans:"下方置換",d:2,at:3,desc:"無色・腐卵臭。有毒。"},
+  {fm:"SO<sub>2</sub>",nm:"二酸化硫黄",M:64,sol:"よく溶ける",gc:"無色",ans:"下方置換",d:2,at:3,desc:"無色・刺激臭。還元性・漂白作用。"},
+  {fm:"NO",nm:"一酸化窒素",M:30,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"下方置換",d:3,boss:1,at:2,desc:"無色。銅と希硝酸から発生。",hint:"NO は空気中の O₂ とすぐ反応 → 水上置換しか使えない"},
+  {fm:"C<sub>2</sub>H<sub>4</sub>",nm:"エチレン",M:28,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"上方置換",d:3,at:6,desc:"無色・かすかに甘いにおい。"},
+  {fm:"C<sub>2</sub>H<sub>2</sub>",nm:"アセチレン",M:26,sol:"溶けにくい",gc:"無色",ans:"水上置換",trap:"上方置換",d:3,at:4,desc:"無色。炭化カルシウムと水から発生。"},
+  {fm:"Cl<sub>2</sub>",nm:"塩素",M:71,sol:"溶ける",gc:"黄緑",ans:"下方置換",trap:"水上置換",d:3,at:2,boss:1,desc:"黄緑色・刺激臭。漂白・殺菌作用。",hint:"Cl₂ は水に溶けるので下方置換"},
+ ]});
+function collectOpts(q, lv) {
+  // 不正解の選択肢は毎回ランダム（後半ほど「ひっかけ」が出やすい）
+  const others = Object.keys(METH).filter(m => m !== q.ans && m !== q.alt);
+  let d;
+  if (q.alt) d = Math.random() < .7 ? q.alt : others[Math.random() * others.length | 0];
+  else if (lv >= 2 && q.trap && Math.random() < .7) d = q.trap;
+  else d = others[Math.random() * others.length | 0];
+  return Math.random() < .5 ? [q.ans, d] : [d, q.ans];
+}
+const airText = q => q.M < 29 ? `軽い（${q.M} ＜ 29）` : `重い（${q.M} ＞ 29）`;
+
+// ================= ♯6 沈殿の色：白？白以外？（共通テスト頻出） =================
+const tubeSVG = (fill, dots) => s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+  <path d="M17 4 V38 A7 7 0 0 0 31 38 V4" fill="#fff" stroke="#22314f" stroke-width="3"/>
+  <path d="M18.5 30 V38 A5.5 5.5 0 0 0 29.5 38 V30 Z" fill="${fill}" ${fill === "#fff" ? 'stroke="#9fb0cc" stroke-width="1"' : ""}/>
+  ${dots ? `<circle cx="22" cy="24" r="2" fill="${dots}"/><circle cx="26" cy="19" r="1.6" fill="${dots}"/>` : ""}</svg>`;
+function pptTop(q) {
+  const col = HEX[q.c], white = q.c === "白";
+  const parts = Array.from({length: 14}, (_, i) => `<circle cx="${156 + (i * 7) % 28}" cy="${104 + (i % 3) * 5 - (i % 4) * 3}" r="${2.5 + (i % 3)}" fill="${col}" ${white ? 'stroke="#c9d6ea"' : ""}/>`).join("");
+  return `<div class="sc-top tube-top"><svg viewBox="0 0 340 140">
+    <path d="M150 6 V112 A20 20 0 0 0 190 112 V6" fill="#ffffff18" stroke="#fff" stroke-width="4"/>
+    <path d="M153 40 V112 A17 17 0 0 0 187 112 V40 Z" fill="#cfe6ff" opacity=".55"/>
+    <rect x="163" y="0" width="14" height="22" rx="4" fill="#ff6b5b"/><path d="M170 22 V34" stroke="#ff6b5b" stroke-width="3"/>
+    <g class="ppt" id="ppt"><path d="M154 116 Q170 96 186 116 A16 16 0 0 1 154 116 Z" fill="${col}" ${white ? 'stroke="#c9d6ea" stroke-width="1.5"' : ""}/>${parts}</g>
+  </svg><span class="pcol" id="pcol" style="color:${white ? "#22314f" : col};${["白","淡黄","淡桃","緑白","青白"].includes(q.c) ? "background:#22314f;color:#fff" : ""}">${q.c}色</span></div>`;
+}
+CH.push({id:"ppt", no:"♯6", title:"沈殿の色：白？白以外？", em:"🧪", mode:"swipe", prompt:"沈殿の色は白？", bg:"#ffe3dc", cap:{},
+ swipe:{title:"白？白以外？", big:"その沈殿、<br>白？白以外？", note:"白か白以外かを選ぶ",
+   opts:{"白":{col:"#6b7a99", icon:tubeSVG("#fff")}, "白以外":{col:"#ff8a3d", icon:tubeSVG("#2b2b33", "#ffd23f")}},
+   pick:() => ["白", "白以外"], /* 左右は固定 */ badge:() => "共通テスト頻出", top:pptTop,
+   reveal:() => { $("ppt")?.classList.add("on"); $("pcol")?.classList.add("on"); },
+   chips:[["何のなかま？", q => `${q.grp}のなかま`]], balance:1,
+   right:q => `${q.nm} は ${q.c}色`, why:q => `${q.nm} は ${q.c}色。${q.memo}`},
+ q:[
+  {nm:"塩化銀",grp:"ハロゲン化銀",fm:"AgCl",c:"白",d:1,ion:"Ag⁺ ＋ Cl⁻",memo:"AgCl 白・AgBr 淡黄・AgI 黄"},
+  {nm:"硫酸バリウム",grp:"硫酸塩",fm:"BaSO<sub>4</sub>",c:"白",d:1,ion:"Ba²⁺ ＋ SO₄²⁻",memo:"BaSO₄・CaSO₄・PbSO₄ は白"},
+  {nm:"炭酸カルシウム",grp:"炭酸塩",fm:"CaCO<sub>3</sub>",c:"白",d:1,ion:"Ca²⁺ ＋ CO₃²⁻",memo:"炭酸塩の沈殿は白"},
+  {nm:"水酸化アルミニウム",grp:"水酸化物",fm:"Al(OH)<sub>3</sub>",c:"白",d:1,ion:"Al³⁺ ＋ OH⁻",memo:"白色ゲル状。過剰の NaOH 水溶液に溶ける"},
+  {nm:"硫化銅(Ⅱ)",grp:"硫化物",fm:"CuS",c:"黒",d:1,ion:"Cu²⁺ ＋ S²⁻",memo:"硫化物は黒が多い"},
+  {nm:"硫化鉛(Ⅱ)",grp:"硫化物",fm:"PbS",c:"黒",d:1,ion:"Pb²⁺ ＋ S²⁻",memo:"硫化物は黒が多い"},
+  {nm:"ヨウ化銀",grp:"ハロゲン化銀",fm:"AgI",c:"黄",d:1,ion:"Ag⁺ ＋ I⁻",memo:"AgCl 白・AgBr 淡黄・AgI 黄"},
+  {nm:"水酸化鉄(Ⅲ)",grp:"水酸化物",fm:"Fe(OH)<sub>3</sub>",c:"赤褐",d:1,ion:"Fe³⁺ ＋ OH⁻",memo:"Fe³⁺ の沈殿は赤褐色"},
+  {nm:"クロム酸鉛(Ⅱ)",grp:"クロム酸塩",fm:"PbCrO<sub>4</sub>",c:"黄",d:1,ion:"Pb²⁺ ＋ CrO₄²⁻",memo:"PbCrO₄・BaCrO₄ は黄、Ag₂CrO₄ は赤褐"},
+  {nm:"硫酸鉛(Ⅱ)",grp:"硫酸塩",fm:"PbSO<sub>4</sub>",c:"白",d:2,ion:"Pb²⁺ ＋ SO₄²⁻",memo:"BaSO₄・CaSO₄・PbSO₄ は白"},
+  {nm:"塩化鉛(Ⅱ)",grp:"塩化物",fm:"PbCl<sub>2</sub>",c:"白",d:2,ion:"Pb²⁺ ＋ Cl⁻",memo:"白色。熱水に溶ける"},
+  {nm:"水酸化亜鉛",grp:"水酸化物",fm:"Zn(OH)<sub>2</sub>",c:"白",d:2,ion:"Zn²⁺ ＋ OH⁻",memo:"白色。過剰の NaOH 水溶液・アンモニア水に溶ける"},
+  {nm:"水酸化マグネシウム",grp:"水酸化物",fm:"Mg(OH)<sub>2</sub>",c:"白",d:2,ion:"Mg²⁺ ＋ OH⁻",memo:"白色。過剰の NaOH 水溶液には溶けない"},
+  {nm:"硫化カドミウム",grp:"硫化物",fm:"CdS",c:"黄",d:2,trap:1,ion:"Cd²⁺ ＋ S²⁻",memo:"硫化物の例外：CdS は黄、ZnS は白"},
+  {nm:"ヨウ化鉛(Ⅱ)",grp:"ヨウ化物",fm:"PbI<sub>2</sub>",c:"黄",d:2,ion:"Pb²⁺ ＋ I⁻",memo:"黄色の沈殿"},
+  {nm:"クロム酸バリウム",grp:"クロム酸塩",fm:"BaCrO<sub>4</sub>",c:"黄",d:2,ion:"Ba²⁺ ＋ CrO₄²⁻",memo:"PbCrO₄・BaCrO₄ は黄、Ag₂CrO₄ は赤褐"},
+  {nm:"クロム酸銀",grp:"クロム酸塩",fm:"Ag<sub>2</sub>CrO<sub>4</sub>",c:"赤褐",d:2,ion:"Ag⁺ ＋ CrO₄²⁻",memo:"Ag₂CrO₄ だけ赤褐（Pb・Ba は黄）"},
+  {nm:"酸化銀",grp:"酸化物",fm:"Ag<sub>2</sub>O",c:"褐",d:2,ion:"Ag⁺ ＋ OH⁻",memo:"水酸化物ではなく Ag₂O（褐色）になる"},
+  {nm:"水酸化銅(Ⅱ)",grp:"水酸化物",fm:"Cu(OH)<sub>2</sub>",c:"青白",d:2,trap:1,ion:"Cu²⁺ ＋ OH⁻",memo:"「白」がつくけど青白色 → 白以外"},
+  {nm:"硫化亜鉛",grp:"硫化物",fm:"ZnS",c:"白",d:3,trap:1,boss:1,ion:"Zn²⁺ ＋ S²⁻",memo:"硫化物は黒が多いが、ZnS は白！"},
+  {nm:"水酸化鉄(Ⅱ)",grp:"水酸化物",fm:"Fe(OH)<sub>2</sub>",c:"緑白",d:3,trap:1,boss:1,ion:"Fe²⁺ ＋ OH⁻",memo:"「白」がつくけど緑白色 → 白以外"},
+  {nm:"硫化マンガン(Ⅱ)",grp:"硫化物",fm:"MnS",c:"淡桃",d:3,trap:1,ion:"Mn²⁺ ＋ S²⁻",memo:"MnS は淡桃色（淡赤色）。黒ではない"},
+  {nm:"硫化銀",grp:"硫化物",fm:"Ag<sub>2</sub>S",c:"黒",d:3,ion:"Ag⁺ ＋ S²⁻",memo:"硫化物は黒が多い"},
+  {nm:"臭化銀",grp:"ハロゲン化銀",fm:"AgBr",c:"淡黄",d:3,boss:1,ion:"Ag⁺ ＋ Br⁻",memo:"白っぽいけど淡黄色 → 白以外"},
+ ].map(q => ({...q, ans:q.c === "白" ? "白" : "白以外", desc:`${q.ion} でできる沈殿`}))});
+
+// ================= スワイプ共通：カード上部にラベルを出す（答えたあとに表示） =================
+const labeledTop = key => q => molecules(q).replace(/<\/div>$/, `<span class="pcol" id="pcol" style="background:#22314f;color:#fff">${q[key]}</span></div>`);
+const showLabel = () => { $("pcol")?.classList.add("on"); };
+
+// ================= ♯7 気体・物質のにおい（4択：においの種類まで覚える） =================
+const SMELL = {"刺激臭":{e:"⚡", t:"#ffe0dc", c:"#ff6b5b"}, "腐卵臭":{e:"🥚", t:"#f3ead0", c:"#a8771c"}, "無臭":{e:"⭕", t:"#e9eef7", c:"#9fb0cc"},
+  "特異臭":{e:"🌀", t:"#e6e0ff", c:"#5f52cc"}, "果実の香り":{e:"🍎", t:"#ffefd6", c:"#ff8a3d"}};
+function smellArt(c) {
+  const s = SMELL[c] || SMELL["無臭"], none = c === "無臭";
+  return `<svg width="96" height="110" viewBox="0 0 96 110">
+    <path d="M18 34 H78 V96 Q78 104 70 104 H26 Q18 104 18 96 Z" fill="#fff" stroke="#6b7a99" stroke-width="3"/>
+    <rect x="14" y="26" width="68" height="10" rx="4" fill="#c9d6ea"/>
+    <circle cx="38" cy="74" r="6" fill="${s.c}" opacity=".5"/><circle cx="56" cy="64" r="6" fill="${s.c}" opacity=".5"/><circle cx="50" cy="88" r="5" fill="${s.c}" opacity=".5"/>
+    ${none ? `<text x="48" y="20" text-anchor="middle" font-size="16" fill="#9fb0cc" font-weight="900">においなし</text>`
+      : `<path d="M30 22 q6 -8 0 -16 M48 22 q6 -8 0 -16 M66 22 q6 -8 0 -16" stroke="${s.c}" stroke-width="4" fill="none" stroke-linecap="round"/>`}</svg>`;
+}
+CH.push({id:"smell", no:"♯7", title:"気体・物質のにおい", em:"👃", kind:"smell", isNew:1, prompt:"どんなにおい？", prompts:["どんなにおい？","においは？","においを答えよ！"],
+  bg:"#efe3ff", allow:Object.keys(SMELL), cap:{"刺激臭":3, "無臭":3}, noSim:1,
+  icon:o => `<span style="font-size:18px">${SMELL[o].e}</span>`, tints:Object.fromEntries(Object.entries(SMELL).map(([k, v]) => [k, v.t])),
+  q:[
+  {fm:"NH<sub>3</sub>",nm:"アンモニア",c:"刺激臭",d:1,hint:"鼻をつく刺激臭。水によく溶ける"},
+  {fm:"H<sub>2</sub>S",nm:"硫化水素",c:"腐卵臭",d:1,hint:"卵が腐ったようなにおい（有毒）"},
+  {fm:"H<sub>2</sub>",nm:"水素",c:"無臭",d:1},
+  {fm:"O<sub>2</sub>",nm:"酸素",c:"無臭",d:1},
+  {fm:"CO<sub>2</sub>",nm:"二酸化炭素",c:"無臭",d:1},
+  {fm:"Cl<sub>2</sub>",nm:"塩素",c:"刺激臭",d:1,hint:"黄緑色・刺激臭（有毒）"},
+  {fm:"HCl",nm:"塩化水素",c:"刺激臭",d:1},
+  {fm:"SO<sub>2</sub>",nm:"二酸化硫黄",c:"刺激臭",d:2,trap:"腐卵臭",hint:"硫黄をふくむが、H₂S（腐卵臭）とはちがって刺激臭"},
+  {fm:"NO<sub>2</sub>",nm:"二酸化窒素",c:"刺激臭",d:2,hint:"赤褐色・刺激臭（有毒）"},
+  {fm:"N<sub>2</sub>",nm:"窒素",c:"無臭",d:2},
+  {fm:"CH<sub>4</sub>",nm:"メタン",c:"無臭",d:2,hint:"都市ガスのにおいは、もれに気づくために後から付けたもの"},
+  {fm:"CH<sub>3</sub>COOC<sub>2</sub>H<sub>5</sub>",nm:"酢酸エチル",c:"果実の香り",d:2,sz:"l",hint:"エステルは果実のような香り"},
+  {fm:"HF",nm:"フッ化水素",c:"刺激臭",d:2},
+  {fm:"Br<sub>2</sub>",nm:"臭素",c:"刺激臭",d:2,hint:"赤褐色の液体。名前のとおり強いにおい（刺激臭）"},
+  {fm:"CO",nm:"一酸化炭素",c:"無臭",d:3,trap:"刺激臭",hint:"有毒なのに無色・無臭だから危険"},
+  {fm:"NO",nm:"一酸化窒素",c:"無臭",d:3,trap:"刺激臭",hint:"NO は無臭。空気中で NO₂ になると刺激臭"},
+  {fm:"O<sub>3</sub>",nm:"オゾン",c:"特異臭",d:3,trap:"無臭",hint:"O₂ は無臭だが、O₃ は特異臭（生ぐさいにおい）"},
+  {fm:"HCHO",nm:"ホルムアルデヒド",c:"刺激臭",d:3,trap:"果実の香り"},
+  {fm:"C<sub>6</sub>H<sub>5</sub>OH",nm:"フェノール",c:"特異臭",d:3,sz:"m",trap:"刺激臭",hint:"フェノールは特異臭"},
+  {fm:"CH<sub>3</sub>COOH",nm:"酢酸",c:"刺激臭",d:3,sz:"m",trap:"果実の香り",hint:"酢酸は刺激臭 ／ 酢酸エチル（エステル）は果実の香り"},
+ ]});
+
+// ================= ♯8 試薬の保存方法：どっち？ =================
+const bottle = ({body = "#fff", liq = null, cap = "none", lid = null, mark = ""}) => s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+  <path d="M18 6 H30 V12 Q38 14 38 22 V42 Q38 45 35 45 H13 Q10 45 10 42 V22 Q10 14 18 12 Z" fill="${body}" stroke="#22314f" stroke-width="2.5"/>
+  ${liq ? `<path d="M11.3 26 H36.7 V42 Q36.7 43.7 35 43.7 H13 Q11.3 43.7 11.3 42 Z" fill="${liq}" opacity=".8"/>` : ""}
+  ${cap === "rubber" ? `<rect x="17" y="2" width="14" height="8" rx="2" fill="#2b2b33"/>` : cap === "glass" ? `<path d="M19 9 H29 L27 2 H21 Z" fill="#e6f0ff" stroke="#22314f" stroke-width="2"/>` : cap === "lid" ? `<rect x="16" y="2" width="16" height="7" rx="2" fill="${lid || "#22314f"}"/>` : ""}
+  ${mark}</svg>`;
+CH.push({id:"store", no:"♯8", title:"試薬の保存方法：どっち？", em:"🧴", mode:"swipe", isNew:1, prompt:"保存方法は？", bg:"#fff0c2", cap:{},
+ swipe:{title:"保存方法どっち？", big:"保存方法<br>どっち？", note:"保存方法を選ぶ",
+   opts:{
+     "石油中":{col:"#ff8a3d", icon:bottle({liq:"#ffd36e", cap:"lid"})}, "水中":{col:"#3d7cff", icon:bottle({liq:"#9cc6ff", cap:"lid"})},
+     "エタノール中":{col:"#14a37a", icon:bottle({liq:"#bfe6d8", cap:"lid"})}, "空気中":{col:"#6b7a99", icon:bottle({})},
+     "透明びん":{col:"#3d7cff", icon:bottle({liq:"#e6f0ff", cap:"lid"})}, "褐色びん":{col:"#8a4b22", icon:bottle({body:"#8a4b22", cap:"lid", lid:"#3a2a1a"})},
+     "ゴム栓":{col:"#22314f", icon:bottle({liq:"#e6f0ff", cap:"rubber"})}, "ガラス栓":{col:"#3d7cff", icon:bottle({liq:"#e6f0ff", cap:"glass"})},
+     "密閉容器":{col:"#22314f", icon:bottle({liq:"#f4f6fb", cap:"lid"})},
+     "ガラスびん":{col:"#3d7cff", icon:bottle({liq:"#e6f0ff", cap:"lid"})}, "ポリ容器":{col:"#14a37a", icon:bottle({body:"#f2f2f2", liq:"#e6f0ff", cap:"lid", lid:"#3d7cff"})},
+   },
+   pick:q => q.pair,  // 選択肢の組と左右は問題ごとに固定
+   badge:() => "共通テスト頻出", top:labeledTop("why2"), reveal:showLabel,
+   chips:[["性質は？", q => q.prop]],
+   right:q => `${q.nm} → ${q.ans}`, why:q => `${q.prop} → ${q.ans}`},
+ q:[
+  {nm:"ナトリウム",fm:"Na",gc:"銀白",pair:["石油中","水中"],ans:"石油中",d:1,prop:"水や空気中の O₂ と反応する",why2:"水と激しく反応"},
+  {nm:"濃硝酸",fm:"HNO<sub>3</sub>",gc:"無色",pair:["透明びん","褐色びん"],ans:"褐色びん",d:1,prop:"光や熱で分解しやすい",why2:"光で分解"},
+  {nm:"黄リン",fm:"P<sub>4</sub>",gc:"淡黄",pair:["空気中","水中"],ans:"水中",d:1,prop:"空気中で自然発火する",why2:"自然発火"},
+  {nm:"NaOH 水溶液",fm:"NaOH aq",gc:"無色",pair:["ゴム栓","ガラス栓"],ans:"ゴム栓",d:1,prop:"ガラス（SiO₂）と反応する",why2:"ガラス栓が固着"},
+  {nm:"カリウム",fm:"K",gc:"銀白",pair:["石油中","エタノール中"],ans:"石油中",d:1,prop:"水やアルコールと反応する",why2:"アルコールとも反応"},
+  {nm:"硝酸銀水溶液",fm:"AgNO<sub>3</sub> aq",gc:"無色",pair:["透明びん","褐色びん"],ans:"褐色びん",d:2,prop:"光で分解して Ag が析出",why2:"光で分解"},
+  {nm:"NaOH（固体）",fm:"NaOH",gc:"白",pair:["ガラスびん","ポリ容器"],ans:"ポリ容器",d:2,prop:"ガラスと反応し、潮解性もある",why2:"ポリ容器で密閉"},
+  {nm:"過酸化水素水",fm:"H<sub>2</sub>O<sub>2</sub> aq",gc:"無色",pair:["褐色びん","透明びん"],ans:"褐色びん",d:2,prop:"光で分解して O₂ を出す",why2:"光で分解"},
+  {nm:"濃硫酸",fm:"H<sub>2</sub>SO<sub>4</sub>",gc:"無色",pair:["ゴム栓","ガラス栓"],ans:"ガラス栓",d:2,prop:"脱水作用でゴムを炭化させる",why2:"ゴムを侵す"},
+  {nm:"リチウム",fm:"Li",gc:"銀白",pair:["水中","石油中"],ans:"石油中",d:2,prop:"水と反応して H₂ を出す",why2:"水と反応"},
+  {nm:"KOH 水溶液",fm:"KOH aq",gc:"無色",pair:["ガラス栓","ゴム栓"],ans:"ゴム栓",d:2,prop:"強塩基でガラスと反応する",why2:"ガラス栓が固着"},
+  {nm:"赤リン",fm:"P",gc:"赤褐",pair:["水中","密閉容器"],ans:"密閉容器",d:3,trap:1,prop:"自然発火しない（黄リンとちがう）",why2:"自然発火しない"},
+  {nm:"過マンガン酸カリウム水溶液",fm:"KMnO<sub>4</sub> aq",gc:"赤紫",pair:["透明びん","褐色びん"],ans:"褐色びん",d:3,prop:"光で分解しやすい",why2:"光で分解"},
+  {nm:"臭素",fm:"Br<sub>2</sub>",gc:"赤褐",pair:["ゴム栓","ガラス栓"],ans:"ガラス栓",d:3,trap:1,prop:"反応性が高くゴムを侵す",why2:"ゴムを侵す"},
+  {nm:"フッ化水素酸",fm:"HF aq",gc:"無色",pair:["ガラスびん","ポリ容器"],ans:"ポリ容器",d:3,boss:1,prop:"ガラス（SiO₂）を溶かす",why2:"ガラスを溶かす"},
+ ].map(q => ({...q, at:1, desc:"どうやって保存する？"}))});
+
+
+// ================= ユーティリティ =================
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pastel = c => !(c in HEX) ? ((cur && cur.tints && cur.tints[c]) || "#e9eef7") : c === "無色" || c === "白" ? "#e9eef7" : `color-mix(in srgb, ${HEX[c]} 38%, #fff)`;
+let AUTO = false, run = 0, cur, Q, idx, score, combo, got;
+
+function loadBest() { try { return JSON.parse(localStorage.getItem("chemicolor-best") || "{}"); } catch (e) { return {}; } }
+function saveBest(id, r) { try { const b = loadBest(); const o = {S:3,A:2,B:1}; if (!b[id] || o[r] > o[b[id]]) { b[id] = r; localStorage.setItem("chemicolor-best", JSON.stringify(b)); } } catch (e) {} }
+
+// 効果音（かわいいベル）
+let ac;
+function bell(fs, step = .09, vol = .07) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    fs.forEach((f, i) => { const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * step;
+      o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + .35);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + .4); });
+  } catch (e) {}
+}
+const SE = {ok:()=>bell([1046,1318,1568]), ng:()=>bell([392,330],.14,.06), lv:()=>bell([784,988,1175,1568,2093],.07), fin:()=>bell([1046,1318,1568,2093,2637],.1)};
+
+// 背景の浮遊デコ
+(function deco() {
+  const items = ["★","●","▲","✦","■","◆"], cols = ["#ff6b5b","#3d7cff","#18b6a4","#ffc93c"];
+  let h = "";
+  for (let i = 0; i < 16; i++) h += `<span style="left:${Math.random()*100}%;font-size:${14+Math.random()*22}px;color:${cols[i%4]};animation-duration:${12+Math.random()*14}s;animation-delay:${-Math.random()*20}s">${items[i%6]}</span>`;
+  $("deco").innerHTML = h;
+})();
+
+function drop(color, w = 22, state = "fill") {
+  const fill = state === "empty" ? "#eef3fb" : state === "miss" ? "#cfd6e2" : (HEX[color] || "#ffffff");
+  const stroke = state === "fill" ? (color === "白" || color === "無色" || !HEX[color] ? "#9fb0cc" : "#0000") : "#d6e0ee";
+  return `<svg width="${w}" height="${w*1.25}" viewBox="0 0 20 25"><path d="M10 1 C10 1 2 11 2 16 a8 8 0 0 0 16 0 C18 11 10 1 10 1Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>${state==="fill"?`<ellipse cx="7" cy="15" rx="2" ry="3" fill="#fff" opacity=".6"/>`:""}${state==="miss"?`<path d="M7 13l6 6M13 13l-6 6" stroke="#fff" stroke-width="2"/>`:""}${color==="無色"&&state==="fill"?`<text x="10" y="20" font-size="7" text-anchor="middle" fill="#b9a8e8">無</text>`:""}</svg>`;
+}
+
+function drawDrops() {
+  $("drops").innerHTML = Q.map((q, i) => {
+    const s = i < got.length ? (got[i] ? "fill" : "miss") : "empty";
+    return drop(q.c, 22, s).replace("<svg", `<svg class="${i === idx ? "now" : ""}"`);
+  }).join("");
+}
+
+// ================= イラスト =================
+function illust(kind, c) {
+  if (kind === "smell") return smellArt(c);
+  const col = HEX[c], none = c === "無色", white = c === "白";
+  if (kind === "solid") return `<svg width="110" height="96" viewBox="0 0 110 96">
+    <ellipse cx="55" cy="80" rx="48" ry="11" fill="#eef3fb" stroke="#c9d6ea" stroke-width="2"/>
+    <path d="M18 78 Q30 40 55 34 Q80 40 92 78 Z" fill="${col}" stroke="${white ? "#9fb0cc" : "#0002"}" stroke-width="2"/>
+    <ellipse cx="44" cy="52" rx="6" ry="9" fill="#fff" opacity=".35"/>
+    <text x="96" y="30" font-size="16" fill="#ffc93c">✦</text></svg>`;
+  if (kind === "gas") return `<svg width="104" height="110" viewBox="0 0 104 110">
+    <rect x="42" y="6" width="20" height="10" rx="3" fill="#ff9d92"/>
+    <path d="M44 16 V38 A32 32 0 1 0 60 38 V16" fill="${none ? "#fff" : col}" fill-opacity="${none ? 1 : .6}" stroke="#6b7a99" stroke-width="3"/>
+    ${none ? `<text x="52" y="76" font-size="14" text-anchor="middle" fill="#9fb0cc" font-weight="900">とうめい</text>` :
+      `<circle cx="38" cy="66" r="7" fill="#fff" opacity=".35"/><circle cx="64" cy="80" r="5" fill="#fff" opacity=".3"/>`}
+    <path d="M30 60 Q34 52 42 50" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/></svg>`;
+  if (kind === "flame") return `<svg width="96" height="116" viewBox="0 0 96 116"><defs>
+    <radialGradient id="fg" cx="50%" cy="70%" r="60%"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${col}"/><stop offset="1" stop-color="${col}" stop-opacity=".85"/></radialGradient></defs>
+    <path d="M48 6 C60 30 78 40 74 66 C72 82 60 90 48 90 C36 90 24 82 22 66 C20 48 36 40 40 24 C44 34 50 36 48 6Z" fill="url(#fg)"/>
+    <rect x="36" y="90" width="24" height="18" rx="4" fill="#c9d6ea"/><rect x="28" y="106" width="40" height="7" rx="3" fill="#6b7a99"/></svg>`;
+  return `<svg width="80" height="116" viewBox="0 0 80 116">
+    <path d="M26 8 V92 A14 14 0 0 0 54 92 V8" fill="#fff" stroke="#6b7a99" stroke-width="3"/>
+    <path d="M27.5 46 V92 A12.5 12.5 0 0 0 52.5 92 V46 Z" fill="${none ? "#eef3fb" : col}" fill-opacity="${none ? 1 : .9}"/>
+    <rect x="20" y="4" width="40" height="7" rx="3" fill="#ff9d92"/>
+    <path d="M33 56 V86" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>`;
+}
+
+// ================= メニュー =================
+function menu() {
+  run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
+  const best = loadBest();
+  stage.innerHTML = `<div class="menu">
+    <div class="logo pop">${APP.logo}<small>${APP.sub}</small></div>
+    <div class="tag">${APP.tag}</div>
+    <div class="kyotsu" style="margin:0 0 14px">${kyotsuBadge()}</div>
+    <div class="chs">${CH.map((c, i) => `<button class="cc" data-i="${i}" style="background:${c.bg}">${c.isNew ? `<span class="new">NEW</span>` : ""}
+      ${best[c.id] ? `<span class="best">BEST ${best[c.id]}</span>` : ""}
+      <div class="em">${c.em}</div><small>${c.no}</small><b>${c.title.replace("：", "<br>")}</b><span class="mtag">${c.swipe ? "2択スワイプ" : "4択"}</span></button>`).join("")}</div>
+    <div class="tog"><button id="mPlay" class="${AUTO ? "" : "on"}">4択であそぶ</button><button id="mAuto" class="${AUTO ? "on" : ""}">自動再生（録画用）</button></div>
+    <div class="note">Lv.1 は似た色の選択肢なし → Lv.3 で似た色が登場！</div>
+  </div>`;
+  stage.querySelectorAll(".cc").forEach(b => b.onclick = () => start(CH[+b.dataset.i]));
+  $("mPlay").onclick = () => { AUTO = false; menu(); };
+  $("mAuto").onclick = () => { AUTO = true; menu(); };
+}
+$("homeBtn").onclick = menu;
+
+// ================= 出題づくり =================
+function build(ch) {
+  const cq = buildQ(ch); if (cq) return cq;
+  const n = Math.min(ch.n || 10, ch.q.length);
+  const target = n === 10 ? {1:4, 2:4, 3:2} : {1:Math.round(n*.3), 2:Math.round(n*.4), 3:n - Math.round(n*.3) - Math.round(n*.4)};
+  const cnt = {}, picked = [];
+  const ok = q => (cnt[q.c] || 0) < (ch.cap[q.c] ?? ch.capAll ?? 2);
+  const add = q => { picked.push(q); cnt[q.c] = (cnt[q.c] || 0) + 1; };
+  for (const d of [1, 2, 3]) {
+    for (const q of shuffle(ch.q.filter(x => x.d === d))) { if (picked.filter(p => p.d === d).length >= target[d]) break; if (ok(q)) add(q); }
+  }
+  for (const q of shuffle(ch.q)) { if (picked.length >= n) break; if (!picked.includes(q) && ok(q)) add(q); }
+  for (const q of shuffle(ch.q)) { if (picked.length >= n) break; if (!picked.includes(q)) add(q); }
+  return picked.sort((a, b) => a.d - b.d);
+}
+const levelOf = (i, n) => i < Math.round(n * .4) ? 1 : i < Math.round(n * .8) ? 2 : 3;
+
+// 似ている色＝同じ系統 or 名前に同じ漢字を含む（例：黄 と 黄褐、緑 と 淡緑）
+const similar = (a, b) => !(cur && cur.noSim) && (famOf(a) === famOf(b) || [...a].some(ch => ch !== "色" && b.includes(ch)));
+function choices(q, lv, allow) {
+  const set = [q.c];
+  const pool = shuffle(allow.filter(c => c !== q.c && (c !== "無色" || c === q.trap)));  // 無色は答え・ひっかけ以外では出さない
+  const fillDistinct = list => { for (const c of list) { if (set.length >= 4) break; if (!set.includes(c) && set.every(s => !similar(s, c))) set.push(c); } };
+  if (lv === 1) {
+    // Lv.1：まぎらわしい色名は出さない（シンプルな色名を優先）
+    // 半分の確率でシンプルな色名を優先、残りは全色からランダム（どちらも似た色は出さない）
+    fillDistinct(Math.random() < .5 ? [...pool.filter(c => SIMPLE.includes(c)), ...pool] : pool);
+  } else {
+    // Lv.2：ひっかけ色を1つだけ ／ Lv.3：似た色をどんどん混ぜる
+    if (q.trap && allow.includes(q.trap) && (lv === 3 || Math.random() < .75)) set.push(q.trap);
+    const near = pool.filter(c => similar(q.c, c) && !set.includes(c));
+    near.slice(0, lv === 3 ? 3 : (set.length > 1 ? 0 : 1)).forEach(c => { if (set.length < 4) set.push(c); });
+    fillDistinct(pool);
+  }
+  for (const c of pool) { if (set.length >= 4) break; if (!set.includes(c)) set.push(c); }
+  return shuffle(set);
+}
+
+// ================= ゲーム進行 =================
+async function start(ch) {
+  if (ch.swipe) return startSwipe(ch);
+  const my = ++run; cur = ch; Q = build(ch); idx = 0; score = 0; combo = 0; got = [];
+  $("hdr").style.display = ""; $("chap").innerHTML = `<small>${ch.no}</small>${ch.title}`;
+  let lastLv = 1;
+  drawDrops();
+  await banner(`<div class="kyotsu">${kyotsuBadge()}</div><div class="big pop mid">${ch.title}</div><div class="sub">${Q.length}連チャレンジ！ まずは定番から</div>`, 1700);
+  for (idx = 0; idx < Q.length; idx++) {
+    if (my !== run) return;
+    drawDrops();
+    const lv = levelOf(idx, Q.length);
+    if (lv !== lastLv) {
+      lastLv = lv;
+      const B = {1:[`Lv.1`, "", "まずは定番から"], 2:[`Lv.2 ⚡`, "p", "ひっかけ問題が混ざるよ"], 3:[`Lv.3 🔥`, "g", "似た色に注意！"]}[lv];
+      await banner(`<div class="big pop ${B[1]}">${B[0]}</div><div class="sub">${B[2]}</div>`, 1300);
+      if (my !== run) return;
+    }
+    await ask(Q[idx], lv, my);
+  }
+  if (my !== run) return;
+  idx = Q.length; drawDrops(); result();
+}
+
+async function banner(html, ms) { $("tint").style.opacity = 0; stage.innerHTML = `<div class="banner">${html}</div>`; SE.lv(); await sleep(ms); }
+
+function ask(q, lv, my) {
+  return new Promise(resolve => {
+    $("tint").style.opacity = 0;
+    const last = idx === Q.length - 1;
+    const opts = choices(q, lv, cur.allow);
+    const LIMIT = AUTO ? 3200 : 8000;
+    stage.innerHTML = `
+      <div class="card lv${lv} flip" id="card">
+        <div class="ribbon ${last ? "last" : "l" + lv}">${last ? "LAST 👑" : "Lv." + lv}</div>
+        <div class="prompt">${pickOne(cur.prompts || [cur.prompt])}</div>
+        <div class="formula ${q.sz || ""}">${q.fm}</div>
+        <div class="nm">${q.nm}</div>
+        <div class="qm pop">?</div>
+        <div class="timer"><i id="tb"></i></div>
+      </div>
+      ${AUTO ? "" : `<div class="choices">${opts.map(o => `<button class="ch" data-c="${o}">${cur.icon ? cur.icon(o) : drop(o, 20)}${o}</button>`).join("")}</div>`}`;
+    $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIMIT, fill:"forwards"});
+    let done = false, tid;
+    const finish = async (pick, el) => {
+      if (done || my !== run) return; done = true; clearTimeout(tid);
+      const ok = AUTO || pick === q.c;
+      stage.querySelectorAll(".ch").forEach(b => { b.disabled = true;
+        if (b.dataset.c === q.c) b.classList.add("right"); else if (b.dataset.c === pick) b.classList.add("wrong"); });
+      got.push(ok); if (ok) { score++; combo++; } else combo = 0;
+      if (!ok) { $("card").classList.add("wob"); SE.ng(); await sleep(500); }
+      if (my !== run) return;
+      splash(q.c, el);
+      reveal(q, ok);
+      drawDrops();
+      if (ok) { SE.ok(); burst(el); if (combo >= 2) comboText(); }
+      await sleep(AUTO ? 2500 : q.hint ? 3000 : 2100);
+      resolve();
+    };
+    stage.querySelectorAll(".ch").forEach(b => b.onclick = () => finish(b.dataset.c, b));
+    tid = setTimeout(() => finish(null, null), LIMIT);
+  });
+}
+
+function splash(c, el) {
+  const r = el ? el.getBoundingClientRect() : $("card").getBoundingClientRect();
+  const s = document.createElement("div"); s.className = "splash";
+  s.style.left = r.left + r.width / 2 + "px"; s.style.top = r.top + r.height / 2 + "px"; s.style.background = pastel(c);
+  document.body.appendChild(s);
+  requestAnimationFrame(() => s.style.transform = "translate(-50%,-50%) scale(90)");
+  setTimeout(() => { $("tint").style.background = pastel(c); $("tint").style.transition = "none"; $("tint").style.opacity = 1;
+    requestAnimationFrame(() => $("tint").style.transition = ""); s.remove(); }, 620);
+}
+
+function burst(el) {
+  const r = (el || $("card")).getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const ch = ["★","✦","●","▲","✧"], cols = ["#ff6b5b","#3d7cff","#ffc93c","#18b6a4"];
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement("div"); p.className = "pt"; p.textContent = ch[i % 5];
+    const a = Math.PI * 2 * i / 16, d = 70 + Math.random() * 60;
+    p.style.left = cx + "px"; p.style.top = cy + "px"; p.style.color = cols[i % 4];
+    p.style.setProperty("--dx", Math.cos(a) * d + "px"); p.style.setProperty("--dy", Math.sin(a) * d + "px"); p.style.setProperty("--r", (Math.random() * 360) + "deg");
+    document.body.appendChild(p); setTimeout(() => p.remove(), 950);
+  }
+}
+
+function comboText() {
+  const w = combo >= 6 ? "Perfect!!" : combo >= 4 ? "Excellent!" : combo >= 3 ? "Great!" : "Nice!";
+  const d = document.createElement("div"); d.className = "combo pop"; d.innerHTML = `${w} <small>×${combo}</small>`;
+  stage.appendChild(d);
+}
+
+function reveal(q, ok) {
+  const card = $("card"), lv = card.className.match(/lv\d/)[0];
+  card.className = `card ${lv} flip`;
+  card.innerHTML = `
+    <div class="res pop ${ok ? "ok" : "ng"}">${AUTO ? "正解！" : ok ? "せいかい！" : "おしい…！"}</div>
+    <div class="small-f">${q.fm}</div><div class="small-n">${q.nm}</div>
+    <div class="ansrow">${illust(q.k || cur.kind, q.c)}<div class="cw pop ${q.c.length >= 4 ? "xs" : q.c.length >= 2 ? "s" : ""}" style="--hl:${HEX[q.c] || !(q.c in HEX) ? pastel(q.c) : "#e9eef7"}"><span>${q.c}</span></div></div>
+    ${q.hint ? `<div class="hint">💡 ${q.hint}</div>` : ""}`;
+}
+
+function result() {
+  $("tint").style.opacity = 0;
+  const n = Q.length, rate = score / n;
+  const r = score === n ? "S" : rate >= .7 ? "A" : "B";
+  const name = {S:"カラーマスター 👑", A:"カラーハンター ⚡", B:"カラールーキー 🔰"}[r];
+  const aMin = Math.ceil(n * .7);
+  if (!AUTO) saveBest(cur.id, r);
+  SE.fin(); for (let i = 0; i < 3; i++) setTimeout(() => burst($("res") || stage), i * 250);
+  stage.innerHTML = `<div class="result" id="res">
+    ${AUTO ? `<h2 class="pop">何問わかった？</h2>
+      <div class="ranks" style="margin:10px 0">
+        <div><span class="r" style="color:#ffb020">S</span>${n}問</div>
+        <div><span class="r" style="color:#3d7cff">A</span>${aMin}〜${n - 1}問</div>
+        <div><span class="r" style="color:#18b6a4">B</span>〜${aMin - 1}問</div></div>
+      <div class="title-b">コメントでランクを教えて！</div>` :
+    `<h2>${cur.no} ${cur.title}</h2>
+      <div class="score">${score}<small> / ${n}</small></div>
+      <div class="title-b pop">${r}ランク・${name}</div>
+      <div style="font-size:12px;color:var(--sub);font-weight:700">ゲットしたカラー</div>
+      <div class="palette">${Q.map((q, i) => drop(q.c, 26, got[i] ? "fill" : "miss")).join("")}</div>`}
+    <div style="font-weight:900;margin-top:4px">今日の${Q.length}問まとめ</div>${summaryTable()}<div class="save">スクショして直前に見返そう！</div>
+    <button class="btn" id="again">もう一回</button>
+    <button class="btn sub" id="back">ほかの単元へ</button>
+  </div>`;
+  $("again").onclick = () => start(cur);
+  $("back").onclick = menu;
+}
+
+// ================= スワイプ（2択）モード =================
+const SWOPT = m => (cur && cur.swipe ? cur.swipe.opts : METH)[m];
+function apparatus(m, s = 46) {
+  const o = SWOPT(m); if (o.icon) return o.icon(s);
+  const c = o.col;
+  if (m === "水上置換") return `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+    <path d="M4 22 V40 Q4 44 8 44 H40 Q44 44 44 40 V22" fill="none" stroke="${c}" stroke-width="3"/>
+    <rect x="5.5" y="28" width="37" height="14.5" rx="2" fill="${c}" opacity=".25"/>
+    <path d="M18 6 H30 V36 H18 Z" fill="#fff" stroke="${c}" stroke-width="3"/><rect x="19.5" y="22" width="9" height="12.5" fill="${c}" opacity=".25"/>
+    <path d="M10 46 V38 Q10 34 16 34 H22" fill="none" stroke="${c}" stroke-width="2.5"/></svg>`;
+  if (m === "上方置換") return `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+    <path d="M17 34 V6 Q17 3 20 3 H28 Q31 3 31 6 V34" fill="none" stroke="${c}" stroke-width="3"/>
+    <path d="M24 46 V10" stroke="${c}" stroke-width="3"/><path d="M19 15 L24 9 L29 15" fill="none" stroke="${c}" stroke-width="2.5"/></svg>`;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 48 48">
+    <path d="M17 14 V42 Q17 45 20 45 H28 Q31 45 31 42 V14" fill="none" stroke="${c}" stroke-width="3"/>
+    <path d="M24 2 V38" stroke="${c}" stroke-width="3"/><path d="M19 33 L24 39 L29 33" fill="none" stroke="${c}" stroke-width="2.5"/></svg>`;
+}
+function molecules(q) {
+  const none = q.gc === "無色", fill = none ? "#9cc6ff" : HEX[q.gc], st = none ? "#3d7cff" : "#0003";
+  const n = Math.min(q.at, 4), r = 9;
+  let g = "";
+  for (let k = 0; k < 7; k++) {
+    const x = 30 + (k % 4) * 75 + Math.random() * 30, y = 30 + (k > 3 ? 55 : 0) + Math.random() * 25;
+    let atoms = "";
+    if (q.ring) { // ベンゼン環（六角形）
+      const pts = Array.from({length: 6}, (_, j) => { const t = Math.PI / 3 * j + k; return `${Math.cos(t) * 14},${Math.sin(t) * 14}`; }).join(" ");
+      atoms = `<polygon points="${pts}" fill="#fff8" stroke="${none ? "#3d7cff" : HEX[q.gc]}" stroke-width="3"/><circle r="6" fill="none" stroke="${none ? "#3d7cff" : HEX[q.gc]}" stroke-width="2"/>`;
+    } else
+    for (let a = 0; a < n; a++) { const ang = a * 2.1 + k; atoms += `<circle cx="${a ? Math.cos(ang) * r * 1.3 : 0}" cy="${a ? Math.sin(ang) * r * 1.3 : 0}" r="${a ? r * .8 : r}" fill="${fill}" stroke="${st}" stroke-width="2"/>`; }
+    g += `<g transform="translate(${x} ${y})"><g class="mol" style="--mx:${(Math.random() - .5) * 18}px;--my:${(Math.random() - .5) * 14}px;animation-delay:${-Math.random() * 3}s">${atoms}</g></g>`;
+  }
+  const bg = none ? "linear-gradient(#eaf3ff,#d5e7ff)" : `linear-gradient(${pastel(q.gc)},color-mix(in srgb, ${HEX[q.gc]} 50%, #fff))`;
+  return `<div class="sc-top" style="background:${bg}"><svg viewBox="0 0 340 140" preserveAspectRatio="xMidYMid slice">${g}</svg></div>`;
+}
+function hearts(l) { return Array.from({length: 3}, (_, i) => `<span class="${i < l ? "" : "x"}">♥</span>`).join(""); }
+
+async function startSwipe(ch) {
+  const my = ++run; cur = ch; Q = build(ch); idx = 0; score = 0; combo = 0; got = []; let lives = 3;
+  $("hdr").style.display = ""; $("tint").style.opacity = 0;
+  const head = () => {
+    $("chap").innerHTML = `<small>${ch.no}</small>${ch.swipe.title} <span class="lives">${hearts(lives)}</span>`;
+    $("drops").innerHTML = `<div class="bar10" style="width:100%">${Q.map((q, i) => `<i style="background:${i < got.length ? (got[i] ? SWOPT(q.ans).col : "#cfd6e2") : ""}"></i>`).join("")}</div>`;
+  };
+  head();
+  await banner(`<div class="kyotsu">${kyotsuBadge()}</div><div class="big pop">${ch.swipe.big}</div><div class="sub">スワイプで仕分け！ 2択${Q.length}連・ライフ3つ</div>`, 1600);
+  for (idx = 0; idx < Q.length; idx++) {
+    if (my !== run) return;
+    const lv = levelOf(idx, Q.length), last = idx === Q.length - 1;
+    if (idx === Math.round(Q.length * .4)) { await banner(`<div class="big pop p">LEVEL UP ▲</div><div class="sub">ひっかけが混ざるよ</div>`, 1200); }
+    if (last) { await banner(`<div class="big pop g">ラスボス</div><div class="sub">最後の相手はボス！</div>`, 1300); }
+    if (my !== run) return;
+    const ok = await swipeQ(q => q, Q[idx], lv, last, my);
+    if (my !== run) return;
+    if (!ok) lives--;
+    head();
+    if (lives <= 0) break;
+  }
+  if (my !== run) return;
+  swipeResult(lives);
+}
+
+function swipeQ(_, q, lv, last, my) {
+  return new Promise(resolve => {
+    const opts = cur.swipe.pick(q, lv), trick = lv >= 2 && q.trap && !last;
+    const LIMIT = AUTO ? 3000 : 9000;
+    stage.innerHTML = `
+      <div class="sw-wrap"><div class="scard ${trick ? "trick" : ""} ${last ? "boss" : ""} ${cur.swipe.top ? "tubecard" : ""} flip" id="sc">
+        ${trick ? `<div class="sc-tag" style="background:#ff8a3d">ひっかけ注意</div>` : last ? `<div class="sc-tag" style="background:var(--pink)">BOSS</div>` : ""}
+        ${cur.swipe.top ? cur.swipe.top(q) : molecules(q)}
+        <div class="sc-body">
+          <div class="sc-name"><b>${q.nm}</b><span class="f">${q.fm}</span>${cur.swipe.badge(q) ? `<span class="mw">${cur.swipe.badge(q)}</span>` : ""}</div>
+          <div class="sc-desc">${q.desc}</div>
+          <div class="chips">${cur.swipe.chips.map((c, i) => `<button class="chip" data-k="${i}">${c[0]}</button>`).join("")}</div>
+          <div class="sc-timer"><i id="tb"></i></div>
+          <div class="sc-note">${AUTO ? "迷ったら止めて考えよう！" : `← 左右にスワイプして${cur.swipe.note} →`}</div>
+        </div></div></div>
+      <div class="toast" id="toast"></div>
+      <div class="sides">${opts.map((o, i) => `<button class="side" data-i="${i}" style="--c:${SWOPT(o).col}"><span class="ring">${apparatus(o)}</span>${o}<span class="arrow">${i ? "右へ →" : "← 左へ"}</span></button>`).join("")}</div>`;
+    const sc = $("sc"), sides = stage.querySelectorAll(".side");
+    $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIMIT, fill:"forwards"});
+    stage.querySelectorAll(".chip").forEach(c => c.onclick = e => { e.stopPropagation(); c.classList.add("open");
+      c.textContent = cur.swipe.chips[+c.dataset.k][1](q); });
+    let done = false, tid, sx = null, dx = 0;
+    const finish = async i => {
+      if (done || my !== run) return; done = true; clearTimeout(tid);
+      const pick = i == null ? null : opts[i], ok = AUTO || pick === q.ans;
+      got.push(ok); if (ok) { score++; combo++; } else combo = 0;
+      sides.forEach((s, k) => { if (opts[k] === q.ans) s.classList.add("right"); else if (k === i) s.classList.add("wrong"); s.classList.remove("hot"); });
+      const st = document.createElement("div"); st.className = "stamp2 pop";
+      st.style.color = st.style.borderColor = ok ? "var(--mint)" : "var(--pink)"; st.textContent = ok ? "正解" : (pick ? "ざんねん" : "時間切れ");
+      sc.appendChild(st);
+      if (cur.swipe.reveal) cur.swipe.reveal(sc, q);
+      $("toast").innerHTML = ok ? `<span class="ok">✓ 正解！ ${cur.swipe.right ? cur.swipe.right(q) : `${q.nm} → ${q.ans}`}</span>${q.hint ? `<small>💡 ${q.hint}</small>` : ""}${combo >= 3 ? `<small>${combo}連続！</small>` : ""}`
+        : `<span class="ng">✗ 正解は ${q.ans}</span><small>💡 ${q.hint || cur.swipe.why(q)}</small>`;
+      if (ok) { SE.ok(); burst(sc); } else { SE.ng(); sc.classList.add("wob"); }
+      await sleep(AUTO ? 1700 : (ok && !q.hint ? 1100 : 2300));
+      if (my !== run) return;
+      const dir = (i ?? (ok ? opts.indexOf(q.ans) : 0)) ? 1 : -1;
+      sc.style.transform = `translateX(${dir * 520}px) rotate(${dir * 25}deg)`; sc.style.opacity = 0;
+      await sleep(320); resolve(ok);
+    };
+    // スワイプ操作
+    sc.addEventListener("pointerdown", e => { if (done || AUTO || e.target.closest(".chip")) return; sx = e.clientX; dx = 0; sc.classList.add("drag"); sc.setPointerCapture(e.pointerId); });
+    sc.addEventListener("pointermove", e => { if (sx == null) return; dx = e.clientX - sx;
+      sc.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+      sides.forEach((s, k) => s.classList.toggle("hot", Math.abs(dx) > 40 && (dx > 0) === (k === 1))); });
+    const up = () => { if (sx == null) return; sx = null; sc.classList.remove("drag");
+      if (Math.abs(dx) > 80) { sc.style.transform = `translateX(${dx * 1.3}px) rotate(${dx / 14}deg)`; finish(dx > 0 ? 1 : 0); }
+      else { sc.style.transform = ""; sides.forEach(s => s.classList.remove("hot")); } };
+    sc.addEventListener("pointerup", up); sc.addEventListener("pointercancel", up);
+    sides.forEach(s => s.onclick = () => { if (!AUTO) finish(+s.dataset.i); });
+    tid = setTimeout(() => finish(AUTO ? opts.indexOf(q.ans) : null), LIMIT);
+  });
+}
+
+function summaryTable() {
+  return `<table class="sum">${Q.map((q, i) => i >= got.length ? "" : `<tr><td>${i + 1}</td><td>${q.nm} <span style="font-family:Quicksand">${q.fm}</span></td>
+    <td class="m" style="color:${q.ans ? SWOPT(q.ans).col : "var(--ink)"}">${q.ans ? q.ans : drop(q.c, 13).replace("<svg", `<svg style="vertical-align:-2px;margin-right:3px"`) + q.c}</td><td class="mk" style="color:${got[i] ? "var(--mint)" : "var(--pink)"}">${AUTO ? "" : got[i] ? "○" : "×"}</td></tr>`).join("")}</table>`;
+}
+
+function swipeResult(lives) {
+  $("tint").style.opacity = 0;
+  const n = Q.length, r = score === n ? "S" : score / n >= .7 ? "A" : "B";
+  if (!AUTO) saveBest(cur.id, r);
+  SE.fin();
+  stage.innerHTML = `<div class="result" id="res">
+    <h2 class="pop">${lives <= 0 ? "ゲームオーバー…" : AUTO ? "何問わかった？" : "クリア！"}</h2>
+    ${AUTO ? "" : `<div class="score">${score}<small> / ${n}</small></div><div class="title-b pop">${r}ランク</div>`}
+    <div style="font-weight:900;margin-top:6px">今日の${got.length}問まとめ</div>
+    ${summaryTable()}
+    <div class="save">スクショして直前に見返そう！</div>
+    <button class="btn" id="again">もう一回</button>
+    <button class="btn sub" id="back">ほかの単元へ</button></div>`;
+  $("again").onclick = () => startSwipe(cur); $("back").onclick = menu;
+}
+
+menu();
+</script>
+</body>
+</html>
