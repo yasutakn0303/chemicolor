@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ケミカラのビルド：src/ の部品を組み合わせて、1ファイルで動く HTML を dist/ に出力する。
 
-  python3 build.py          … 全エディションをビルド
+  python3 build.py          … 全エディションをビルド（＋トップページ src/index.html を dist/ にコピー）
 各エディション = エンジン(base.html) ＋ 共通データ ＋ 単元データ ＋（ごほうび版なら）合成ラボ＆報酬
 """
 from pathlib import Path
@@ -47,3 +47,7 @@ if __name__ == "__main__":
     for e in EDITIONS:
         if (SRC / "data" / e[2]).exists():
             build(*e)
+    # トップページ（各エディションへのリンク集）はそのままコピー
+    DIST.mkdir(exist_ok=True)
+    (DIST / "index.html").write_text(read("index.html"), encoding="utf-8")
+    print("✔ dist/index.html")

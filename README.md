@@ -1,1 +1,70 @@
+# ケミカラ！ 化学の色・反応クイズ
 
+高校化学（無機・有機）を、iPad／スマホのブラウザで遊びながら覚えるクイズゲームです。
+ビルドすると **1ファイルで動く HTML** ができるので、サーバーがなくても配布・公開できます。
+
+## エディション（`dist/` に出力）
+
+| ファイル | 内容 |
+|---|---|
+| `inorganic.html` | 無機・基本版（色クイズ4単元＋捕集法スワイプ）。知識を足していくベース |
+| `inorganic-rank.html` | 無機・ランキング＆ごほうび版（スコア・ランキング・コイン・バッジ・素材ガチャ・合成ラボ） |
+| `organic.html` | 有機版（呈色反応・抽出スワイプ・置換/付加スワイプ＋芳香族中心の合成ラボ） |
+
+## フォルダ構成
+
+```
+src/
+  engine/
+    base.html      … クイズ本体（4択モード・スワイプ2択モード・結果まとめ）
+    rewards.js/css … ランキング・コイン・バッジ・ガチャ・合成ラボの画面
+    lab-core.js    … 合成ラボの共通部品（カード表示・解説・ガチャ確率）
+  data/
+    common.js          … 色の定義（HEX）・色の系統（FAM）など全版共通
+    inorganic.js       … 無機の単元・問題
+    inorganic-lab.js   … 無機の素材・物質・レシピ
+    organic.js         … 有機の単元・問題
+    organic-lab.js     … 有機の素材・物質・レシピ
+tools/check_recipes.js … レシピの原子の数・重複などを自動チェック
+src/index.html         … トップページ（3つの版へのリンク集。ビルドで dist/ にコピー）
+build.py               … src を組み合わせて dist/*.html を作る
+.github/workflows/pages.yml … main への push で build.py を実行し GitHub Pages に公開
+```
+
+## 使い方
+
+```bash
+python3 build.py              # dist/ に全エディションを出力
+node tools/check_recipes.js   # 合成レシピの検査（両辺の原子の数がそろっているか など）
+```
+
+## 問題・レシピの追加
+
+- **4択の色クイズ**：`src/data/*.js` の `CH[].q` に `{fm, nm, c, d, trap, hint}` を追加
+  - `c` は `common.js` の `HEX` にある色名。`d` は難易度 1〜3（Lv.1 では似た色名は選択肢に出ない）
+- **スワイプ（2択）**：`mode:"swipe"` の単元に `{nm, fm, ans, d, boss, hint}` を追加（`swipe.opts` が2つの選択肢）
+- **合成レシピ**：`src/data/*-lab.js` の `RECIPES` に `[{材料:係数}, {生成物:係数}, "ヒント"]`
+  - 係数＝必要なカード枚数。触媒は材料と生成物の両方に入れる（変化しないことが伝わる）
+  - 追加したら必ず `node tools/check_recipes.js` で確認
+
+## 共通テストのカウントダウン
+
+`src/data/common.js` の `kyotsuDay1()` が「1月13日以降の最初の土曜日」を計算します（2021〜2027年度の実際の日程と一致）。
+大学入試センターの発表と違う年があれば `KYOTSU_FIXED` に `年: [月-1, 日]` を追加してください。
+
+## 公開（GitHub Pages）
+
+`main` に push するたびに GitHub Actions（`.github/workflows/pages.yml`）が `build.py` を実行し、
+`dist/` を GitHub Pages に公開します。生徒は URL を開くだけで遊べます（ログイン不要）。
+
+**最初に1回だけ設定**：リポジトリの Settings → Pages を開き、
+Build and deployment の **Source** を **GitHub Actions** にします。
+
+- トップページ：`https://<ユーザー名>.github.io/<リポジトリ名>/`（3つの版へのリンク集。元は `src/index.html`）
+- 各版：上の URL の後ろに `inorganic.html` / `inorganic-rank.html` / `organic.html`
+- 公開の進み具合やエラーは、リポジトリの Actions タブで確認できます
+
+## データの保存について
+
+記録（スコア・コイン・図鑑）は各端末のブラウザ（localStorage）に保存されます。
+エディションごとに保存キーが分かれています（`APP.saveKey`）。キーを変えると記録が消えるので注意。
