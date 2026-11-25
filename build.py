@@ -16,7 +16,7 @@ SRC, DIST = ROOT / "src", ROOT / "dist"
 FIELDS = [
     ("inorg", "無機",   "🧪", "inorganic.js", "inorganic-lab.js"),
     ("org",   "有機",   "⚗️", "organic.js",   "organic-lab.js"),
-    ("poly",  "高分子", "🧬", "polymer.js",   "polymer-lab.js"),
+    ("poly",  "高分子", "🧬", "polymer.js",   None),   # 高分子はクイズだけ（合成ラボなし）
 ]
 SAVE_KEY = "chemicolor-rank-v1"   # 変えない（生徒の記録が消える）
 # 合言葉を忘れたときに使う「先生用コード」のハッシュ（SHA-256。コードそのものはここに書かない）
@@ -42,7 +42,7 @@ def fields_js():
     for fid, name, em, quiz, lab in FIELDS:
         out.append(f"""FIELDS.push((() => {{
 {read("data/" + quiz)}
-{read("data/" + lab)}
+{read("data/" + lab) if lab else "const MATS = [], PROD = [], RECIPES = [], LAB_TABS = [], STARTER = {}, LAB_BADGES = [];"}
 return {{id:"{fid}", name:"{name}", em:"{em}", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
   POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM}};
 }})());""")
