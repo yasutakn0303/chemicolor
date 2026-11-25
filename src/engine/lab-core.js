@@ -60,7 +60,7 @@ function showDetail(k) {
 // 実際のペースは tools/sim_collect.js で確かめられる。
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
 // ガチャ（コイン）でも素材が集まるので、おたすけの量は少なめにかける（tools/sim_collect.js で調整した値）
-const HELP = {drop:.3, login:.15};
+const HELP = {drop:.3, login:.18};
 const loginCoins = streak => 150 + Math.min(streak, 7) * 30;   // ログインボーナスのコイン（連続日数で増える）
 
 // 未発見のレシピを順に作るとしたら、足りない素材は何か（中間体は作り方までさかのぼる）
