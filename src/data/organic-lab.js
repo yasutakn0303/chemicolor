@@ -76,30 +76,30 @@ const PROD = [
 // [材料, できるもの（主生成物を先に）, ヒント]　触媒は「入れて出てくる」ので変化しないことがわかる
 const RECIPES = [
  // 脂肪族
- [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加"],
+ [{C2H2:1,H2:1},{C2H4:1},"三重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加","heat,press,cat"],
  [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"お酒がすっぱくなる"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
- [{CH3COOH:1,C2H5OH:1,H2SO4:1},{EtOAc:1,H2O:1,H2SO4:1},"エステル化（濃硫酸は触媒）"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加"],
- [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加"],
+ [{CH3COOH:1,C2H5OH:1,H2SO4:1},{EtOAc:1,H2O:1,H2SO4:1},"エステル化（濃硫酸は触媒）","heat"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加","cat:HgSO₄"],
+ [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化","heat,cat"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加","cat"],
  [{C2H4:1,Br2:1},{C2H4Br2:1},"臭素水の脱色"], [{C2H5OH:2,Na:2},{C2H5ONa:2,H2:1},"アルコールとナトリウム"],
  [{C2H5OH:2,H2SO4:1},{Et2O:1,H2O:1,H2SO4:1},"130℃：分子間で脱水"], [{C2H5OH:1,H2SO4:1},{C2H4:1,H2O:1,H2SO4:1},"170℃：分子内で脱水"],
  [{C2H4:5},{PE:1},"たくさんつながる（付加重合）"], [{C2H3Cl:5},{PVC:1},"たくさんつながる（付加重合）"],
  [{C6H6:1,H2:3,Ni:1},{C6H12:1,Ni:1},"ベンゼン環に水素付加（高温高圧）"], [{C6H6:1,Cl2:3},{BHC:1},"光でベンゼン環に付加"],
  // 芳香族
- [{C2H2:3},{C6H6:1},"3分子が環状につながる"], [{C6H6:1,HNO3:1,H2SO4:1},{PhNO2:1,H2O:1,H2SO4:1},"ニトロ化（混酸）"],
- [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化"], [{C6H6:1,Cl2:1,Fe:1},{PhCl:1,HCl:1,Fe:1},"Fe 触媒で置換"],
+ [{C2H2:3},{C6H6:1},"3分子が環状につながる","heat,cat:Fe"], [{C6H6:1,HNO3:1,H2SO4:1},{PhNO2:1,H2O:1,H2SO4:1},"ニトロ化（混酸）","heat"],
+ [{C6H6:1,H2SO4:1},{PhSO3H:1,H2O:1},"スルホン化","heat"], [{C6H6:1,Cl2:1,Fe:1},{PhCl:1,HCl:1,Fe:1},"Fe 触媒で置換"],
  [{PhNO2:1,H2:3},{PhNH2:1,H2O:2},"ニトロ基の還元"], [{PhNH2:1,HCl:1},{PhNH3Cl:1},"弱塩基 ＋ 強酸"],
  [{PhNH3Cl:1,NaOH:1},{PhNH2:1,NaCl:1,H2O:1},"弱塩基の遊離"], [{PhNH2:1,NaNO2:1,HCl:2},{PhN2Cl:1,NaCl:1,H2O:2},"ジアゾ化（5℃以下）"],
  [{PhN2Cl:1,PhONa:1},{Azo:1,NaCl:1},"ジアゾカップリング"], [{PhN2Cl:1,H2O:1},{PhOH:1,N2:1,HCl:1},"ジアゾニウム塩を温める"],
  [{PhSO3H:1,NaOH:1},{PhSO3Na:1,H2O:1},"スルホン酸の中和"], [{PhSO3Na:1,NaOH:2},{PhONa:1,Na2SO3:1,H2O:1},"アルカリ融解"],
  [{PhCl:1,NaOH:2},{PhONa:1,NaCl:1,H2O:1},"高温高圧で NaOH と"], [{PhONa:1,CO2:1,H2O:1},{PhOH:1,NaHCO3:1},"弱酸の遊離"],
- [{PhOH:1,NaOH:1},{PhONa:1,H2O:1},"フェノールの中和"], [{C6H6:1,C3H6:1},{Cumene:1},"クメン法①"],
+ [{PhOH:1,NaOH:1},{PhONa:1,H2O:1},"フェノールの中和"], [{C6H6:1,C3H6:1},{Cumene:1},"クメン法①","cat"],
  [{Cumene:1,O2:1},{CHP:1},"クメン法②（酸化）"], [{CHP:1,H2SO4:1},{PhOH:1,Acetone:1,H2SO4:1},"クメン法③（分解）"],
  [{PhONa:1,CO2:1},{SalNa:1},"高温高圧（コルベ・シュミット反応）"], [{SalNa:1,HCl:1},{Sal:1,NaCl:1},"弱酸の遊離"],
- [{Sal:1,Ac2O:1},{Aspirin:1,CH3COOH:1},"アセチル化 → 解熱鎮痛剤"], [{Sal:1,CH3OH:1,H2SO4:1},{MeSal:1,H2O:1,H2SO4:1},"エステル化 → 湿布薬"],
+ [{Sal:1,Ac2O:1},{Aspirin:1,CH3COOH:1},"アセチル化 → 解熱鎮痛剤"], [{Sal:1,CH3OH:1,H2SO4:1},{MeSal:1,H2O:1,H2SO4:1},"エステル化 → 湿布薬","heat"],
  [{Tol:2,O2:3},{BzOH:2,H2O:2},"側鎖の酸化（実際は KMnO₄）"], [{BzOH:1,NaHCO3:1},{BzONa:1,H2O:1,CO2:1},"炭酸より強い酸"],
- [{BzOH:1,CH3OH:1,H2SO4:1},{MeBz:1,H2O:1,H2SO4:1},"エステル化"], [{PhNH2:1,Ac2O:1},{Acetanilide:1,CH3COOH:1},"アミノ基のアセチル化"],
- [{PhOH:1,Br2:3},{TBP:1,HBr:3},"臭素水で白色沈殿"], [{PhOH:1,HNO3:3},{Picric:1,H2O:3},"フェノールのニトロ化"],
-].map(([inp, out, hint], i) => ({id:"o" + (i + 1), inp, out, hint}));
+ [{BzOH:1,CH3OH:1,H2SO4:1},{MeBz:1,H2O:1,H2SO4:1},"エステル化","heat"], [{PhNH2:1,Ac2O:1},{Acetanilide:1,CH3COOH:1},"アミノ基のアセチル化"],
+ [{PhOH:1,Br2:3},{TBP:1,HBr:3},"臭素水で白色沈殿"], [{PhOH:1,HNO3:3},{Picric:1,H2O:3},"フェノールのニトロ化","heat,cat:濃硫酸"],
+].map(([inp, out, hint, cond], i) => ({cond, id:"o" + (i + 1), inp, out, hint}));
 
 const LAB_TABS = ["脂肪族", "芳香族"];
 const STARTER = {C2H2:6, H2:6, O2:4, H2O:4, HNO3:2, H2SO4:3, Cl2:2, HCl:3, NaOH:3, CO2:2};
@@ -108,4 +108,11 @@ const LAB_BADGES = [
   {id:"aspirin", e:"💊", nm:"薬学への一歩",   tx:"アセチルサリチル酸を合成", test:p => p.made.Aspirin},
   {id:"azo",     e:"🎨", nm:"染料職人",       tx:"アゾ化合物を合成",         test:p => p.made.Azo},
   {id:"cumene",  e:"🏭", nm:"クメン法マスター", tx:"フェノールとアセトンを合成", test:p => p.made.Acetone},
+  {id:"ester",   e:"🍎", nm:"エステル職人",   tx:"酢酸エチル・サリチル酸メチル・安息香酸メチルを合成", test:p => p.made.EtOAc && p.made.MeSal && p.made.MeBz},
+  {id:"aniline", e:"🟣", nm:"アニリン合成",   tx:"アニリンを合成",       test:p => p.made.PhNH2},
+  {id:"phenol",  e:"🧴", nm:"フェノール合成", tx:"フェノールを合成",     test:p => p.made.PhOH},
+  {id:"salicyl", e:"🌿", nm:"サリチル酸ファミリー", tx:"サリチル酸・アスピリン・サリチル酸メチルを合成", test:p => p.made.Sal && p.made.Aspirin && p.made.MeSal},
+  {id:"ether",   e:"💨", nm:"脱水の達人",     tx:"ジエチルエーテルとエチレンを合成", test:p => p.made.Et2O && p.made.C2H4},
+  {id:"picric",  e:"💛", nm:"ピクリン酸",     tx:"ピクリン酸を合成",     test:p => p.made.Picric},
+  {id:"addBz",   e:"⬢",  nm:"ベンゼンへの付加", tx:"シクロヘキサンと BHC を合成", test:p => p.made.C6H12 && p.made.BHC},
 ];

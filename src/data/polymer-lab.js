@@ -62,20 +62,20 @@ const PROD = [
 const RECIPES = [
  // 樹脂
  [{C2H4:5},{PE:1},"エチレンの付加重合"], [{C3H6:5},{PP:1},"プロペンの付加重合"],
- [{C2H2:1,HCl:1},{C2H3Cl:1},"アセチレンに HCl を付加"], [{C2H3Cl:5},{PVC:1},"塩化ビニルの付加重合"],
+ [{C2H2:1,HCl:1},{C2H3Cl:1},"アセチレンに HCl を付加","cat"], [{C2H3Cl:5},{PVC:1},"塩化ビニルの付加重合"],
  [{Sty:5},{PS:1},"ベンゼン環をもつ単量体の付加重合"], [{MMA:5},{PMMA:1},"アクリル樹脂をつくる"],
  [{C2F4:5},{PTFE:1},"フッ素をふくむ単量体の付加重合"], [{VAc:5},{PVAc:1},"接着剤になる高分子"],
- [{TPA:5,EG:5},{PET:1,H2O:10},"ペットボトルの縮合重合"], [{Lac:5},{PLA:1,H2O:5},"生分解性プラスチック"],
- [{PhOH:5,HCHO:5},{PF:1,H2O:5},"付加縮合でできる熱硬化性樹脂"],
+ [{TPA:5,EG:5},{PET:1,H2O:10},"ペットボトルの縮合重合","heat"], [{Lac:5},{PLA:1,H2O:5},"生分解性プラスチック","heat"],
+ [{PhOH:5,HCHO:5},{PF:1,H2O:5},"付加縮合でできる熱硬化性樹脂","heat"],
  // 繊維・ゴム
- [{AdA:5,HMDA:5},{N66:1,H2O:10},"ジカルボン酸とジアミンの縮合重合"], [{Capro:5},{N6:1},"環が開いてつながる（開環重合）"],
- [{AN:5},{PAN:1},"アクリル繊維をつくる"], [{PVAc:1,NaOH:5},{PVA:1,CH3COONa:5},"ポリ酢酸ビニルのけん化"],
+ [{AdA:5,HMDA:5},{N66:1,H2O:10},"ジカルボン酸とジアミンの縮合重合","heat"], [{Capro:5},{N6:1},"環が開いてつながる（開環重合）","heat"],
+ [{AN:5},{PAN:1},"アクリル繊維をつくる"], [{PVAc:1,NaOH:5},{PVA:1,CH3COONa:5},"ポリ酢酸ビニルのけん化","heat"],
  [{Bd:5},{BR:1},"二重結合が2つの単量体の付加重合"], [{CP:5},{CR:1},"Cl をもつ合成ゴム"],
  [{Bd:5,Sty:5},{SBR:1},"2種類の単量体の共重合"],
  // 天然高分子
  [{Iso:5},{NR:1},"ゴムの木がつくる高分子"], [{aGlc:5},{Starch:1,H2O:5},"α-グルコースがつながる"],
  [{bGlc:5},{Cell:1,H2O:5},"β-グルコースがつながる"], [{Gly:5},{Pep:1,H2O:5},"ペプチド結合でつながる"],
-].map(([inp, out, hint], i) => ({id:"p" + (i + 1), inp, out, hint}));
+].map(([inp, out, hint, cond], i) => ({cond, id:"p" + (i + 1), inp, out, hint}));
 
 const LAB_TABS = ["樹脂", "繊維・ゴム", "天然高分子"];
 const STARTER = {C2H4:5, aGlc:5, C2H2:2, HCl:2};
@@ -84,4 +84,11 @@ const LAB_BADGES = [
   {id:"nylon",   e:"🧵", nm:"ナイロン職人",   tx:"ナイロン66 を合成",   test:p => p.made.N66},
   {id:"rubber",  e:"🛞", nm:"ゴム博士",       tx:"SBR を合成",          test:p => p.made.SBR},
   {id:"natural", e:"🌾", nm:"天然高分子マスター", tx:"デンプン・セルロース・ポリペプチドを合成", test:p => p.made.Starch && p.made.Cell && p.made.Pep},
+  {id:"pet",     e:"🍶", nm:"ペットボトル職人", tx:"PET を合成",          test:p => p.made.PET},
+  {id:"teflon",  e:"🍳", nm:"テフロン加工",     tx:"PTFE を合成",         test:p => p.made.PTFE},
+  {id:"nylon2",  e:"🪢", nm:"ナイロン兄弟",     tx:"ナイロン66 とナイロン6 を合成", test:p => p.made.N66 && p.made.N6},
+  {id:"rubber3", e:"🎈", nm:"合成ゴム3種",      tx:"BR・CR・SBR を合成",  test:p => p.made.BR && p.made.CR && p.made.SBR},
+  {id:"vinylon", e:"🧶", nm:"ビニロンへの道",   tx:"ポリビニルアルコールを合成", test:p => p.made.PVA},
+  {id:"eco",     e:"♻️", nm:"エコ素材",         tx:"ポリ乳酸を合成",      test:p => p.made.PLA},
+  {id:"resin",   e:"🔌", nm:"熱硬化性樹脂",     tx:"フェノール樹脂を合成", test:p => p.made.PF},
 ];
