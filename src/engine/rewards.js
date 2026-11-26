@@ -157,7 +157,7 @@ function finishRun() {
   const prevBest = p.best[cur.id] || 0, newRec = pts > prevBest;
   if (newRec) p.best[cur.id] = pts;
   const pos = addRank(cur.id, pts);
-  const coins = Math.round(pts / 4) + {S:150, A:80, B:30}[r];  // 1回クリアでたっぷり
+  const coins = runCoins(pts, r);
   const lv0 = lvOfXp(p.xp);
   p.coins += coins; p.earned += coins; p.xp += pts; p.plays++;
   const ids = ["first"];

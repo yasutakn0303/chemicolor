@@ -268,7 +268,7 @@ function menu() {
     <div class="kyotsu" style="margin:0 0 14px">${kyotsuBadge()}</div>
     <div class="chs">${CH.map((c, i) => `<button class="cc" data-i="${i}" style="background:${c.bg}">${c.isNew ? `<span class="new">NEW</span>` : ""}
       ${best[c.id] ? `<span class="best">BEST ${best[c.id]}</span>` : ""}
-      <div class="em">${c.em}</div><small>${c.no}</small><b>${c.title.replace("：", "<br>")}</b><span class="mtag">${c.swipe ? "2択スワイプ" : "4択"}</span></button>`).join("")}</div>
+      <div class="em">${c.em}</div><small>${c.no}</small><b>${c.title.replace("：", "<br>")}</b><span class="mtag">${c.swipe ? "2択スワイプ" : c.q.every(q => q.ms) ? "複数選択" : c.q.some(q => q.ms) ? "4択＋複数選択" : c.allow && c.allow.length === 3 ? "3択" : "4択"}</span></button>`).join("")}</div>
     <div class="tog"><button id="mPlay" class="${AUTO ? "" : "on"}">4択であそぶ</button><button id="mAuto" class="${AUTO ? "on" : ""}">自動再生（録画用）</button></div>
     <div class="note">Lv.1 は似た色の選択肢なし → Lv.3 で似た色が登場！</div>
   </div>`;
