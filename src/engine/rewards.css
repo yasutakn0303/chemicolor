@@ -158,3 +158,13 @@
 .rc.hinted{background:#fff9e6}
 .btoast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 16px);transform:translateX(-50%);z-index:60;background:var(--ink);color:#fff;
   border:3px solid var(--sun);border-radius:18px;padding:10px 18px;font-size:16px;text-align:center;line-height:1.5;box-shadow:0 6px 0 #0004;animation:bounce .6s cubic-bezier(.2,1.8,.4,1)}
+/* 合成ラボ：見やすい素材一覧 */
+.panel.wide{max-width:640px}
+.stk.big{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.stk.big .st{min-height:86px;font-size:11px;padding:8px 4px 6px;border:2px solid transparent}
+.stk.big .st .f{font-size:15px;margin-top:2px}
+.stk.big .st .nmx{line-height:1.25;word-break:keep-all;overflow-wrap:anywhere}
+.stk.big .st.sel{border-color:var(--lav);background:#e6f0ff;box-shadow:0 0 0 2px #9cc0ff}
+.st .inf{position:absolute;top:2px;left:4px;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #9fb0cc;color:#6b7a99;font:700 11px/15px Quicksand,sans-serif;text-align:center}
+.sub3{font-size:12px;font-weight:900;color:var(--sub);margin:8px 0 4px}
+.slot small{display:block;font-size:9px;font-weight:700;color:var(--sub)}

@@ -427,59 +427,75 @@ async function gachaFx(got) {
 }
 
 // ================= 合成ラボ =================
-let slot = {}, recTab = null;
+// 材料は「何を使うか」だけをタップで選ぶ（係数は選ばなくてよい）。必要な枚数はレシピの係数どおりに自動で使う。
+// 工業的製法など触媒が必要なレシピは、触媒（ガチャで出る）も選ばないと反応しない。
+let slot = {}, recTab = null, labFilter = "all";
 const canMake = (p, r) => Object.entries(r.inp).every(([k, n]) => (p.inv[k] || 0) >= n);
+const keysOf = o => Object.keys(o).sort().join("+");
+const isCat = (r, k) => r.inp[k] && r.out[k];                 // 両辺にある＝触媒
+const needText = r => Object.entries(r.inp).map(([k, n]) => `${ITEM[k].fm} ×${n}`).join("・");
+const LAB_FILTERS = [["all", "すべて"], ["気体", "気体"], ["液体", "液体"], ["水溶液", "水溶液"], ["固体", "固体"], ["cat", "触媒"]];
 function lab(msg = "") {
   if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const p = P(); ensureInv(p);
-  const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0 && FIELD.used.has(k));   // この分野のレシピで使うものだけ
+  const catKeys = new Set(RECIPES.flatMap(r => Object.keys(r.inp).filter(k => isCat(r, k))));
+  const pass = k => labFilter === "all" || (labFilter === "cat" ? catKeys.has(k) : ITEM[k].st === labFilter && !catKeys.has(k));
+  const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0 && FIELD.used.has(k) && pass(k));
+  const mats = owned.filter(k => ITEM[k].mat), prods = owned.filter(k => !ITEM[k].mat);
   const found = RECIPES.filter(r => p.recipes[r.id]).length;
-  const slotHTML = Object.keys(slot).length
-    ? Object.entries(slot).map(([k, n]) => `<button class="slot" data-k="${k}">${n > 1 ? `<b>${n}</b>` : ""}${ITEM[k].fm}</button>`).join(`<span class="plus">＋</span>`)
-    : `<span style="color:var(--sub);font-size:13px">下の素材をタップして入れよう<br>（同じ素材を2回タップ＝係数2）</span>`;
+  const sel = Object.keys(slot);
+  const slotHTML = sel.length
+    ? sel.map(k => `<button class="slot" data-k="${k}">${ITEM[k].fm}<small>${ITEM[k].nm}</small></button>`).join(`<span class="plus">＋</span>`)
+    : `<span style="color:var(--sub);font-size:13px">使う素材をタップして選ぼう（係数は考えなくてOK）<br>例：N₂ と H₂ と 触媒を選ぶ → アンモニア</span>`;
   if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
   const list = RECIPES.filter(r => recCat(r) === recTab);
-  stage.innerHTML = `<div class="panel">
+  const cards = ks => `<div class="stk big">${ks.map(k => itemCard(k, p.inv[k], `data-k="${k}" role="button"`, true).replace('class="st', `class="st ${slot[k] ? "sel" : ""}`)).join("")}</div>`;
+  stage.innerHTML = `<div class="panel wide">
     <h2 class="pop">⚗️ 合成ラボ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
     <div class="flask">${slotHTML}</div>
-    <div style="display:flex;gap:8px"><button class="btn" id="mix" ${Object.keys(slot).length ? "" : "disabled style='opacity:.5'"}>合成する！</button><button class="btn sub" id="clr" style="flex:none;width:96px;white-space:nowrap">クリア</button></div>
+    <div style="display:flex;gap:8px"><button class="btn" id="mix" ${sel.length ? "" : "disabled style='opacity:.5'"}>合成する！</button><button class="btn sub" id="clr" style="flex:none;width:96px;white-space:nowrap">クリア</button></div>
     <div id="lmsg" class="lmsg">${msg}</div>
-    <div class="sec">もっている素材・物質 <small>（長押しで解説）</small></div>
-    ${owned.length ? `<div class="stk">${owned.map(k => itemCard(k, p.inv[k] - (slot[k] || 0), `data-k="${k}" role="button"`)).join("")}</div>` : `<div class="empty">素材がありません。ガチャやクイズで集めよう</div>`}
+    <div class="sec">もっている素材・物質 <small>（タップで選ぶ／ⓘで解説）</small></div>
+    <div class="tabs">${LAB_FILTERS.map(([f, t]) => `<button data-lf="${f}" class="${labFilter === f ? "on" : ""}">${t}</button>`).join("")}</div>
+    ${!owned.length ? `<div class="empty">この種類の素材はありません</div>` : ""}
+    ${mats.length ? `<div class="sub3">🎁 ガチャの素材</div>${cards(mats)}` : ""}
+    ${prods.length ? `<div class="sub3">⚗️ つくった物質</div>${cards(prods)}` : ""}
     <div class="sec">レシピ帳　${found}/${RECIPES.length}</div>
     <div class="tabs">${LAB_TABS.map(t => `<button data-rt="${t}" class="${recTab === t ? "on" : ""}">${t} ${RECIPES.filter(r => recCat(r) === t && p.recipes[r.id]).length}/${RECIPES.filter(r => recCat(r) === t).length}</button>`).join("")}</div>
     <div class="recipes">${list.map(r => p.recipes[r.id]
-      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<div>${condIcons(r)}</div><small>${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
+      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<div>${condIcons(r)}</div><small>${canMake(p, r) ? "▶ タップで材料をセット" : `材料が足りない（${needText(r)}）`}</small></button>`
       : p.hints && p.hints[r.id]
-      ? `<button class="rc hinted ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${sideHTML(r.inp)} → ${outNames(r)}<div>${condIcons(r)}</div><small>💡 ${r.hint}　${canMake(p, r) ? "▶ タップで材料をセット" : "材料が足りない"}</small></button>`
+      ? `<button class="rc hinted ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${Object.keys(r.inp).map(k => ITEM[k].fm).join(" ＋ ")} → ${outNames(r)}<div>${condIcons(r)}</div><small>💡 ${r.hint}　${canMake(p, r) ? "▶ タップで材料をセット" : `材料が足りない（${needText(r)}）`}</small></button>`
       : `<div class="rc">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${outNames(r)}<small>💡 ${r.hint}（材料${Object.keys(r.inp).length}種類）</small>
-          <button class="hbtn" data-h="${r.id}">🔍 材料と係数を見る（🪙${HINT_COST}）</button></div>`).join("")}</div>
+          <button class="hbtn" data-h="${r.id}">🔍 材料を見る（🪙${HINT_COST}）</button></div>`).join("")}</div>
     <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
-  stage.querySelectorAll(".stk .st[data-k]").forEach(c => {
-    let lp; c.onpointerdown = () => { lp = setTimeout(() => { lp = "done"; showDetail(c.dataset.k); }, 550); };
-    c.onpointerup = c.onpointerleave = () => { if (lp !== "done") clearTimeout(lp); };
-    c.onclick = () => { if (lp === "done") { lp = null; return; }
-      const k = c.dataset.k; if ((p.inv[k] || 0) - (slot[k] || 0) <= 0) return;
-      slot[k] = (slot[k] || 0) + 1; bell([880], .05, .04); lab(); };
+  // 素材カード：タップで選ぶ／もう一度タップで外す。解説は ⓘ だけ（スクロールで開かないように長押しはやめた）
+  stage.querySelectorAll(".stk .st[data-k]").forEach(c => c.onclick = e => {
+    const k = c.dataset.k;
+    if (e.target.closest(".inf")) return showDetail(k);
+    slot[k] ? delete slot[k] : slot[k] = 1; bell([880], .05, .04);
+    const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y;
   });
-  stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { const k = b.dataset.k; if (--slot[k] <= 0) delete slot[k]; lab(); });
-  stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; lab(); });
-  stage.querySelectorAll(".rc[data-r]").forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.r); if (!canMake(p, r)) return; slot = {...r.inp}; lab(); stage.scrollTop = 0; });
+  stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { delete slot[b.dataset.k]; lab(); });
+  stage.querySelectorAll("[data-lf]").forEach(b => b.onclick = () => { labFilter = b.dataset.lf; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
+  stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
+  stage.querySelectorAll(".rc[data-r]").forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.r);
+    slot = Object.fromEntries(Object.keys(r.inp).map(k => [k, 1])); lab(canMake(p, r) ? "" : `🤏 材料が足りない：${needText(r)} が必要`); });
   stage.querySelectorAll(".hbtn").forEach(b => b.onclick = () => buyHint(RECIPES.find(x => x.id === b.dataset.h)));
   $("clr").onclick = () => { slot = {}; lab(); };
   $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
-  $("mix").onclick = mix;
+  $("mix").onclick = () => mix();
 }
 const HINT_COST = 50;
 const outNames = r => Object.keys(r.out).filter(k => !ITEM[k].mat || Object.keys(r.out).length === 1).map(k => ITEM[k].nm).join(" ＋ ");
-// ヒント：コイン50で、未発見レシピの材料と係数を見せる（ほぼ答え）
+// ヒント：コイン50で、未発見レシピの材料を見せる（ほぼ答え）
 function buyHint(r) {
   const p = P(), ok = p.coins >= HINT_COST;
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box"><div style="font-size:40px">🔍</div>
-    <div style="font-weight:900">「${outNames(r)}」の材料と係数を見る？</div>
+    <div style="font-weight:900">「${outNames(r)}」の材料を見る？</div>
     <div style="font-size:13px;color:var(--sub);margin-top:4px">🪙${HINT_COST} 使います（所持 🪙${p.coins}）</div>
     ${ok ? `<button class="btn" id="hOk">見る（🪙${HINT_COST}）</button>` : `<div class="lmsg">コインが足りません。クイズで集めよう</div>`}
     <button class="btn sub" id="hNo">やめる</button></div>`;
@@ -487,19 +503,33 @@ function buyHint(r) {
   m.querySelector("#hNo").onclick = () => m.remove();
   if (ok) m.querySelector("#hOk").onclick = () => {
     p.coins -= HINT_COST; p.hints = p.hints || {}; p.hints[r.id] = today(); p.hintUsed = (p.hintUsed || 0) + 1;
-    const b = autoBadges(); saveS(); m.remove(); bell([880, 1175]); lab(`🔍 ヒント：${sideHTML(r.inp)} → ${outNames(r)}`); badgeToast(b);
+    const b = autoBadges(); saveS(); m.remove(); bell([880, 1175]); lab(`🔍 ヒント：${Object.keys(r.inp).map(k => ITEM[k].fm).join(" ＋ ")} → ${outNames(r)}`); badgeToast(b);
   };
 }
-function sameBag(a, b) { const ka = Object.keys(a), kb = Object.keys(b); return ka.length === kb.length && ka.every(k => a[k] === b[k]); }
-
-async function mix() {
-  const p = P(), r = RECIPES.find(x => sameBag(x.inp, slot));
+// 同じ材料の組み合わせで条件がちがうレシピ（例：エタノール＋濃硫酸の 130℃／170℃）は、どちらで反応させるか選ぶ
+function pickCond(cands) {
+  return new Promise(res => {
+    const m = document.createElement("div"); m.className = "modal";
+    m.innerHTML = `<div class="box"><div style="font-size:36px">🌡️</div><div style="font-weight:900">どの条件で反応させる？</div>
+      ${cands.map((r, i) => `<button class="btn ${i ? "sub" : ""}" data-i="${i}">${r.hint}</button>`).join("")}
+      <button class="btn sub" data-i="-1">やめる</button></div>`;
+    document.body.appendChild(m);
+    m.querySelectorAll("[data-i]").forEach(b => b.onclick = () => { m.remove(); res(cands[+b.dataset.i] || null); });
+  });
+}
+async function mix(fixed) {
+  const p = P(), key = keysOf(slot);
+  const cands = fixed ? [fixed] : RECIPES.filter(x => keysOf(x.inp) === key);
+  let r = cands.length > 1 ? await pickCond(cands) : cands[0];
+  if (cands.length > 1 && !r) return lab();
   if (!r) {
-    const near = RECIPES.find(x => Object.keys(x.inp).sort().join() === Object.keys(slot).sort().join());
-    SE.ng(); slot = {};
-    return lab(near ? `🤏 材料は合ってる！ でも枚数（係数）がちがうよ` : `💨 反応しなかった… 組み合わせを変えてみよう`);
+    // 触媒を入れわすれている？（触媒を除くと材料が一致するレシピがある）
+    const noCat = RECIPES.find(x => keysOf(Object.fromEntries(Object.keys(x.inp).filter(k => !isCat(x, k)).map(k => [k, 1]))) === key && Object.keys(x.inp).some(k => isCat(x, k)));
+    SE.ng();
+    return lab(noCat ? `⚗️ 組み合わせは合ってる！ でもこの反応には触媒が必要みたい…` : `💨 反応しなかった… 組み合わせを変えてみよう`);
   }
-  const used = {...slot};
+  if (!canMake(p, r)) { SE.ng(); return lab(`🤏 材料が足りない：${needText(r)} が必要（係数の数だけカードを使う）`); }
+  const used = {...r.inp};
   Object.entries(r.inp).forEach(([k, n]) => p.inv[k] -= n);
   Object.entries(r.out).forEach(([k, n]) => { p.inv[k] = (p.inv[k] || 0) + n; p.made[k] = (p.made[k] || 0) + n; });
   const first = !p.recipes[r.id]; p.recipes[r.id] = today();
@@ -510,13 +540,14 @@ async function mix() {
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
   const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
   await mixFx(r, used, first);
-  // 結果
-  const prods = Object.keys(r.out).filter(k => !ITEM[k].mat), main = prods[0] || Object.keys(r.out)[0];
-  const again = canMake(p, r);
+  // 結果：係数つきの反応式と解説
+  const prods = Object.keys(r.out).filter(k => !ITEM[k].mat && !isCat(r, k)), main = prods[0] || Object.keys(r.out)[0];
+  const again = canMake(p, r), cats = Object.keys(r.inp).filter(k => isCat(r, k));
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box res-box">${first ? `<div class="newtag pop">NEW!</div>` : ""}
     <div class="pop" style="font-size:22px;color:var(--pink)">${first ? "新しい物質を発見！" : "合成成功！"}</div>
     <div class="eqbig">${eqHTML(r)}</div>
+    <div style="font-size:12px;color:var(--sub);font-weight:700">使ったカード：${needText(r)}${cats.length ? `（${cats.map(k => ITEM[k].fm).join("・")} は触媒なので戻ってくる）` : ""}</div>
     <div class="flipin">${detailHTML(main)}</div>
     ${prods.slice(1).map(k => `<div class="sub2">＋ ${ITEM[k].nm}（${ITEM[k].c}）もできた</div>`).join("")}
     ${first ? `<div class="bonus">はじめての発見ボーナス 🪙+50</div>` : ""}
@@ -524,7 +555,7 @@ async function mix() {
     <div style="display:flex;gap:8px">${again ? `<button class="btn" id="mAgain" style="font-size:15px;white-space:nowrap">もう一度つくる</button>` : ""}<button class="btn ${again ? "sub" : ""}" id="mOk" style="font-size:15px;white-space:nowrap">ラボにもどる</button></div></div>`;
   document.body.appendChild(m);
   m.querySelector("#mOk").onclick = () => { m.remove(); lab(); };
-  if (again) m.querySelector("#mAgain").onclick = () => { m.remove(); slot = {...r.inp}; mix(); };
+  if (again) m.querySelector("#mAgain").onclick = () => { m.remove(); slot = Object.fromEntries(Object.keys(r.inp).map(k => [k, 1])); mix(r); };
 }
 
 // ================= マイページ（バッジ・図鑑） =================

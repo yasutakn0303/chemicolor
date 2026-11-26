@@ -52,6 +52,12 @@ for (const l of labs) {
   l.P.filter(p => !outs.has(p.k)).forEach(p => errs.push(`作れない物質: ${p.nm}`));
   const bags = l.R.map(r => JSON.stringify(Object.entries(r.inp).sort()));
   bags.forEach((b, i) => { if (bags.indexOf(b) !== i) errs.push(`材料の組み合わせが重複: ${l.R[i].id}`); });
+  // 合成ラボは係数を選ばないので、材料の種類（キーの組）が同じレシピは「条件を選ぶ」画面になる。ヒント文で区別できるか確かめる
+  const sets = {}; l.R.forEach(r => (sets[Object.keys(r.inp).sort().join("+")] = sets[Object.keys(r.inp).sort().join("+")] || []).push(r));
+  Object.values(sets).filter(v => v.length > 1).forEach(v => {
+    if (new Set(v.map(r => r.hint)).size < v.length) errs.push(`材料の種類が同じでヒントも同じ: ${v.map(r => r.id).join(",")}`);
+    else console.log(`   （材料の種類が同じ → 条件を選ぶ：${v.map(r => r.hint).join(" ／ ")}）`);
+  });
   // 同じキーなのに化学式がちがう（別の物質を同じキーで登録してしまった）
   [...l.M, ...l.P].forEach(x => { const a = ALL[x.k]; if (a && JSON.stringify(parse(a.fm)) !== JSON.stringify(parse(x.fm))) errs.push(`キー ${x.k} の化学式がファイルごとにちがう`); });
   console.log(`${errs.length ? "✘" : "✔"} ${l.file}: レシピ ${l.R.length}・物質 ${new Set([...l.M, ...l.P].map(x => x.k)).size}`);
