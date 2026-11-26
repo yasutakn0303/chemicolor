@@ -15,6 +15,7 @@ const FIELDS_SRC = [["inorg", "inorganic", 1], ["org", "organic", 1], ["poly", "
 const code = `
 const drop = () => "", illust = () => "", molecules = () => "", $ = () => null;
 ${read("data/common.js")}
+${read("engine/struct.js")}
 const FIELDS = [];
 ${FIELDS_SRC.map(([id, f, lab]) => `FIELDS.push((() => {\n${read(`data/${f}.js`)}\n${lab ? read(`data/${f}-lab.js`) : "const MATS = [], PROD = [], RECIPES = [], LAB_TABS = [], STARTER = {}, LAB_BADGES = [];"}
 return {id:"${id}", name:"${id}", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES, POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};})());`).join("\n")}
