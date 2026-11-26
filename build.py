@@ -52,7 +52,8 @@ return {{id:"{fid}", name:"{name}", em:"{em}", APP, CH, METH, MATS, PROD, RECIPE
 def build(out, title, kind):
     s = read("engine/base.html")
     s = s.replace("/*TITLE*/", title)
-    s = must_replace(s, "/*COMMON*/", read("data/common.js") + "\n" + read("engine/struct.js"))
+    # 構造式の部品は総合版だけで使う（基本版には入れない）
+    s = must_replace(s, "/*COMMON*/", read("data/common.js") + ("" if kind == "basic" else "\n" + read("engine/struct.js")))
     if kind == "basic":
         s = must_replace(s, "/*DATA*/", read("data/inorganic.js"))
         s = s.replace("/*LAB*/", "")
@@ -68,9 +69,21 @@ def build(out, title, kind):
         s = must_replace(s, "\nmenu();\n</script>", "\n" + read("engine/rewards.js") + "\n" + read("engine/lab-fx.js") + "\nmenu();\n</script>")
         s = must_replace(s, '$("homeBtn").onclick = menu;', '$("homeBtn").onclick = () => menu();')
         s = must_replace(s, "/*TEACHER_HASH*/", TEACHER_CODE_SHA256)
+    s = minify(s)
     DIST.mkdir(exist_ok=True)
     (DIST / out).write_text(s, encoding="utf-8")
     print(f"✔ dist/{out}  ({len(s)//1024} KB)")
+
+def minify(s):
+    """配信するファイルを軽くする（安全な範囲だけ）：行頭の字下げ・空行・行全体の // コメントを取りのぞく。
+    行の中身は変えないので、プログラムの動きは変わらない。"""
+    out = []
+    for line in s.split("\n"):
+        t = line.strip()
+        if not t or t.startswith("// "):
+            continue
+        out.append(t)
+    return "\n".join(out) + "\n"
 
 def redirect(out, to):
     (DIST / out).write_text(f"""<!DOCTYPE html>
