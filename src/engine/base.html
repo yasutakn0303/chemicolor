@@ -69,6 +69,11 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .ch svg{flex:none}
 .ch.right{background:#d8f7ec;box-shadow:0 5px 0 #8fdcc3}.ch.wrong{background:#ffe1dd;color:#c9483a;box-shadow:0 5px 0 #f5b8b0}
 .ch:disabled{cursor:default}
+.qimg{margin-top:8px;max-width:100%;display:flex;justify-content:center}.sc-top svg.struct{position:static;max-height:118px;width:auto !important;max-width:94%}.qimg.sm{margin-top:6px;transform:scale(.85)}
+.choices.multi .ch .box{flex:none;width:18px;height:18px;border-radius:6px;border:2.5px solid #c9d6ea;background:#fff}
+.choices.multi .ch.sel{background:#e6f0ff;box-shadow:0 5px 0 #9cc0ff}.choices.multi .ch.sel .box{background:var(--lav);border-color:var(--lav)}
+.choices.multi .ch.right .box{background:var(--mint);border-color:var(--mint)}
+.btn.mgo{max-width:350px;margin-top:12px;background:var(--lav);box-shadow:0 5px 0 #2557c9}
 .ch.lg{font-size:15px}.ch.xl{font-size:12.5px;line-height:1.2;padding:13px 8px}
 /* fx */
 .splash{position:fixed;width:30px;height:30px;border-radius:50%;z-index:0;transform:translate(-50%,-50%) scale(0);transition:transform .6s ease-out,opacity .6s}
@@ -329,7 +334,7 @@ async function start(ch) {
       await banner(`<div class="big pop ${B[1]}">${B[0]}</div><div class="sub">${B[2]}</div>`, 1300);
       if (my !== run) return;
     }
-    await ask(Q[idx], lv, my);
+    await (Q[idx].ms ? askMulti : ask)(Q[idx], lv, my);   // ms がある問題は複数選択
   }
   if (my !== run) return;
   idx = Q.length; drawDrops(); result();
@@ -343,17 +348,18 @@ function ask(q, lv, my) {
     const last = idx === Q.length - 1;
     const opts = q.opts ? shuffle([q.c, ...shuffle(q.opts.filter(o => o !== q.c)).slice(0, 3)]) : choices(q, lv, cur.allow);
     const LIMIT = AUTO ? 3200 : 8000;
+    const LIM = LIMIT * (q.img ? 1.6 : 1);   // 構造式を読む問題は時間を長めに
     stage.innerHTML = `
       <div class="card lv${lv} flip" id="card">
         <div class="ribbon ${last ? "last" : "l" + lv}">${last ? "LAST 👑" : "Lv." + lv}</div>
         <div class="prompt">${q.ask || pickOne(cur.prompts || [cur.prompt])}</div>
         <div class="formula ${q.sz || ""}">${q.fm}</div>
         <div class="nm">${q.nm}</div>
-        <div class="qm pop">?</div>
+        ${q.img ? `<div class="qimg">${q.img}</div>` : `<div class="qm pop">?</div>`}
         <div class="timer"><i id="tb"></i></div>
       </div>
       ${AUTO ? "" : `<div class="choices">${opts.map(o => `<button class="ch ${o.length > 9 ? "xl" : o.length > 5 ? "lg" : ""}" data-c="${o}">${cur.icon ? cur.icon(o) : drop(o, 20)}${o}</button>`).join("")}</div>`}`;
-    $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIMIT, fill:"forwards"});
+    $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIM, fill:"forwards"});
     let done = false, tid;
     const finish = async (pick, el) => {
       if (done || my !== run) return; done = true; clearTimeout(tid);
@@ -371,7 +377,53 @@ function ask(q, lv, my) {
       resolve();
     };
     stage.querySelectorAll(".ch").forEach(b => b.onclick = () => finish(b.dataset.c, b));
-    tid = setTimeout(() => finish(null, null), LIMIT);
+    tid = setTimeout(() => finish(null, null), LIM);
+  });
+}
+
+// ================= 複数選択（「何と何？」）：q.ms＝正解の配列、q.opts＝まちがいの候補。全部そろえば正解 =================
+function askMulti(q, lv, my) {
+  return new Promise(resolve => {
+    $("tint").style.opacity = 0;
+    const last = idx === Q.length - 1, ans = new Set(q.ms);
+    const opts = shuffle([...q.ms, ...shuffle(q.opts.filter(o => !ans.has(o))).slice(0, Math.max(2, 6 - q.ms.length))]);
+    const LIMIT = AUTO ? 3200 : 8000;
+    const LIM = LIMIT * 1.8;
+    const sel = new Set();
+    stage.innerHTML = `
+      <div class="card lv${lv} flip" id="card">
+        <div class="ribbon ${last ? "last" : "l" + lv}">${last ? "LAST 👑" : "Lv." + lv}</div>
+        <div class="prompt">${q.ask || "あてはまるものを すべて えらぶ"}</div>
+        <div class="formula ${q.sz || ""}">${q.fm}</div>
+        <div class="nm">${q.nm}</div>
+        ${q.img ? `<div class="qimg">${q.img}</div>` : `<div class="qm pop">?</div>`}
+        <div class="timer"><i id="tb"></i></div>
+      </div>
+      ${AUTO ? "" : `<div class="choices multi">${opts.map(o => `<button class="ch ${o.length > 9 ? "xl" : o.length > 5 ? "lg" : ""}" data-c="${o}"><span class="box"></span>${o}</button>`).join("")}</div>
+        <button class="btn mgo" id="mgo">決定（${q.ms.length > 1 ? "いくつか選ぶ" : "1つ選ぶ"}）</button>`}`;
+    $("tb").animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}], {duration: LIM, fill:"forwards"});
+    let done = false, tid;
+    const finish = async () => {
+      if (done || my !== run) return; done = true; clearTimeout(tid);
+      const ok = AUTO || (sel.size === ans.size && [...sel].every(o => ans.has(o)));
+      stage.querySelectorAll(".ch").forEach(b => { b.disabled = true;
+        if (ans.has(b.dataset.c)) b.classList.add("right"); else if (sel.has(b.dataset.c)) b.classList.add("wrong"); });
+      if ($("mgo")) $("mgo").disabled = true;
+      got.push(ok); if (ok) { score++; combo++; } else combo = 0;
+      if (!ok) { $("card").classList.add("wob"); SE.ng(); await sleep(500); }
+      if (my !== run) return;
+      splash(q.c, $("mgo"));
+      reveal(q, ok);
+      drawDrops();
+      if (ok) { SE.ok(); burst($("card")); if (combo >= 2) comboText(); }
+      await sleep(AUTO ? 2500 : ok ? (q.hint ? 2000 : 1300) : 3000);
+      resolve();
+    };
+    stage.querySelectorAll(".ch").forEach(b => b.onclick = () => {
+      const c = b.dataset.c; sel.has(c) ? sel.delete(c) : sel.add(c); b.classList.toggle("sel", sel.has(c)); bell([880], .05, .03);
+    });
+    if ($("mgo")) $("mgo").onclick = finish;
+    tid = setTimeout(finish, LIM);
   });
 }
 
@@ -408,7 +460,7 @@ function reveal(q, ok) {
   card.className = `card ${lv} flip`;
   card.innerHTML = `
     <div class="res pop ${ok ? "ok" : "ng"}">${AUTO ? "正解！" : ok ? "せいかい！" : "おしい…！"}</div>
-    <div class="small-f">${q.fm}</div><div class="small-n">${q.nm}</div>
+    <div class="small-f">${q.fm}</div><div class="small-n">${q.nm}</div>${q.img ? `<div class="qimg sm">${q.img}</div>` : ""}
     <div class="ansrow">${illust(q.k || cur.kind, q.c)}<div class="cw pop ${q.c.length >= 8 ? "xxs" : q.c.length >= 4 ? "xs" : q.c.length >= 2 ? "s" : ""}" style="--hl:${HEX[q.c] || !(q.c in HEX) ? pastel(q.c) : "#e9eef7"}"><span>${q.c}</span></div></div>
     ${q.hint ? `<div class="hint">💡 ${q.hint}</div>` : ""}`;
 }

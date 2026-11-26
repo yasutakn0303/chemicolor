@@ -52,7 +52,7 @@ return {{id:"{fid}", name:"{name}", em:"{em}", APP, CH, METH, MATS, PROD, RECIPE
 def build(out, title, kind):
     s = read("engine/base.html")
     s = s.replace("/*TITLE*/", title)
-    s = must_replace(s, "/*COMMON*/", read("data/common.js"))
+    s = must_replace(s, "/*COMMON*/", read("data/common.js") + "\n" + read("engine/struct.js"))
     if kind == "basic":
         s = must_replace(s, "/*DATA*/", read("data/inorganic.js"))
         s = s.replace("/*LAB*/", "")

@@ -39,9 +39,11 @@ function ensureInv(p, F = FIELD) {
   p.started = p.started || {inorg:1};   // 分野を分ける前の記録は無機のスタートセットをもらい済み
   if (F && !p.started[F.id]) { p.started[F.id] = 1; Object.entries(F.STARTER).forEach(([k, n]) => p.inv[k] = (p.inv[k] || 0) + n); }
 }
-function itemCard(k, n, extra = "") {
+// info：ⓘ ボタンをつけて、名前を省略せずに出す（合成ラボ用）
+function itemCard(k, n, extra = "", info = false) {
   const it = ITEM[k] || ALL_ITEM[k];
-  return `<div class="st ${it.r || "P"}" ${extra}>${it.r ? `<span class="rr">${it.r}</span>` : it.cat !== LAB_TABS[0] && it.cat !== "素材" ? `<span class="rr" style="color:var(--mint)">${it.cat}</span>` : ""}${n != null ? `<span class="cnt">×${n}</span>` : ""}${drop(it.c, 16)}<div class="f">${it.fm}</div>${it.nm.length > 7 ? it.nm.slice(0, 7) + "…" : it.nm}</div>`;
+  const name = info ? it.nm.replace(/（触媒）/, "") : it.nm.length > 7 ? it.nm.slice(0, 7) + "…" : it.nm;
+  return `<div class="st ${it.r || "P"}" ${extra}>${it.r ? `<span class="rr">${it.r}</span>` : it.cat !== LAB_TABS[0] && it.cat !== "素材" ? `<span class="rr" style="color:var(--mint)">${it.cat}</span>` : ""}${n != null ? `<span class="cnt">×${n}</span>` : ""}${info ? `<span class="inf">i</span>` : ""}${drop(it.c, 16)}<div class="f">${it.fm}</div><div class="nmx">${name}</div></div>`;
 }
 function detailHTML(k) {
   const it = ITEM[k] || ALL_ITEM[k];
