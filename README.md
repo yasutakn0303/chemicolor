@@ -44,7 +44,7 @@ src/
     inorganic-lab.js   … 無機の素材・物質・レシピ
     organic.js         … 有機の単元・問題
     organic-lab.js     … 有機の素材・物質・レシピ
-    polymer.js         … 高分子・糖類の単元・問題（12単元。合成ラボなし）
+    polymer.js         … 高分子・糖類の単元・問題（11単元。合成ラボなし）
 tools/check_recipes.js … レシピの原子の数・重複などを自動チェック
 tools/sim_collect.js   … コンプまでのペース（何周・何日）をシミュレーション
 src/index.html         … トップページ（3つの版へのリンク集。ビルドで dist/ にコピー）
