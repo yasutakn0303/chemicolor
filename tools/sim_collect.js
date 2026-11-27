@@ -82,7 +82,7 @@ for (let t = 0; t < N; t++) {
   while (!allDone(p) && day < 200) { login(p, ++day); const left = FIELDS.filter(F => !done(p, F)); if (left.length) playRun(p, left[day % left.length]); }
   daily.push(day);
 }
-console.log(`目標：遊ぶだけならクリア 40〜60 回 ／ 毎日ログインで 3〜5 週`);
+console.log(`目標：遊ぶだけならクリア 約75 回（全単元を約2.5周） ／ 毎日ログインで 3〜5 週`);
 L.LAB_FIELDS.forEach(F => console.log(`  ${F.id}: レシピ ${F.RECIPES.length}・単元 ${F.CH.length}・必要な素材 ${L.totalNeed(F)} 枚 → クリア1回のおたすけ ${L.dropHelp(F)} 枚`));
 console.log(`  ログイン1日のおたすけ ${L.loginHelp()} 枚`);
 const units = FIELDS.reduce((a, F) => a + F.CH.length, 0);

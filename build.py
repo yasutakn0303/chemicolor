@@ -22,6 +22,10 @@ SAVE_KEY = "chemicolor-rank-v1"   # 変えない（生徒の記録が消える�
 # 合言葉を忘れたときに使う「先生用コード」のハッシュ（SHA-256。コードそのものはここに書かない）
 #   変えるとき： python3 -c "import hashlib;print(hashlib.sha256(('chemicolor-teacher|'+'新しいコード').encode()).hexdigest())"
 TEACHER_CODE_SHA256 = "f390e3d6bb1b409a2afa9eef9f670a141c64094c068030ae7edf4d17422a6c00"
+# お試し用の先生コード（ほかの先生に試してもらう用）のハッシュ。合成ラボの「🔧 先生用」に入れると、
+# そのプレイヤーに1回だけ「全素材5個ずつ＋コイン2500」を渡す（合言葉のリセットや確認モードには使えない）
+#   変えるとき： python3 -c "import hashlib;print(hashlib.sha256(('chemicolor-trial|'+'新しいコード').encode()).hexdigest())"
+TRIAL_CODE_SHA256 = "689c430381ee8a0e1fc550ca7a8aac4f87d638b5e0dc50ed2a64b6810dcfdaab"
 
 EDITIONS = [
     # 出力ファイル名,     タイトル,                                種類
@@ -70,6 +74,7 @@ def build(out, title, kind):
         s = must_replace(s, "\nmenu();\n</script>", "\n" + read("engine/rewards.js") + "\n" + read("engine/lab-fx.js") + "\nmenu();\n</script>")
         s = must_replace(s, '$("homeBtn").onclick = menu;', '$("homeBtn").onclick = () => menu();')
         s = must_replace(s, "/*TEACHER_HASH*/", TEACHER_CODE_SHA256)
+        s = must_replace(s, "/*TRIAL_HASH*/", TRIAL_CODE_SHA256)
     s = minify(s)
     DIST.mkdir(exist_ok=True)
     (DIST / out).write_text(s, encoding="utf-8")
