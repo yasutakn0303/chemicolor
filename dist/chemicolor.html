@@ -125,6 +125,7 @@ background:var(--pink);color:#fff;box-shadow:0 5px 0 #c9483a}
 .stamp2{white-space:nowrap}
 .tubecard .stamp2{top:auto;bottom:64px;left:auto;right:8px;transform:rotate(-10deg);font-size:24px;padding:2px 12px}
 .kyotsu{display:inline-block;background:#fff;color:var(--pink);border:3px solid var(--pink);font-weight:900;border-radius:999px;padding:4px 14px;font-size:15px;transform:rotate(-3deg)}
+.ptime{font-size:12px;font-weight:900;color:var(--ink);background:#fff;border-radius:14px;padding:6px 12px;margin:-4px auto 12px;line-height:1.6;box-shadow:0 3px 0 #d6e4f7;display:inline-block}.ptime b{display:block;color:var(--mint)}
 .kyotsu b{font-family:Quicksand;font-size:22px}
 .cc{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 8px !important}
 .cc b{font-size:15px !important;line-height:1.3}
@@ -403,6 +404,82 @@ function kyotsuBadge() {
 const n = daysToKyotsu(), d = nextKyotsu();
 return n > 0 ? `共通テスト（${d.getMonth() + 1}/${d.getDate()}）まで あと<b>${n}</b>日` : "今日は共通テスト！ がんばれ！";
 }
+const PLAYTIME = {
+enabled: true,          // false にすると、いつでも遊べる
+weekly: [
+{days: "火",   from: "08:40", to: "11:30"},
+{days: "毎日", from: "15:15", to: "22:00"},
+],
+extra: [],
+off: [],
+};
+const PT = {offset: 0, ready: false, waiting: null};
+const WD = "日月火水木金土";
+async function syncTime() {
+try {
+if (!/^https?:/.test(location.protocol)) throw 0;
+const ac = new AbortController(), t = setTimeout(() => ac.abort(), 3000), t0 = Date.now();
+const r = await fetch(location.href.split("#")[0], {method: "HEAD", cache: "no-store", signal: ac.signal});
+clearTimeout(t);
+const d = Date.parse(r.headers.get("Date"));
+if (!isNaN(d)) PT.offset = d - (t0 + Date.now()) / 2;
+} catch (e) {}
+PT.ready = true;
+if (PT.waiting) { const f = PT.waiting; PT.waiting = null; f(); }
+}
+function jstNow() {
+const j = new Date(Date.now() + PT.offset + 9 * 3600e3);
+return {wd: j.getUTCDay(), min: j.getUTCHours() * 60 + j.getUTCMinutes(),
+date: `${j.getUTCFullYear()}-${String(j.getUTCMonth() + 1).padStart(2, "0")}-${String(j.getUTCDate()).padStart(2, "0")}`, ms: j.getTime()};
+}
+const hm = s => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
+const hmText = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+const dayOK = (days, wd) => days === "毎日" || (days === "平日" && wd >= 1 && wd <= 5) || (days === "土日" && (wd === 0 || wd === 6)) || days.includes(WD[wd]);
+function windowsOf(wd, date) {
+if ((PLAYTIME.off || []).includes(date)) return [];
+return [...PLAYTIME.weekly.filter(w => dayOK(w.days, wd)), ...(PLAYTIME.extra || []).filter(w => w.date === date)]
+.map(w => [hm(w.from), hm(w.to)]).sort((a, b) => a[0] - b[0]);
+}
+function playStatus() {
+if (!PLAYTIME.enabled) return {ok: true};
+const n = jstNow(), now = windowsOf(n.wd, n.date).find(([a, b]) => n.min >= a && n.min < b);
+if (now) return {ok: true, left: now[1] - n.min, until: now[1]};
+for (let k = 0; k < 8; k++) {
+const d = new Date(n.ms + k * 864e5), wd = d.getUTCDay();
+const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+const w = windowsOf(wd, date).find(([a]) => k > 0 || a > n.min);
+if (w) return {ok: false, next: `${k === 0 ? "今日" : k === 1 ? "明日" : WD[wd] + "曜"} ${hmText(w[0])}`};
+}
+return {ok: false, next: ""};
+}
+const scheduleText = () => PLAYTIME.weekly.map(w => `${w.days === "毎日" || w.days.length > 1 && /日$|平日/.test(w.days) ? w.days : w.days + "曜"} ${w.from.replace(/^0/, "")}〜${w.to.replace(/^0/, "")}`).join("　／　");
+function playBadge() {
+if (!PLAYTIME.enabled) return "";
+const s = playStatus();
+return `<div class="ptime">⏰ 遊べる時間：${scheduleText()}${s.ok && s.left != null ? `<b>あと ${s.left >= 60 ? `${Math.floor(s.left / 60)}時間${s.left % 60}分` : `${s.left}分`}（${hmText(s.until)} まで）</b>` : ""}</div>`;
+}
+function playLocked() {
+if (!PLAYTIME.enabled) return false;
+if (!PT.ready) { PT.waiting = () => menu(); showLock(null); return true; }
+const s = playStatus();
+if (s.ok) return false;
+showLock(s); return true;
+}
+function showLock(s) {
+run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
+stage.innerHTML = s ? `<div class="result" style="text-align:center">
+<div style="font-size:54px">🌙</div>
+<h2 class="pop">今は遊べない時間です</h2>
+${s.next ? `<div class="title-b">次は <b>${s.next}</b> から</div>` : ""}
+<div class="ptime" style="margin-top:8px">⏰ 遊べる時間<br>${scheduleText().replace(/　／　/g, "<br>")}</div>
+<div style="font-size:12px;color:var(--sub);margin-top:10px">記録はこの端末に残っています。時間になったら、また遊ぼう！</div>
+<button class="btn sub" id="ptRe">もう一度たしかめる</button></div>`
+: `<div class="result" style="text-align:center"><div style="font-size:40px">⏳</div><h2>時刻を確認しています…</h2></div>`;
+if (s) $("ptRe").onclick = () => { PT.ready = false; PT.waiting = () => menu(); syncTime(); showLock(null); };
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncTime(); });
+setInterval(syncTime, 10 * 60e3);
+syncTime();
 const SV_FONT = `font-family="'Hiragino Sans','Zen Maru Gothic',sans-serif" font-weight="700"`;
 const svText = (x, y, t, size = 15, anchor = "middle", extra = "") =>
 `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" text-anchor="${anchor}" ${SV_FONT} fill="#22314f" ${extra}>${t}</text>`;
@@ -1920,12 +1997,14 @@ return `<svg width="80" height="116" viewBox="0 0 80 116">
 <path d="M33 56 V86" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/></svg>`;
 }
 function menu() {
+if (playLocked()) return;   // 遊べる時間の外はお休み画面
 run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
 const best = loadBest();
 stage.innerHTML = `<div class="menu">
 <div class="logo pop">${APP.logo}<small>${APP.sub}</small></div>
 <div class="tag">${APP.tag}</div>
 <div class="kyotsu" style="margin:0 0 14px">${kyotsuBadge()}</div>
+${playBadge()}
 <div class="chs">${CH.map((c, i) => `<button class="cc" data-i="${i}" style="background:${c.bg}">${c.isNew ? `<span class="new">NEW</span>` : ""}
 ${best[c.id] ? `<span class="best">BEST ${best[c.id]}</span>` : ""}
 <div class="em">${c.em}</div><small>${c.no}</small><b>${c.title.replace("：", "<br>")}</b><span class="mtag">${c.swipe ? "2択スワイプ" : c.q.every(q => q.ms) ? "複数選択" : c.q.some(q => q.ms) ? "4択＋複数選択" : c.allow && c.allow.length === 3 ? "3択" : "4択"}</span></button>`).join("")}</div>
@@ -1969,6 +2048,7 @@ for (const c of pool) { if (set.length >= 4) break; if (!set.includes(c)) set.pu
 return shuffle(set);
 }
 async function start(ch) {
+if (playLocked()) return;   // 「もう一回」も時間外なら止める（遊んでいる途中の1回は最後まで遊べる）
 if (ch.swipe) return startSwipe(ch);
 const my = ++run; cur = ch; Q = build(ch); idx = 0; score = 0; combo = 0; got = [];
 $("hdr").style.display = ""; $("chap").innerHTML = `<small>${ch.no}</small>${ch.title}`;
@@ -2169,6 +2249,7 @@ return `<div class="sc-top" style="background:${bg}"><svg viewBox="0 0 340 140" 
 }
 function hearts(l) { return Array.from({length: 3}, (_, i) => `<span class="${i < l ? "" : "x"}">♥</span>`).join(""); }
 async function startSwipe(ch) {
+if (playLocked()) return;
 const my = ++run; cur = ch; Q = build(ch); idx = 0; score = 0; combo = 0; got = []; let lives = 3;
 $("hdr").style.display = ""; $("tint").style.opacity = 0;
 const head = () => {
@@ -2446,6 +2527,7 @@ const _startSwipe = startSwipe;
 startSwipe = function (ch) { pts = 0; runMax = 0; const r = _startSwipe(ch); hudOn(); return r; };
 const _menu = menu;
 menu = function () {
+if (playLocked()) return;
 if (!S.cur || !S.players[S.cur]) return nameEntry();
 _menu();
 ensureInv(P());
@@ -2604,6 +2686,7 @@ stage.querySelectorAll("[data-m]").forEach(b => b.onclick = () => ranking(tab, b
 $("bk").onclick = menu;
 }
 function gacha() {
+if (playLocked()) return;
 if (!FIELD.hasLab) return menu();
 run++; $("hdr").style.display = "none";
 const p = P(); ensureInv(p);
@@ -2655,6 +2738,7 @@ const isCat = (r, k) => r.inp[k] && r.out[k];                 // 両辺にある
 const needText = r => Object.entries(r.inp).map(([k, n]) => `${ITEM[k].fm} ×${n}`).join("・");
 const LAB_FILTERS = [["all", "すべて"], ["気体", "気体"], ["液体", "液体"], ["水溶液", "水溶液"], ["固体", "固体"], ["cat", "触媒"]];
 function lab(msg = "") {
+if (playLocked()) return;
 if (!FIELD.hasLab) return menu();
 run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
 const p = P(); ensureInv(p);

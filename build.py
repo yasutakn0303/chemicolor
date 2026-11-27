@@ -53,7 +53,8 @@ def build(out, title, kind):
     s = read("engine/base.html")
     s = s.replace("/*TITLE*/", title)
     # 構造式の部品は総合版だけで使う（基本版には入れない）
-    s = must_replace(s, "/*COMMON*/", read("data/common.js") + ("" if kind == "basic" else "\n" + read("engine/struct.js")))
+    s = must_replace(s, "/*COMMON*/", read("data/common.js") + "\n" + read("data/schedule.js") + "\n" + read("engine/playtime.js")
+                     + ("" if kind == "basic" else "\n" + read("engine/struct.js")))
     if kind == "basic":
         s = must_replace(s, "/*DATA*/", read("data/inorganic.js"))
         s = s.replace("/*LAB*/", "")

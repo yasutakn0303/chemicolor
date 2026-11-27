@@ -125,6 +125,7 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .stamp2{white-space:nowrap}
 .tubecard .stamp2{top:auto;bottom:64px;left:auto;right:8px;transform:rotate(-10deg);font-size:24px;padding:2px 12px}
 .kyotsu{display:inline-block;background:#fff;color:var(--pink);border:3px solid var(--pink);font-weight:900;border-radius:999px;padding:4px 14px;font-size:15px;transform:rotate(-3deg)}
+.ptime{font-size:12px;font-weight:900;color:var(--ink);background:#fff;border-radius:14px;padding:6px 12px;margin:-4px auto 12px;line-height:1.6;box-shadow:0 3px 0 #d6e4f7;display:inline-block}.ptime b{display:block;color:var(--mint)}
 .kyotsu b{font-family:Quicksand;font-size:22px}
 .cc{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px 8px !important}
 .cc b{font-size:15px !important;line-height:1.3}
@@ -260,12 +261,14 @@ function illust(kind, c) {
 
 // ================= メニュー =================
 function menu() {
+  if (playLocked()) return;   // 遊べる時間の外はお休み画面
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const best = loadBest();
   stage.innerHTML = `<div class="menu">
     <div class="logo pop">${APP.logo}<small>${APP.sub}</small></div>
     <div class="tag">${APP.tag}</div>
     <div class="kyotsu" style="margin:0 0 14px">${kyotsuBadge()}</div>
+    ${playBadge()}
     <div class="chs">${CH.map((c, i) => `<button class="cc" data-i="${i}" style="background:${c.bg}">${c.isNew ? `<span class="new">NEW</span>` : ""}
       ${best[c.id] ? `<span class="best">BEST ${best[c.id]}</span>` : ""}
       <div class="em">${c.em}</div><small>${c.no}</small><b>${c.title.replace("：", "<br>")}</b><span class="mtag">${c.swipe ? "2択スワイプ" : c.q.every(q => q.ms) ? "複数選択" : c.q.some(q => q.ms) ? "4択＋複数選択" : c.allow && c.allow.length === 3 ? "3択" : "4択"}</span></button>`).join("")}</div>
@@ -318,6 +321,7 @@ function choices(q, lv, allow) {
 
 // ================= ゲーム進行 =================
 async function start(ch) {
+  if (playLocked()) return;   // 「もう一回」も時間外なら止める（遊んでいる途中の1回は最後まで遊べる）
   if (ch.swipe) return startSwipe(ch);
   const my = ++run; cur = ch; Q = build(ch); idx = 0; score = 0; combo = 0; got = [];
   $("hdr").style.display = ""; $("chap").innerHTML = `<small>${ch.no}</small>${ch.title}`;
@@ -530,6 +534,7 @@ function molecules(q) {
 function hearts(l) { return Array.from({length: 3}, (_, i) => `<span class="${i < l ? "" : "x"}">♥</span>`).join(""); }
 
 async function startSwipe(ch) {
+  if (playLocked()) return;
   const my = ++run; cur = ch; Q = build(ch); idx = 0; score = 0; combo = 0; got = []; let lives = 3;
   $("hdr").style.display = ""; $("tint").style.opacity = 0;
   const head = () => {

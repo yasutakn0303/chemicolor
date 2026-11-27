@@ -212,6 +212,7 @@ startSwipe = function (ch) { pts = 0; runMax = 0; const r = _startSwipe(ch); hud
 // --- メニュー拡張
 const _menu = menu;
 menu = function () {
+  if (playLocked()) return;
   if (!S.cur || !S.players[S.cur]) return nameEntry();
   _menu();
   ensureInv(P());
@@ -381,6 +382,7 @@ function ranking(tab, mode = "local") {
 
 // ================= 素材ガチャ（演出つき） =================
 function gacha() {
+  if (playLocked()) return;
   if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none";
   const p = P(); ensureInv(p);
@@ -436,6 +438,7 @@ const isCat = (r, k) => r.inp[k] && r.out[k];                 // 両辺にある
 const needText = r => Object.entries(r.inp).map(([k, n]) => `${ITEM[k].fm} ×${n}`).join("・");
 const LAB_FILTERS = [["all", "すべて"], ["気体", "気体"], ["液体", "液体"], ["水溶液", "水溶液"], ["固体", "固体"], ["cat", "触媒"]];
 function lab(msg = "") {
+  if (playLocked()) return;
   if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const p = P(); ensureInv(p);
