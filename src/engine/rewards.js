@@ -36,6 +36,8 @@ const isReg = n => !!(S.players[n] && S.players[n].pin);
 const CLASS_RANK = null;
 // 合言葉を忘れたとき：先生用コード（build.py の TEACHER_CODE_SHA256）を入れると、合言葉を決め直せる
 const TEACHER_HASH = "/*TEACHER_HASH*/";
+const TRIAL_HASH = "/*TRIAL_HASH*/";   // お試し用の先生コード（素材とコインを1回だけ渡す）
+const TRIAL_GIFT = {mats:5, coins:2500};
 async function sha256(t) {
   if (!(window.crypto && crypto.subtle)) return "";
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
@@ -412,14 +414,24 @@ function gacha() {
   };
   $("p1").onclick = () => go(1); $("p10").onclick = () => go(10);
 }
+const GACHA_FX = [
+  {html:`<div class="orb">🫧</div>`, tx:"なにが出るかな…", sr:"…！？ 光り方がちがう！", se:[523, 587, 659, 698, 784]},
+  {html:`<div class="gstage"><div class="gtube">🧪</div>${[0, 1, 2, 3, 4].map(i => `<i class="gbub" style="left:${30 + i * 14}%;animation-delay:${i * .22}s"></i>`).join("")}</div>`,
+    tx:"試験管で調合中…", sr:"…！？ 液が金色に光っている！", se:[440, 494, 523, 587, 659]},
+  {html:`<div class="gstage"><div class="gring"><div class="gspin">${["H", "C", "N", "O", "S", "Cl", "Na", "Fe"].map((e, i) => `<b style="transform:rotate(${i * 45}deg) translate(88px) rotate(${-i * 45}deg)">${e}</b>`).join("")}</div></div><div class="gatom">⚛️</div></div>`,
+    tx:"元素が集まってくる…", sr:"…！？ 元素がかがやいている！", se:[659, 587, 523, 587, 659, 784]},
+];
 async function gachaFx(got) {
   const sr = got.some(m => m.r === "SR"), rr = got.some(m => m.r === "R");
   const fx = document.createElement("div"); fx.className = "fx " + (sr ? "gold" : rr ? "blue" : "");
-  fx.innerHTML = `<div class="orb" id="orb">🫧</div><div class="fxt">${sr ? "…！？ 光り方がちがう！" : "なにが出るかな…"}</div><div class="fx-skip">タップでスキップ</div>`;
+  // 演出は3パターンからランダム：カプセル・フラスコ・原子
+  const pat = GACHA_FX[Math.floor(Math.random() * GACHA_FX.length)];
+  fx.innerHTML = `${pat.html}<div class="fxt">${sr ? pat.sr : pat.tx}</div><div class="fx-skip">タップでスキップ</div>`;
   document.body.appendChild(fx);
   let skip = false; fx.onclick = () => skip = true;
   const wait = async ms => { const t = performance.now(); while (!skip && performance.now() - t < ms) await sleep(30); };
-  bell([523, 587, 659, 698, 784], .1, .04); await wait(sr ? 1500 : 1000);
+  bell(pat.se, .1, .04); await wait(sr ? 1100 : 800);
+  fx.classList.add("go"); if (!skip) bell([392, 523, 659, 784], .08, .04); await wait(sr ? 700 : 450);
   fx.innerHTML = `<div class="flashw"></div><div class="fxgrid" style="grid-template-columns:repeat(${got.length > 5 ? 5 : got.length},1fr)">${got.map((m, i) =>
     `<div class="fc ${m.r}" style="animation-delay:${skip ? 0 : i * (got.length > 10 ? 60 : 160)}ms">${itemCard(m.k)}</div>`).join("")}</div>
     <div class="fxt">${sr ? "✨ SR ゲット！ ✨" : "素材ゲット！"}</div><button class="btn" id="fxOk" style="max-width:260px">OK</button>`;
@@ -519,8 +531,16 @@ async function teacherTools() {
   m.querySelector("#tdNo").onclick = () => m.remove();
   m.querySelector("#tdOk").onclick = async () => {
     if (Date.now() < resetLock) { m.querySelector("#tdm").textContent = "しばらく待ってからもう一度"; return; }
-    const h = await sha256("chemicolor-teacher|" + m.querySelector("#tdc").value.trim().toUpperCase());
+    const code = m.querySelector("#tdc").value.trim().toUpperCase();
+    const h = await sha256("chemicolor-teacher|" + code), ht = await sha256("chemicolor-trial|" + code);
     if (!h) { m.querySelector("#tdm").textContent = "https のページで開いてください"; return; }
+    if (ht === TRIAL_HASH) {
+      // お試し用：このプレイヤーに1回だけ、全分野の素材を5個ずつ＋コイン2500
+      if (p.trialGift) { m.querySelector("#tdm").textContent = "このプレイヤーはもう受け取っています"; return; }
+      new Set(LAB_FIELDS.flatMap(F => F.MATS.map(x => x.k))).forEach(k => { p.inv[k] = (p.inv[k] || 0) + TRIAL_GIFT.mats; });   // 無機・有機で同じ素材は1回だけ
+      p.coins += TRIAL_GIFT.coins; p.trialGift = today(); saveS(); m.remove(); bell([1046, 1318, 1568]);
+      return lab(`🎁 お試しセット：全部の素材を ${TRIAL_GIFT.mats} 個ずつ＋🪙${TRIAL_GIFT.coins} を受け取りました`);
+    }
     if (h !== TEACHER_HASH) {
       if (++resetMiss >= 5) { resetLock = Date.now() + 60000; resetMiss = 0; }
       m.querySelector("#tdm").textContent = "先生用コードがちがいます"; SE.ng(); m.querySelector("#tdc").value = ""; return;
@@ -529,7 +549,7 @@ async function teacherTools() {
   };
 }
 // ---- レシピ帳：小さな正方形のタイル（発見済みは生成物の色、未発見は「？」）
-const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
+const mainOf = mainItem;
 // 同じ物質をつくるレシピ（作り方が2つ以上ある物質は、タイルに ①② の番号をつける）
 const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
 const NUM = "①②③④⑤⑥⑦⑧⑨";
@@ -618,7 +638,7 @@ async function mix(fixed) {
   const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
   await mixFx(r, used, first);
   // 結果：係数つきの反応式と解説
-  const prods = Object.keys(r.out).filter(k => !ITEM[k].mat && !isCat(r, k)), main = prods[0] || Object.keys(r.out)[0];
+  const main = mainOf(r).k, prods = [main, ...Object.keys(r.out).filter(k => k !== main && !ITEM[k].mat && !isCat(r, k))];
   const again = canMake(p, r), cats = Object.keys(r.inp).filter(k => isCat(r, k));
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box res-box">${first ? `<div class="newtag pop">NEW!</div>` : ""}
@@ -639,7 +659,7 @@ async function mix(fixed) {
 function mypage(tab = "badge") {
   run++; $("hdr").style.display = "none";
   const p = P(); ensureInv(p);
-  const bn = Object.keys(p.badges).length;
+  const bn = BADGES.filter(b => p.badges[b.id]).length;   // なくなったバッジ（無機ラボの「有機デビュー」など）は数えない
   const book = c => PROD.filter(x => x.cat === c), cnt = c => book(c).filter(x => p.made[x.k]).length;
   stage.innerHTML = `<div class="panel">
     <h2 class="pop">${esc(S.cur)} のコレクション <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>

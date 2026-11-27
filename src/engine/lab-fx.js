@@ -15,7 +15,7 @@ function sceneOf(r) {
   if (/触媒/.test(h)) tags.add("cat");
   const reac = Object.keys(r.inp).filter(k => !r.out[k]).map(k => ITEM[k]);
   const prods = Object.keys(r.out).filter(k => !r.inp[k]).map(k => ITEM[k]);
-  const main = prods.find(x => !x.mat) || prods[0] || ITEM[Object.keys(r.out)[0]];
+  const main = mainItem(r);
   if (/以下|冷や/.test(h)) tags.add("cool");
   else if (/加熱|強熱|高温|電気炉|℃|温める|融解|熱分解/.test(h)) tags.add("heat");
   if (/高圧/.test(h)) tags.add("press");
