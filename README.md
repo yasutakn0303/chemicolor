@@ -98,7 +98,8 @@ Build and deployment の **Source** を **GitHub Actions** にします。
 
 ## 遊べる時間（基本版・総合版）
 
-`src/data/schedule.js` の `PLAYTIME` で、遊べる時間を決めています（日本時間）。今の設定：
+`src/data/schedule.js` の `PLAYTIME` で、遊べる時間を決められます（日本時間）。**今はオフ（いつでも遊べる）**です。
+使うときは `enabled: true` にします。用意してある時間割：
 
 - 毎週火曜 8:40〜11:30
 - 毎日 15:15〜22:00
@@ -109,7 +110,7 @@ Build and deployment の **Source** を **GitHub Actions** にします。
 
 - 時間を変える：`weekly` の `days`（「毎日」「平日」「土日」「火」「月水金」など）と `from`・`to` を書きかえる
 - 特定の日の追加・休み：`extra`・`off` に書く（書き方はファイルの中に例あり）
-- 時間の制限をやめる：`enabled: false`
+- 時間の制限を使う／やめる：`enabled: true`／`false`
 
 ## 同時アクセスについて
 

@@ -4,7 +4,7 @@
 //   from / to：「時:分」（to の時刻ちょうどで終わる）
 // 時間が終わっても、遊んでいる途中の1回（10問）は最後まで遊べる。次の単元・ガチャ・ラボに進むときに止まる。
 const PLAYTIME = {
-  enabled: true,          // false にすると、いつでも遊べる
+  enabled: false,         // true にすると時間の制限がかかる（false：いつでも遊べる）
   weekly: [
     {days: "火",   from: "08:40", to: "11:30"},
     {days: "毎日", from: "15:15", to: "22:00"},

@@ -235,7 +235,7 @@ const n = daysToKyotsu(), d = nextKyotsu();
 return n > 0 ? `共通テスト（${d.getMonth() + 1}/${d.getDate()}）まで あと<b>${n}</b>日` : "今日は共通テスト！ がんばれ！";
 }
 const PLAYTIME = {
-enabled: true,          // false にすると、いつでも遊べる
+enabled: false,         // true にすると時間の制限がかかる（false：いつでも遊べる）
 weekly: [
 {days: "火",   from: "08:40", to: "11:30"},
 {days: "毎日", from: "15:15", to: "22:00"},
