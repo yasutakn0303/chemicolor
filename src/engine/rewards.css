@@ -179,3 +179,8 @@
 .rt.hinted{border-color:var(--sun);background:#fff9e6}
 .rt .go{position:absolute;top:3px;right:5px;font-size:10px;color:var(--mint);font-weight:900}
 .rbar{height:8px;border-radius:4px;background:#eef3fb;overflow:hidden;margin:-2px 0 8px}.rbar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--lav))}
+.rt .rn{position:absolute;left:4px;top:2px;font-size:12px;font-weight:900;color:var(--sub)}
+.rcard{max-height:88vh;overflow-y:auto}
+.rinfo{text-align:left;margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.6}
+.routes{text-align:left;margin-top:8px;padding:8px 10px;border-radius:12px;background:#f3f7fd;font-size:13px;line-height:1.7}
+.routes small{color:var(--sub)}.routes .me{font-weight:900;color:var(--ink)}

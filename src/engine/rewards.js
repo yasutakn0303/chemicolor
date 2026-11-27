@@ -452,7 +452,10 @@ function lab(msg = "") {
     ? sel.map(k => `<button class="slot" data-k="${k}">${ITEM[k].fm}<small>${ITEM[k].nm}</small></button>`).join(`<span class="plus">＋</span>`)
     : `<span style="color:var(--sub);font-size:13px">使う素材をタップして選ぼう（係数は考えなくてOK）<br>例：N₂ と H₂ と 触媒を選ぶ → アンモニア</span>`;
   if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
-  const list = RECIPES.filter(r => recCat(r) === recTab);
+  // 同じ物質の作り方はとなりに並べる（物質が最初に出てくる順）
+  const list = RECIPES.filter(r => recCat(r) === recTab), first = {};
+  list.forEach((r, i) => { const k = mainOf(r).k; if (!(k in first)) first[k] = i; });
+  list.sort((a, b) => first[mainOf(a).k] - first[mainOf(b).k] || RECIPES.indexOf(a) - RECIPES.indexOf(b));
   const cards = ks => `<div class="stk big">${ks.map(k => itemCard(k, p.inv[k], `data-k="${k}" role="button"`, true).replace('class="st', `class="st ${slot[k] ? "sel" : ""}`)).join("")}</div>`;
   stage.innerHTML = `<div class="panel wide">
     <h2 class="pop">⚗️ 合成ラボ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
@@ -488,17 +491,21 @@ function lab(msg = "") {
 }
 // ---- レシピ帳：小さな正方形のタイル（発見済みは生成物の色、未発見は「？」）
 const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
+// 同じ物質をつくるレシピ（作り方が2つ以上ある物質は、タイルに ①② の番号をつける）
+const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
+const NUM = "①②③④⑤⑥⑦⑧⑨";
 function recipeTile(p, r) {
   const it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r);
+  const rs = routesOf(r), no = rs.length > 1 ? `<span class="rn">${NUM[rs.indexOf(r)] || ""}</span>` : "";
   return done
-    ? `<button class="rt ok" data-r="${r.id}" style="--bg:${HEX[it.c] && !["白", "無色"].includes(it.c) ? pastel(it.c) : "#eef6ff"}">${can ? `<span class="go">▶</span>` : ""}${drop(it.c, 16)}<b>${it.fm}</b><small>${it.nm}</small></button>`
-    : `<button class="rt ${hinted ? "hinted" : ""}" data-r="${r.id}">${hinted ? `<span class="go">💡</span>` : ""}<span class="q">？</span><small>${it.nm}</small></button>`;
+    ? `<button class="rt ok" data-r="${r.id}" style="--bg:${HEX[it.c] && !["白", "無色"].includes(it.c) ? pastel(it.c) : "#eef6ff"}">${no}${can ? `<span class="go">▶</span>` : ""}${drop(it.c, 16)}<b>${it.fm}</b><small>${it.nm}</small></button>`
+    : `<button class="rt ${hinted ? "hinted" : ""}" data-r="${r.id}">${no}${hinted ? `<span class="go">💡</span>` : ""}<span class="q">？</span><small>${it.nm}</small></button>`;
 }
 // タイルをタップしたときの小さな画面
 function recipeCard(r) {
-  const p = P(), it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r);
+  const p = P(), it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r), routes = routesOf(r);
   const m = document.createElement("div"); m.className = "modal";
-  m.innerHTML = `<div class="box">
+  m.innerHTML = `<div class="box rcard">
     <div style="font-size:12px;color:var(--sub);font-weight:900">${done ? "✅ 発見ずみ" : hinted ? "💡 ヒントを見たレシピ" : "❓ まだ見つけていないレシピ"}</div>
     <div class="pop" style="font-size:20px;margin:4px 0">${it.nm}</div>
     ${done ? `<div class="eqbig">${eqHTML(r)}</div>`
@@ -506,6 +513,9 @@ function recipeCard(r) {
       : `<div class="eqbig">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${it.fm}</div>`}
     ${done || hinted ? `<div>${condIcons(r)}</div>` : ""}
     <div class="hint" style="margin-top:8px">💡 ${r.hint}${done || hinted ? "" : `（材料 ${Object.keys(r.inp).length} 種類）`}</div>
+    ${done ? `<ul class="rinfo">${it.info.map(t => `<li>${t}</li>`).join("")}</ul>` : ""}
+    ${routes.length > 1 ? `<div class="routes"><b>${it.nm}の作り方 ${routes.length} 通り</b>（見つけた ${routes.filter(x => p.recipes[x.id]).length}）
+      ${routes.map((x, i) => `<div class="${x === r ? "me" : ""}">${NUM[i]} ${p.recipes[x.id] ? `${sideHTML(x.inp)}　<small>${x.hint}</small>` : `？　<small>${p.hints && p.hints[x.id] ? x.hint : "まだ見つけていない"}</small>`}</div>`).join("")}</div>` : ""}
     ${done || hinted ? `<div style="font-size:12px;color:var(--sub);font-weight:700;margin-top:6px">${can ? "今の材料で作れる！" : `材料が足りない（${needText(r)}）`}</div>
         <button class="btn" id="rcSet">材料をセット</button>`
       : `<button class="btn" id="rcHint" style="background:var(--sun);color:var(--ink);box-shadow:0 5px 0 #d9951a">🔍 材料を見る（🪙${HINT_COST}）</button>`}
