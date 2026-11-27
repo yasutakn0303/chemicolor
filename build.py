@@ -103,3 +103,6 @@ if __name__ == "__main__":
     # トップページ（各エディションへのリンク集）はそのままコピー
     (DIST / "index.html").write_text(read("index.html"), encoding="utf-8")
     print("✔ dist/index.html")
+    # ホーム画面のアイコン（iPhone・iPad の「ホーム画面に追加」で使う。180×180 の PNG）
+    (DIST / "apple-touch-icon.png").write_bytes((SRC / "apple-touch-icon.png").read_bytes())
+    print("✔ dist/apple-touch-icon.png")
