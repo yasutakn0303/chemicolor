@@ -157,7 +157,7 @@ function finishRun() {
   const prevBest = p.best[cur.id] || 0, newRec = pts > prevBest;
   if (newRec) p.best[cur.id] = pts;
   const pos = addRank(cur.id, pts);
-  const coins = Math.round(pts / 4) + {S:150, A:80, B:30}[r];  // 1回クリアでたっぷり
+  const coins = runCoins(pts, r);
   const lv0 = lvOfXp(p.xp);
   p.coins += coins; p.earned += coins; p.xp += pts; p.plays++;
   const ids = ["first"];
@@ -212,6 +212,7 @@ startSwipe = function (ch) { pts = 0; runMax = 0; const r = _startSwipe(ch); hud
 // --- メニュー拡張
 const _menu = menu;
 menu = function () {
+  if (playLocked()) return;
   if (!S.cur || !S.players[S.cur]) return nameEntry();
   _menu();
   ensureInv(P());
@@ -381,6 +382,7 @@ function ranking(tab, mode = "local") {
 
 // ================= 素材ガチャ（演出つき） =================
 function gacha() {
+  if (playLocked()) return;
   if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none";
   const p = P(); ensureInv(p);
@@ -436,6 +438,7 @@ const isCat = (r, k) => r.inp[k] && r.out[k];                 // 両辺にある
 const needText = r => Object.entries(r.inp).map(([k, n]) => `${ITEM[k].fm} ×${n}`).join("・");
 const LAB_FILTERS = [["all", "すべて"], ["気体", "気体"], ["液体", "液体"], ["水溶液", "水溶液"], ["固体", "固体"], ["cat", "触媒"]];
 function lab(msg = "") {
+  if (playLocked()) return;
   if (!FIELD.hasLab) return menu();
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
   const p = P(); ensureInv(p);
@@ -449,7 +452,10 @@ function lab(msg = "") {
     ? sel.map(k => `<button class="slot" data-k="${k}">${ITEM[k].fm}<small>${ITEM[k].nm}</small></button>`).join(`<span class="plus">＋</span>`)
     : `<span style="color:var(--sub);font-size:13px">使う素材をタップして選ぼう（係数は考えなくてOK）<br>例：N₂ と H₂ と 触媒を選ぶ → アンモニア</span>`;
   if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
-  const list = RECIPES.filter(r => recCat(r) === recTab);
+  // 同じ物質の作り方はとなりに並べる（物質が最初に出てくる順）
+  const list = RECIPES.filter(r => recCat(r) === recTab), first = {};
+  list.forEach((r, i) => { const k = mainOf(r).k; if (!(k in first)) first[k] = i; });
+  list.sort((a, b) => first[mainOf(a).k] - first[mainOf(b).k] || RECIPES.indexOf(a) - RECIPES.indexOf(b));
   const cards = ks => `<div class="stk big">${ks.map(k => itemCard(k, p.inv[k], `data-k="${k}" role="button"`, true).replace('class="st', `class="st ${slot[k] ? "sel" : ""}`)).join("")}</div>`;
   stage.innerHTML = `<div class="panel wide">
     <h2 class="pop">⚗️ 合成ラボ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
@@ -462,13 +468,10 @@ function lab(msg = "") {
     ${mats.length ? `<div class="sub3">🎁 ガチャの素材</div>${cards(mats)}` : ""}
     ${prods.length ? `<div class="sub3">⚗️ つくった物質</div>${cards(prods)}` : ""}
     <div class="sec">レシピ帳　${found}/${RECIPES.length}</div>
+    <div class="rbar"><i style="width:${found / RECIPES.length * 100}%"></i></div>
     <div class="tabs">${LAB_TABS.map(t => `<button data-rt="${t}" class="${recTab === t ? "on" : ""}">${t} ${RECIPES.filter(r => recCat(r) === t && p.recipes[r.id]).length}/${RECIPES.filter(r => recCat(r) === t).length}</button>`).join("")}</div>
-    <div class="recipes">${list.map(r => p.recipes[r.id]
-      ? `<button class="rc ok ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${eqHTML(r)}<div>${condIcons(r)}</div><small>${canMake(p, r) ? "▶ タップで材料をセット" : `材料が足りない（${needText(r)}）`}</small></button>`
-      : p.hints && p.hints[r.id]
-      ? `<button class="rc hinted ${canMake(p, r) ? "" : "short"}" data-r="${r.id}">${Object.keys(r.inp).map(k => ITEM[k].fm).join(" ＋ ")} → ${outNames(r)}<div>${condIcons(r)}</div><small>💡 ${r.hint}　${canMake(p, r) ? "▶ タップで材料をセット" : `材料が足りない（${needText(r)}）`}</small></button>`
-      : `<div class="rc">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${outNames(r)}<small>💡 ${r.hint}（材料${Object.keys(r.inp).length}種類）</small>
-          <button class="hbtn" data-h="${r.id}">🔍 材料を見る（🪙${HINT_COST}）</button></div>`).join("")}</div>
+    <div class="rgrid">${list.map(r => recipeTile(p, r)).join("")}</div>
+    <div style="font-size:11px;color:var(--sub);margin-top:4px">タイルをタップ → 反応式・ヒント　／　▶ ＝ 今の材料で作れる　💡 ＝ ヒントを見た</div>
     <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
   // 素材カード：タップで選ぶ／もう一度タップで外す。解説は ⓘ だけ（スクロールで開かないように長押しはやめた）
@@ -481,12 +484,47 @@ function lab(msg = "") {
   stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { delete slot[b.dataset.k]; lab(); });
   stage.querySelectorAll("[data-lf]").forEach(b => b.onclick = () => { labFilter = b.dataset.lf; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
   stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
-  stage.querySelectorAll(".rc[data-r]").forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.r);
-    slot = Object.fromEntries(Object.keys(r.inp).map(k => [k, 1])); lab(canMake(p, r) ? "" : `🤏 材料が足りない：${needText(r)} が必要`); });
-  stage.querySelectorAll(".hbtn").forEach(b => b.onclick = () => buyHint(RECIPES.find(x => x.id === b.dataset.h)));
+  stage.querySelectorAll(".rt[data-r]").forEach(b => b.onclick = () => recipeCard(RECIPES.find(x => x.id === b.dataset.r)));
   $("clr").onclick = () => { slot = {}; lab(); };
   $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
   $("mix").onclick = () => mix();
+}
+// ---- レシピ帳：小さな正方形のタイル（発見済みは生成物の色、未発見は「？」）
+const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
+// 同じ物質をつくるレシピ（作り方が2つ以上ある物質は、タイルに ①② の番号をつける）
+const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
+const NUM = "①②③④⑤⑥⑦⑧⑨";
+function recipeTile(p, r) {
+  const it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r);
+  const rs = routesOf(r), no = rs.length > 1 ? `<span class="rn">${NUM[rs.indexOf(r)] || ""}</span>` : "";
+  return done
+    ? `<button class="rt ok" data-r="${r.id}" style="--bg:${HEX[it.c] && !["白", "無色"].includes(it.c) ? pastel(it.c) : "#eef6ff"}">${no}${can ? `<span class="go">▶</span>` : ""}${drop(it.c, 16)}<b>${it.fm}</b><small>${it.nm}</small></button>`
+    : `<button class="rt ${hinted ? "hinted" : ""}" data-r="${r.id}">${no}${hinted ? `<span class="go">💡</span>` : ""}<span class="q">？</span><small>${it.nm}</small></button>`;
+}
+// タイルをタップしたときの小さな画面
+function recipeCard(r) {
+  const p = P(), it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r), routes = routesOf(r);
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="box rcard">
+    <div style="font-size:12px;color:var(--sub);font-weight:900">${done ? "✅ 発見ずみ" : hinted ? "💡 ヒントを見たレシピ" : "❓ まだ見つけていないレシピ"}</div>
+    <div class="pop" style="font-size:20px;margin:4px 0">${it.nm}</div>
+    ${done ? `<div class="eqbig">${eqHTML(r)}</div>`
+      : hinted ? `<div class="eqbig">${Object.keys(r.inp).map(k => ITEM[k].fm).join(" ＋ ")} → ${it.fm}</div>`
+      : `<div class="eqbig">${Object.keys(r.inp).map(() => "？").join(" ＋ ")} → ${it.fm}</div>`}
+    ${done || hinted ? `<div>${condIcons(r)}</div>` : ""}
+    <div class="hint" style="margin-top:8px">💡 ${r.hint}${done || hinted ? "" : `（材料 ${Object.keys(r.inp).length} 種類）`}</div>
+    ${done ? `<ul class="rinfo">${it.info.map(t => `<li>${t}</li>`).join("")}</ul>` : ""}
+    ${routes.length > 1 ? `<div class="routes"><b>${it.nm}の作り方 ${routes.length} 通り</b>（見つけた ${routes.filter(x => p.recipes[x.id]).length}）
+      ${routes.map((x, i) => `<div class="${x === r ? "me" : ""}">${NUM[i]} ${p.recipes[x.id] ? `${sideHTML(x.inp)}　<small>${x.hint}</small>` : `？　<small>${p.hints && p.hints[x.id] ? x.hint : "まだ見つけていない"}</small>`}</div>`).join("")}</div>` : ""}
+    ${done || hinted ? `<div style="font-size:12px;color:var(--sub);font-weight:700;margin-top:6px">${can ? "今の材料で作れる！" : `材料が足りない（${needText(r)}）`}</div>
+        <button class="btn" id="rcSet">材料をセット</button>`
+      : `<button class="btn" id="rcHint" style="background:var(--sun);color:var(--ink);box-shadow:0 5px 0 #d9951a">🔍 材料を見る（🪙${HINT_COST}）</button>`}
+    <button class="btn sub" id="rcNo">とじる</button></div>`;
+  document.body.appendChild(m);
+  m.querySelector("#rcNo").onclick = () => m.remove();
+  if (m.querySelector("#rcSet")) m.querySelector("#rcSet").onclick = () => { m.remove();
+    slot = Object.fromEntries(Object.keys(r.inp).map(k => [k, 1])); lab(can ? "" : `🤏 材料が足りない：${needText(r)} が必要`); stage.querySelector(".panel").scrollTop = 0; };
+  if (m.querySelector("#rcHint")) m.querySelector("#rcHint").onclick = () => { m.remove(); buyHint(r); };
 }
 const HINT_COST = 50;
 const outNames = r => Object.keys(r.out).filter(k => !ITEM[k].mat || Object.keys(r.out).length === 1).map(k => ITEM[k].nm).join(" ＋ ");

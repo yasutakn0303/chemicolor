@@ -21,7 +21,7 @@ ${FIELDS_SRC.map(([id, f, lab]) => `FIELDS.push((() => {\n${read(`data/${f}.js`)
 return {id:"${id}", name:"${id}", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES, POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};})());`).join("\n")}
 let APP = {...FIELDS[0].APP, saveKey:"x"}, CH, METH;
 ${read("engine/lab-core.js")}
-return {FIELDS, planNeed, needNow, totalNeed, dropHelp, loginHelp, pull, ensureInv, giveNeeded, setField, GACHA_COST, PER_PULL, GOAL_LAPS, GOAL_DAYS, loginCoins, helpField, LAB_FIELDS};`;
+return {FIELDS, planNeed, needNow, totalNeed, dropHelp, loginHelp, pull, ensureInv, giveNeeded, setField, GACHA_COST, PER_PULL, GOAL_LAPS, GOAL_DAYS, loginCoins, runCoins, helpField, LAB_FIELDS};`;
 const L = new Function(code)();
 const {FIELDS} = L;
 
@@ -55,7 +55,7 @@ function gacha(p, F) {
 function newP() { const p = {coins:0}; FIELDS.forEach(F => L.ensureInv(p, F)); return p; }
 function playRun(p, F) {
   const x = Math.random(), r = x < .3 ? "S" : x < .8 ? "A" : "B";
-  p.coins += Math.round(1800 / 4) + {S:150, A:80, B:30}[r];
+  p.coins += L.runCoins(1800, r);
   for (let i = 0; i < {S:8, A:5, B:3}[r]; i++) { const m = L.pull(null, F); p.inv[m.k] = (p.inv[m.k] || 0) + 1; }
   const HF = L.helpField(p, F), h = L.dropHelp(F.hasLab ? F : HF); L.giveNeeded(p, HF, r === "B" ? Math.ceil(h / 2) : h);
   gacha(p, F); craftAll(p);
@@ -71,9 +71,10 @@ const avg = a => (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1);
 const N = +process.argv[2] || 200, laps = [], loginOnly = [], daily = [], lapsField = {};
 for (let t = 0; t < N; t++) {
   // ① 周回
-  let p = newP(), lap = 0, runs = 0;
-  while (!allDone(p) && lap < 50) { lap++; for (const F of FIELDS) for (const _ of F.CH) { if (!done(p, F)) playRun(p, F); runs++; } }
-  laps.push(lap);
+  // 全分野の単元を順に1回ずつ遊ぶ（クリア回数で数える）
+  let p = newP(), runs = 0; const order = FIELDS.flatMap(F => F.CH.map(() => F));
+  while (!allDone(p) && runs < 2000) { playRun(p, order[runs % order.length]); runs++; }
+  laps.push(runs);
   // ② ログインだけ
   p = newP(); let day = 0; while (!allDone(p) && day < 200) login(p, ++day); loginOnly.push(day);
   // ③ 毎日ログイン＋1回
@@ -81,9 +82,10 @@ for (let t = 0; t < N; t++) {
   while (!allDone(p) && day < 200) { login(p, ++day); const left = FIELDS.filter(F => !done(p, F)); if (left.length) playRun(p, left[day % left.length]); }
   daily.push(day);
 }
-console.log(`目標：全単元を ${L.GOAL_LAPS} 周 ／ 毎日ログインで ${L.GOAL_DAYS} 日`);
+console.log(`目標：遊ぶだけならクリア 40〜60 回 ／ 毎日ログインで 3〜5 週`);
 L.LAB_FIELDS.forEach(F => console.log(`  ${F.id}: レシピ ${F.RECIPES.length}・単元 ${F.CH.length}・必要な素材 ${L.totalNeed(F)} 枚 → クリア1回のおたすけ ${L.dropHelp(F)} 枚`));
 console.log(`  ログイン1日のおたすけ ${L.loginHelp()} 枚`);
-console.log(`① 周回だけ　　　　：平均 ${avg(laps)} 周（最短 ${Math.min(...laps)}・最長 ${Math.max(...laps)}）`);
+const units = FIELDS.reduce((a, F) => a + F.CH.length, 0);
+console.log(`① 遊ぶだけ　　　　：平均 ${avg(laps)} 回クリア（全${units}単元の約 ${(avg(laps) / units).toFixed(1)} 周）`);
 console.log(`② ログインだけ　　：平均 ${avg(loginOnly)} 日（約 ${(avg(loginOnly) / 7).toFixed(1)} 週）`);
 console.log(`③ 毎日ログイン＋1回：平均 ${avg(daily)} 日（約 ${(avg(daily) / 7).toFixed(1)} 週）`);
