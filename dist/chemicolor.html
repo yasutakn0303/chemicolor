@@ -361,6 +361,7 @@ display:flex;flex-direction:column;align-items:center;justify-content:center;gap
 .rinfo{text-align:left;margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.6}
 .routes{text-align:left;margin-top:8px;padding:8px 10px;border-radius:12px;background:#f3f7fd;font-size:13px;line-height:1.7}
 .routes small{color:var(--sub)}.routes .me{font-weight:900;color:var(--ink)}
+.tdbg{border:0;background:none;font:inherit;font-size:11px;color:#a9b6cc;padding:6px 10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -2836,7 +2837,8 @@ ${prods.length ? `<div class="sub3">⚗️ つくった物質</div>${cards(prods
 <div class="rgrid">${list.map(r => recipeTile(p, r)).join("")}</div>
 <div style="font-size:11px;color:var(--sub);margin-top:4px">タイルをタップ → 反応式・ヒント　／　▶ ＝ 今の材料で作れる　💡 ＝ ヒントを見た</div>
 <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
-<button class="btn sub" id="bk">メニューへ</button></div>`;
+<button class="btn sub" id="bk">メニューへ</button>
+<div style="text-align:center;margin-top:10px"><button id="tdbg" class="tdbg">🔧 先生用${p.teacher ? "（確認モード）" : ""}</button></div></div>`;
 stage.querySelectorAll(".stk .st[data-k]").forEach(c => c.onclick = e => {
 const k = c.dataset.k;
 if (e.target.closest(".inf")) return showDetail(k);
@@ -2850,6 +2852,43 @@ stage.querySelectorAll(".rt[data-r]").forEach(b => b.onclick = () => recipeCard(
 $("clr").onclick = () => { slot = {}; lab(); };
 $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
 $("mix").onclick = () => mix();
+$("tdbg").onclick = teacherTools;
+}
+async function teacherTools() {
+const p = P(), m = document.createElement("div"); m.className = "modal";
+const fill = withProd => {
+LAB_FIELDS.forEach(F => [...F.MATS, ...(withProd ? F.PROD : [])].forEach(x => { p.inv[x.k] = Math.max(p.inv[x.k] || 0, 10); }));
+saveS(); m.remove(); bell([880, 1175]); lab(withProd ? "🔧 素材とつくれる物質を10個ずつにしました" : "🔧 素材を10個ずつにしました");
+};
+const tools = () => {
+m.innerHTML = `<div class="box"><div style="font-size:36px">🔧</div><div style="font-weight:900">先生用：合成ラボの確認</div>
+<div style="font-size:12px;color:var(--sub);margin:4px 0">${esc(S.cur)} だけに使えます（ほかの生徒の記録は変わりません）</div>
+<button class="btn" id="tf1">素材を10個ずつにする</button>
+<button class="btn sub" id="tf2">つくった物質も10個ずつ</button>
+<button class="btn sub" id="tfOff" style="font-size:13px">確認モードをやめる</button>
+<button class="btn sub" id="tfNo">とじる</button></div>`;
+m.querySelector("#tf1").onclick = () => fill(false);
+m.querySelector("#tf2").onclick = () => fill(true);
+m.querySelector("#tfOff").onclick = () => { delete p.teacher; saveS(); m.remove(); lab(); };
+m.querySelector("#tfNo").onclick = () => m.remove();
+};
+document.body.appendChild(m);
+if (p.teacher) return tools();
+m.innerHTML = `<div class="box"><div style="font-size:36px">🔧</div><div style="font-weight:900">先生用コードを入力</div>
+<input class="inp" id="tdc" type="password" autocomplete="off" autocapitalize="characters" placeholder="先生用コード">
+<div class="lmsg" id="tdm"></div>
+<button class="btn" id="tdOk">OK</button><button class="btn sub" id="tdNo">とじる</button></div>`;
+m.querySelector("#tdNo").onclick = () => m.remove();
+m.querySelector("#tdOk").onclick = async () => {
+if (Date.now() < resetLock) { m.querySelector("#tdm").textContent = "しばらく待ってからもう一度"; return; }
+const h = await sha256("chemicolor-teacher|" + m.querySelector("#tdc").value.trim().toUpperCase());
+if (!h) { m.querySelector("#tdm").textContent = "https のページで開いてください"; return; }
+if (h !== TEACHER_HASH) {
+if (++resetMiss >= 5) { resetLock = Date.now() + 60000; resetMiss = 0; }
+m.querySelector("#tdm").textContent = "先生用コードがちがいます"; SE.ng(); m.querySelector("#tdc").value = ""; return;
+}
+p.teacher = 1; saveS(); tools();
+};
 }
 const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
 const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
