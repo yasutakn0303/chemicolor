@@ -44,7 +44,15 @@ function playStatus() {
   return {ok: false, next: ""};
 }
 // 時間割の文（メニュー・ロック画面に出す）
-const scheduleText = () => PLAYTIME.weekly.map(w => `${w.days === "毎日" || w.days.length > 1 && /日$|平日/.test(w.days) ? w.days : w.days + "曜"} ${w.from.replace(/^0/, "")}〜${w.to.replace(/^0/, "")}`).join("　／　");
+// 毎週の時間に加えて、これからの特定の日（extra）も出す
+const hmS = t => t.replace(/^0/, "");
+const scheduleText = () => {
+  const n = jstNow();   // 終わった日・時間は出さない
+  const ex = (PLAYTIME.extra || []).filter(w => w.date > n.date || w.date === n.date && hm(w.to) > n.min).map(w => { const [y, m, d] = w.date.split("-").map(Number);
+    return `${m}/${d}(${WD[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}) ${hmS(w.from)}〜${hmS(w.to)}`; });
+  const wk = PLAYTIME.weekly.map(w => `${w.days === "毎日" || w.days.length > 1 && /日$|平日/.test(w.days) ? w.days : w.days + "曜"} ${hmS(w.from)}〜${hmS(w.to)}`);
+  return [...wk, ...ex].join("　／　");
+};
 function playBadge() {
   if (!PLAYTIME.enabled) return "";
   const s = playStatus();
@@ -63,8 +71,8 @@ function showLock(s) {
   stage.innerHTML = s ? `<div class="result" style="text-align:center">
       <div style="font-size:54px">🌙</div>
       <h2 class="pop">今は遊べない時間です</h2>
-      ${s.next ? `<div class="title-b">次は <b>${s.next}</b> から</div>` : ""}
-      <div class="ptime" style="margin-top:8px">⏰ 遊べる時間<br>${scheduleText().replace(/　／　/g, "<br>")}</div>
+      ${s.next ? `<div class="title-b">次は <b>${s.next}</b> から</div>` : `<div class="title-b">次に遊べる日は、先生からのお知らせを待ってね</div>`}
+      ${scheduleText() ? `<div class="ptime" style="margin-top:8px">⏰ 遊べる時間<br>${scheduleText().replace(/　／　/g, "<br>")}</div>` : ""}
       <div style="font-size:12px;color:var(--sub);margin-top:10px">記録はこの端末に残っています。時間になったら、また遊ぼう！</div>
       <button class="btn sub" id="ptRe">もう一度たしかめる</button></div>`
     : `<div class="result" style="text-align:center"><div style="font-size:40px">⏳</div><h2>時刻を確認しています…</h2></div>`;
