@@ -473,7 +473,8 @@ function lab(msg = "") {
     <div class="rgrid">${list.map(r => recipeTile(p, r)).join("")}</div>
     <div style="font-size:11px;color:var(--sub);margin-top:4px">タイルをタップ → 反応式・ヒント　／　▶ ＝ 今の材料で作れる　💡 ＝ ヒントを見た</div>
     <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
-    <button class="btn sub" id="bk">メニューへ</button></div>`;
+    <button class="btn sub" id="bk">メニューへ</button>
+    <div style="text-align:center;margin-top:10px"><button id="tdbg" class="tdbg">🔧 先生用${p.teacher ? "（確認モード）" : ""}</button></div></div>`;
   // 素材カード：タップで選ぶ／もう一度タップで外す。解説は ⓘ だけ（スクロールで開かないように長押しはやめた）
   stage.querySelectorAll(".stk .st[data-k]").forEach(c => c.onclick = e => {
     const k = c.dataset.k;
@@ -488,6 +489,44 @@ function lab(msg = "") {
   $("clr").onclick = () => { slot = {}; lab(); };
   $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
   $("mix").onclick = () => mix();
+  $("tdbg").onclick = teacherTools;
+}
+// ---- 先生用：合成ラボの確認（先生用コードを入れたプレイヤーだけ、素材を10個ずつにできる）
+async function teacherTools() {
+  const p = P(), m = document.createElement("div"); m.className = "modal";
+  const fill = withProd => {
+    LAB_FIELDS.forEach(F => [...F.MATS, ...(withProd ? F.PROD : [])].forEach(x => { p.inv[x.k] = Math.max(p.inv[x.k] || 0, 10); }));
+    saveS(); m.remove(); bell([880, 1175]); lab(withProd ? "🔧 素材とつくれる物質を10個ずつにしました" : "🔧 素材を10個ずつにしました");
+  };
+  const tools = () => {
+    m.innerHTML = `<div class="box"><div style="font-size:36px">🔧</div><div style="font-weight:900">先生用：合成ラボの確認</div>
+      <div style="font-size:12px;color:var(--sub);margin:4px 0">${esc(S.cur)} だけに使えます（ほかの生徒の記録は変わりません）</div>
+      <button class="btn" id="tf1">素材を10個ずつにする</button>
+      <button class="btn sub" id="tf2">つくった物質も10個ずつ</button>
+      <button class="btn sub" id="tfOff" style="font-size:13px">確認モードをやめる</button>
+      <button class="btn sub" id="tfNo">とじる</button></div>`;
+    m.querySelector("#tf1").onclick = () => fill(false);
+    m.querySelector("#tf2").onclick = () => fill(true);
+    m.querySelector("#tfOff").onclick = () => { delete p.teacher; saveS(); m.remove(); lab(); };
+    m.querySelector("#tfNo").onclick = () => m.remove();
+  };
+  document.body.appendChild(m);
+  if (p.teacher) return tools();
+  m.innerHTML = `<div class="box"><div style="font-size:36px">🔧</div><div style="font-weight:900">先生用コードを入力</div>
+    <input class="inp" id="tdc" type="password" autocomplete="off" autocapitalize="characters" placeholder="先生用コード">
+    <div class="lmsg" id="tdm"></div>
+    <button class="btn" id="tdOk">OK</button><button class="btn sub" id="tdNo">とじる</button></div>`;
+  m.querySelector("#tdNo").onclick = () => m.remove();
+  m.querySelector("#tdOk").onclick = async () => {
+    if (Date.now() < resetLock) { m.querySelector("#tdm").textContent = "しばらく待ってからもう一度"; return; }
+    const h = await sha256("chemicolor-teacher|" + m.querySelector("#tdc").value.trim().toUpperCase());
+    if (!h) { m.querySelector("#tdm").textContent = "https のページで開いてください"; return; }
+    if (h !== TEACHER_HASH) {
+      if (++resetMiss >= 5) { resetLock = Date.now() + 60000; resetMiss = 0; }
+      m.querySelector("#tdm").textContent = "先生用コードがちがいます"; SE.ng(); m.querySelector("#tdc").value = ""; return;
+    }
+    p.teacher = 1; saveS(); tools();
+  };
 }
 // ---- レシピ帳：小さな正方形のタイル（発見済みは生成物の色、未発見は「？」）
 const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
