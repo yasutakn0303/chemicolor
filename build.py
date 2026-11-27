@@ -62,8 +62,8 @@ def build(out, title, kind):
         s = must_replace(s, "/*DATA*/", fields_js())
         s = must_replace(s, "/*LAB*/", read("engine/lab-core.js"))
         # スコア計算のフック
-        s = must_replace(s, "const LIMIT = AUTO ? 3200 : 8000;", "const LIMIT = AUTO ? 3200 : 8000, t0 = performance.now();")
-        s = must_replace(s, "const LIMIT = AUTO ? 3000 : 9000;", "const LIMIT = AUTO ? 3000 : 9000, t0 = performance.now();")
+        s = must_replace(s, "const LIMIT = AUTO ? 3200 : 10500;", "const LIMIT = AUTO ? 3200 : 10500, t0 = performance.now();")
+        s = must_replace(s, "const LIMIT = AUTO ? 3000 : 11500;", "const LIMIT = AUTO ? 3000 : 11500, t0 = performance.now();")
         s = must_replace(s, "got.push(ok); if (ok) { score++; combo++; } else combo = 0;",
                          "got.push(ok); if (ok) { score++; combo++; addPts(lv, LIMIT, t0); } else combo = 0;", 2)
         s = must_replace(s, "</style>", read("engine/rewards.css") + "</style>")
