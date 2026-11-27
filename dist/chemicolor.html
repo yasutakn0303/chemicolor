@@ -1441,8 +1441,14 @@ const MATS = [
 ["C6H12O6","C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>","グルコース","白","R","固体",["ブドウ糖。単糖類","酵母のはたらきでアルコール発酵","還元性あり（銀鏡反応・フェーリング液）"]],
 ["CO","CO","一酸化炭素","無色","R","気体",["無色・無臭で有毒","メタノールと反応させて酢酸を工業的につくる","還元剤としてはたらく"]],
 ["CaOAc2","(CH<sub>3</sub>COO)<sub>2</sub>Ca","酢酸カルシウム","白","SR","固体",["酢酸のカルシウム塩","乾留（空気を断って加熱）するとアセトン","アセトンの実験室での製法"]],
+["I2","I<sub>2</sub>","ヨウ素","黒紫","R","固体",["NaOH と一緒にヨードホルム反応に使う","CH₃CO- や CH₃CH(OH)- をもつ物質で黄色沈殿","デンプンで青紫色（ヨウ素デンプン反応）"]],
+["CaC2","CaC<sub>2</sub>","炭化カルシウム","灰","R","固体",["カーバイド","水を加えるとアセチレンが発生","アセチレンの実験室での製法"]],
+["AgNH3OH","[Ag(NH<sub>3</sub>)<sub>2</sub>]OH","アンモニア性硝酸銀","無色","R","水溶液",["銀鏡反応の試薬（[Ag(NH₃)₂]⁺）","アルデヒドで還元されて銀が析出","還元性の検出"]],
+["CuSO4","CuSO<sub>4</sub>","硫酸銅(Ⅱ)","白","R","固体",["フェーリング液の成分（Cu²⁺）","アルデヒドで還元されて Cu₂O の赤色沈殿","NaOH と一緒に使う"]],
+["Fat","(C<sub>17</sub>H<sub>35</sub>COO)<sub>3</sub>C<sub>3</sub>H<sub>5</sub>","油脂（ステアリン酸のトリグリセリド）","白","SR","固体",["グリセリンと高級脂肪酸のエステル","NaOH でけん化 → セッケン ＋ グリセリン","飽和脂肪酸が多いと常温で固体（脂肪）"]],
+["Naph","C<sub>10</sub>H<sub>8</sub>","ナフタレン","白","SR","固体",["ベンゼン環が2つ縮合した芳香族","昇華性がある（防虫剤）","V₂O₅ を触媒に酸化 → 無水フタル酸"]],
 ].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
-MATS.find(m => m.k === "Ac2O").tab = "脂肪族";   // 素材だが合成もできる（レシピ帳のタブ）
+[["Ac2O", "脂肪族"], ["CH3OH", "脂肪族"], ["CO", "脂肪族"], ["C2H2", "脂肪族"]].forEach(([k, t]) => MATS.find(m => m.k === k).tab = t);
 const PROD = [
 ["C2H4","C<sub>2</sub>H<sub>4</sub>","エチレン","無色","脂肪族","気体",["二重結合をもつアルケン → 付加反応","臭素水を脱色する","植物ホルモン。ポリエチレンの原料"]],
 ["C2H6","C<sub>2</sub>H<sub>6</sub>","エタン","無色","脂肪族","気体",["単結合のみのアルカン","付加はせず、光で置換反応","天然ガスにふくまれる"]],
@@ -1509,7 +1515,25 @@ const PROD = [
 ["K2SO4","K<sub>2</sub>SO<sub>4</sub>","硫酸カリウム","白","その他","固体",["酸化の反応で出てくる塩","—","—"]],
 ["CaCO3","CaCO<sub>3</sub>","炭酸カルシウム","白","その他","固体",["酢酸カルシウムの乾留で出てくる","石灰石の主成分","—"]],
 ["Na2SO4","Na<sub>2</sub>SO<sub>4</sub>","硫酸ナトリウム","白","その他","固体",["弱酸の遊離で出てくる塩","—","—"]],
+["HCOOCH3","HCOOCH<sub>3</sub>","ギ酸メチル","無色","脂肪族","液体",["ギ酸とメタノールのエステル","ホルミル基をもつ → 銀鏡反応が陽性","酢酸と異性体（C₂H₄O₂）"]],
+["MeOAc","CH<sub>3</sub>COOCH<sub>3</sub>","酢酸メチル","無色","脂肪族","液体",["酢酸とメタノールのエステル","濃硫酸が触媒","芳香をもつ液体"]],
+["CHI3","CHI<sub>3</sub>","ヨードホルム","黄","脂肪族","固体",["ヨードホルム反応の黄色沈殿","CH₃CO- または CH₃CH(OH)- をもつ物質で陽性","特有のにおい"]],
+["HCOONa","HCOONa","ギ酸ナトリウム","白","その他","固体",["ヨードホルム反応で出てくる","—","—"]],
+["NaI","NaI","ヨウ化ナトリウム","白","その他","固体",["ヨードホルム反応で出てくる","—","—"]],
+["Ag","Ag","銀（銀鏡）","銀白","その他","固体",["銀鏡反応で試験管の内側に析出","アルデヒドの還元性の検出","[Ag(NH₃)₂]⁺ が還元されてできる"]],
+["CH3COONH4","CH<sub>3</sub>COONH<sub>4</sub>","酢酸アンモニウム","白","その他","水溶液",["銀鏡反応で出てくる","—","—"]],
+["Cu2O","Cu<sub>2</sub>O","酸化銅(Ⅰ)","赤","その他","固体",["フェーリング液の還元で生じる赤色沈殿","アルデヒドの還元性の検出","Cu²⁺ が還元されてできる"]],
+["Soap","C<sub>17</sub>H<sub>35</sub>COONa","セッケン（ステアリン酸ナトリウム）","白","脂肪族","固体",["油脂のけん化でできる","疎水基と親水基をもつ → ミセル","水溶液は弱塩基性"]],
+["Gly","C<sub>3</sub>H<sub>5</sub>(OH)<sub>3</sub>","グリセリン","無色","脂肪族","液体",["3価のアルコール","油脂のけん化で生じる","甘みのある粘りけの強い液体"]],
+["NG","C<sub>3</sub>H<sub>5</sub>(ONO<sub>2</sub>)<sub>3</sub>","ニトログリセリン","無色","脂肪族","液体",["グリセリンの硝酸エステル","ダイナマイトの原料","狭心症の薬にも使われる"]],
+["C3H8","C<sub>3</sub>H<sub>8</sub>","プロパン","無色","脂肪族","気体",["プロペンに H₂ が付加","LP ガスの主成分","アルカン"]],
+["C3H6Br2","CH<sub>3</sub>CHBrCH<sub>2</sub>Br","1,2-ジブロモプロパン","無色","脂肪族","液体",["プロペンに Br₂ が付加","臭素水の赤褐色が消える","不飽和結合の検出に関係"]],
+["CaOH2","Ca(OH)<sub>2</sub>","水酸化カルシウム","白","その他","固体",["カーバイドに水を加えると残る","—","—"]],
+["PhAnh","C<sub>6</sub>H<sub>4</sub>(CO)<sub>2</sub>O","無水フタル酸","白","芳香族","固体",["ナフタレンや o-キシレンの酸化でできる","フタル酸の分子内で水がとれた酸無水物","樹脂・染料の原料"]],
+["Phth","C<sub>6</sub>H<sub>4</sub>(COOH)<sub>2</sub>","フタル酸","白","芳香族","固体",["o 位に -COOH が2つ","加熱すると分子内で脱水 → 無水フタル酸","異性体のテレフタル酸は脱水しない"]],
+["PhOAc","CH<sub>3</sub>COOC<sub>6</sub>H<sub>5</sub>","酢酸フェニル","無色","芳香族","液体",["フェノールのアセチル化でできるエステル","フェノールは酸と直接エステルをつくりにくい","無水酢酸を使う"]],
 ].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info: info.filter(t => t !== "—")}));
+[["Ag", "脂肪族"], ["Cu2O", "脂肪族"]].forEach(([k, t]) => PROD.find(m => m.k === k).tab = t);
 const RECIPES = [
 [{C2H2:1,H2:1},{C2H4:1},"三重結合に H₂ が1分子付加","cat:Pt・Ni"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加","heat,press,cat"],
 [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"酢酸発酵（お酒がすっぱくなる）"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
@@ -1562,6 +1586,24 @@ const RECIPES = [
 [{CH3COOH:2},{Ac2O:1,H2O:1},"2分子から水がとれる（脱水剤で縮合）"],
 [{PhCl:1,H2O:1},{PhOH:1,HCl:1},"過熱水蒸気と反応","heat"],
 [{SalNa:2,H2SO4:1},{Sal:2,Na2SO4:1},"硫酸で弱酸を遊離"],
+[{CO:1,H2:2},{CH3OH:1},"CO と H₂ から合成（工業的製法）","heat,press,cat"],
+[{HCOOH:1,H2SO4:1},{CO:1,H2O:1,H2SO4:1},"濃硫酸で脱水（CO の製法）","heat"],
+[{HCOOH:1,CH3OH:1,H2SO4:1},{HCOOCH3:1,H2O:1,H2SO4:1},"エステル化","heat"],
+[{CH3COOH:1,CH3OH:1,H2SO4:1},{MeOAc:1,H2O:1,H2SO4:1},"エステル化","heat"],
+[{C2H5OH:1,I2:4,NaOH:6},{CHI3:1,HCOONa:1,NaI:5,H2O:5},"ヨードホルム反応（エタノール）","heat,ppt"],
+[{CH3CHO:1,I2:3,NaOH:4},{CHI3:1,HCOONa:1,NaI:3,H2O:3},"ヨードホルム反応（アセトアルデヒド）","heat,ppt"],
+[{Acetone:1,I2:3,NaOH:4},{CHI3:1,CH3COONa:1,NaI:3,H2O:3},"ヨードホルム反応（アセトン）","heat,ppt"],
+[{CH3CHO:1,AgNH3OH:2},{Ag:2,CH3COONH4:1,NH3:3,H2O:1},"銀鏡反応","heat,aq"],
+[{CH3CHO:1,CuSO4:2,NaOH:5},{Cu2O:1,CH3COONa:1,Na2SO4:2,H2O:3},"フェーリング液の還元（赤色沈殿）","heat,ppt"],
+[{Fat:1,NaOH:3},{Soap:3,Gly:1},"油脂のけん化","heat"],
+[{Gly:1,HNO3:3,H2SO4:1},{NG:1,H2O:3,H2SO4:1},"グリセリンの硝酸エステル化（混酸）"],
+[{C3H6:1,H2:1},{C3H8:1},"二重結合に H₂ が付加","cat:Pt・Ni"],
+[{C3H6:1,Br2:1},{C3H6Br2:1},"臭素水の脱色"],
+[{CaC2:1,H2O:2},{C2H2:1,CaOH2:1},"カーバイドに水"],
+[{Naph:2,O2:9},{PhAnh:2,CO2:4,H2O:4},"ナフタレンの酸化","heat,cat:V₂O₅"],
+[{PhAnh:1,H2O:1},{Phth:1},"酸無水物に水"],
+[{Phth:1},{PhAnh:1,H2O:1},"加熱して分子内で脱水","heat"],
+[{PhOH:1,Ac2O:1},{PhOAc:1,CH3COOH:1},"フェノールのアセチル化"],
 ].map(([inp, out, hint, cond], i) => ({cond, id:"o" + (i + 1), inp, out, hint}))
 .filter(r => r.cond !== "off");   // off：使わなくなったレシピ（id がずれないよう行は残す）
 const LAB_TABS = ["脂肪族", "芳香族"];
@@ -1578,6 +1620,9 @@ const LAB_BADGES = [
 {id:"ether",   e:"💨", nm:"脱水の達人",     tx:"ジエチルエーテルとエチレンを合成", test:p => p.made.Et2O && p.made.C2H4},
 {id:"picric",  e:"💛", nm:"ピクリン酸",     tx:"ピクリン酸を合成",     test:p => p.made.Picric},
 {id:"addBz",   e:"⬢",  nm:"ベンゼンへの付加", tx:"シクロヘキサンと BHC を合成", test:p => p.made.C6H12 && p.made.BHC},
+{id:"iodo",    e:"🟡", nm:"ヨードホルム反応", tx:"ヨードホルムを合成", test:p => p.made.CHI3},
+{id:"reduce",  e:"🪞", nm:"還元性の検出",   tx:"銀鏡反応とフェーリング液の還元", test:p => p.made.Ag && p.made.Cu2O},
+{id:"soap",    e:"🧼", nm:"セッケン職人",   tx:"セッケンとグリセリンを合成", test:p => p.made.Soap && p.made.Gly},
 ];
 return {id:"org", name:"有機", em:"⚗️", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
 POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};
@@ -1972,7 +2017,9 @@ ITEM = FIELD.item; POOL = FIELD.pool;
 }
 const sideHTML = o => Object.entries(o).map(([k, n]) => `${n > 1 ? `<b style="color:var(--pink)">${n}</b>` : ""}${ITEM[k].fm}`).join(" ＋ ");
 const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
-const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]), it = o.find(x => !x.mat) || o[0]; return LAB_TABS.includes(it.cat) ? it.cat : it.tab || LAB_TABS[0]; };
+const mainItem = r => { const o = Object.keys(r.out).filter(k => !r.inp[k]).map(k => ITEM[k]), inTab = x => LAB_TABS.includes(x.cat) || x.tab;
+return o.find(inTab) || o.find(x => !x.mat) || o[0] || ITEM[Object.keys(r.out)[0]]; };
+const recCat = r => { const it = mainItem(r); return LAB_TABS.includes(it.cat) ? it.cat : it.tab || LAB_TABS[0]; };
 const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
 const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
@@ -2001,7 +2048,7 @@ m.innerHTML = `<div class="box">${detailHTML(k)}<button class="btn sub" id="dOk"
 document.body.appendChild(m); m.querySelector("#dOk").onclick = () => m.remove();
 }
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
-const HELP = {drop:.1, login:.1};
+const HELP = {drop:.1, login:.12};
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
 const loginCoins = streak => 120 + Math.min(streak, 7) * 20;   // ログインボーナスのコイン（連続日数で増える）
@@ -2931,7 +2978,7 @@ m.querySelector("#tdm").textContent = "先生用コードがちがいます"; SE
 p.teacher = 1; saveS(); tools();
 };
 }
-const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
+const mainOf = mainItem;
 const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
 const NUM = "①②③④⑤⑥⑦⑧⑨";
 function recipeTile(p, r) {
@@ -3014,7 +3061,7 @@ if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
 LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
 const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
 await mixFx(r, used, first);
-const prods = Object.keys(r.out).filter(k => !ITEM[k].mat && !isCat(r, k)), main = prods[0] || Object.keys(r.out)[0];
+const main = mainOf(r).k, prods = [main, ...Object.keys(r.out).filter(k => k !== main && !ITEM[k].mat && !isCat(r, k))];
 const again = canMake(p, r), cats = Object.keys(r.inp).filter(k => isCat(r, k));
 const m = document.createElement("div"); m.className = "modal";
 m.innerHTML = `<div class="box res-box">${first ? `<div class="newtag pop">NEW!</div>` : ""}
@@ -3058,7 +3105,7 @@ catKeys.forEach(k => { tags.add("cat"); catNames.push(ITEM[k].fm); });
 if (/触媒/.test(h)) tags.add("cat");
 const reac = Object.keys(r.inp).filter(k => !r.out[k]).map(k => ITEM[k]);
 const prods = Object.keys(r.out).filter(k => !r.inp[k]).map(k => ITEM[k]);
-const main = prods.find(x => !x.mat) || prods[0] || ITEM[Object.keys(r.out)[0]];
+const main = mainItem(r);
 if (/以下|冷や/.test(h)) tags.add("cool");
 else if (/加熱|強熱|高温|電気炉|℃|温める|融解|熱分解/.test(h)) tags.add("heat");
 if (/高圧/.test(h)) tags.add("press");

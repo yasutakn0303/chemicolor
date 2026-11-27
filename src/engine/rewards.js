@@ -529,7 +529,7 @@ async function teacherTools() {
   };
 }
 // ---- レシピ帳：小さな正方形のタイル（発見済みは生成物の色、未発見は「？」）
-const mainOf = r => { const ks = Object.keys(r.out).filter(k => !r.inp[k]); return ITEM[ks.find(k => !ITEM[k].mat) || ks[0]]; };
+const mainOf = mainItem;
 // 同じ物質をつくるレシピ（作り方が2つ以上ある物質は、タイルに ①② の番号をつける）
 const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
 const NUM = "①②③④⑤⑥⑦⑧⑨";
@@ -618,7 +618,7 @@ async function mix(fixed) {
   const b = [...unlock(ids), ...autoBadges()]; saveS(); slot = {};
   await mixFx(r, used, first);
   // 結果：係数つきの反応式と解説
-  const prods = Object.keys(r.out).filter(k => !ITEM[k].mat && !isCat(r, k)), main = prods[0] || Object.keys(r.out)[0];
+  const main = mainOf(r).k, prods = [main, ...Object.keys(r.out).filter(k => k !== main && !ITEM[k].mat && !isCat(r, k))];
   const again = canMake(p, r), cats = Object.keys(r.inp).filter(k => isCat(r, k));
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box res-box">${first ? `<div class="newtag pop">NEW!</div>` : ""}
