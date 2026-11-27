@@ -1025,8 +1025,25 @@ const MATS = [
 ["Pt","Pt","白金（触媒）","銀","R","固体",["オストワルト法（NH₃ → NO）の触媒","反応の前後で変化しない","さびにくい貴金属"]],
 ["KBr","KBr","臭化カリウム","白","SR","固体",["白色の結晶。水によく溶ける","Cl₂ を通すと Br₂ が遊離（酸化力 Cl₂ ＞ Br₂）","Ag⁺ と淡黄色の AgBr を沈殿"]],
 ["KI","KI","ヨウ化カリウム","白","SR","固体",["白色の結晶。水によく溶ける","Cl₂・Br₂ で I₂ が遊離（I⁻ は酸化されやすい）","Ag⁺ と黄色の AgI を沈殿"]],
+["Al","Al","アルミニウム","銀白","R","固体",["両性金属：酸にも強塩基にも溶ける","濃硝酸には不動態","軽くてさびにくい"]],
+["Na2S2O3","Na<sub>2</sub>S<sub>2</sub>O<sub>3</sub>","チオ硫酸ナトリウム","白","SR","固体",["ハイポ","AgBr などを錯イオンにして溶かす（写真の定着）","還元剤としてもはたらく"]],
+["K4FeCN6","K<sub>4</sub>[Fe(CN)<sub>6</sub>]","ヘキサシアニド鉄(Ⅱ)酸カリウム","淡黄","SR","固体",["黄血塩。黄色の結晶","Fe³⁺ と濃青色沈殿","Fe³⁺ の検出に使う"]],
+["K3FeCN6","K<sub>3</sub>[Fe(CN)<sub>6</sub>]","ヘキサシアニド鉄(Ⅲ)酸カリウム","赤","SR","固体",["赤血塩。暗赤色の結晶","Fe²⁺ と濃青色沈殿","Fe²⁺ の検出に使う"]],
 ].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
 const PROD = [
+["AgNH3OH","[Ag(NH<sub>3</sub>)<sub>2</sub>]OH","ジアンミン銀(Ⅰ)（水酸化物）","無色","錯イオン","水溶液",["錯イオン [Ag(NH₃)₂]⁺（直線形）","Ag₂O が過剰のアンモニア水に溶けてできる","アンモニア性硝酸銀（銀鏡反応に使う）"]],
+["AgNH3Cl","[Ag(NH<sub>3</sub>)<sub>2</sub>]Cl","ジアンミン銀(Ⅰ)（塩化物）","無色","錯イオン","水溶液",["錯イオン [Ag(NH₃)₂]⁺（直線形）","AgCl はアンモニア水に溶ける","AgI はアンモニア水に溶けない"]],
+["NaAgS2O3","Na<sub>3</sub>[Ag(S<sub>2</sub>O<sub>3</sub>)<sub>2</sub>]","ビス(チオスルファト)銀(Ⅰ)酸ナトリウム","無色","錯イオン","水溶液",["錯イオン [Ag(S₂O₃)₂]³⁻","ハロゲン化銀がチオ硫酸ナトリウムに溶ける","写真の定着に使われた"]],
+["Na2ZnOH4","Na<sub>2</sub>[Zn(OH)<sub>4</sub>]","テトラヒドロキシド亜鉛(Ⅱ)酸ナトリウム","無色","錯イオン","水溶液",["錯イオン [Zn(OH)₄]²⁻","Zn(OH)₂ が過剰の NaOH に溶ける","亜鉛は両性元素"]],
+["ZnNH3","[Zn(NH<sub>3</sub>)<sub>4</sub>](OH)<sub>2</sub>","テトラアンミン亜鉛(Ⅱ)","無色","錯イオン","水溶液",["錯イオン [Zn(NH₃)₄]²⁺（正四面体形）","Zn(OH)₂ が過剰のアンモニア水に溶ける","Al(OH)₃ はアンモニア水に溶けない → 区別できる"]],
+["NaAlOH4","Na[Al(OH)<sub>4</sub>]","テトラヒドロキシドアルミン酸ナトリウム","無色","錯イオン","水溶液",["錯イオン [Al(OH)₄]⁻","Al(OH)₃ が過剰の NaOH に溶ける","アルミニウムは両性元素"]],
+["PB","KFe[Fe(CN)<sub>6</sub>]","濃青色沈殿（ベルリンブルー）","深青","錯イオン","固体",["鉄イオンの検出で生じる濃青色沈殿","Fe³⁺ ＋ ヘキサシアニド鉄(Ⅱ)酸イオン","Fe²⁺ ＋ ヘキサシアニド鉄(Ⅲ)酸イオン でも生じる"]],
+["Ag2O","Ag<sub>2</sub>O","酸化銀","褐","無機","固体",["Ag⁺ に少量のアンモニア水・NaOH で褐色沈殿","水酸化銀はできず Ag₂O になる","過剰のアンモニア水に溶ける"]],
+["NH4NO3","NH<sub>4</sub>NO<sub>3</sub>","硝酸アンモニウム","白","無機","固体",["沈殿の反応で残る塩","窒素肥料","—"]],
+["NaBr","NaBr","臭化ナトリウム","白","無機","固体",["定着の反応で残る塩","—","—"]],
+["ZnOH2","Zn(OH)<sub>2</sub>","水酸化亜鉛","白","無機","固体",["白色のゲル状沈殿","過剰の NaOH にも過剰のアンモニア水にも溶ける","両性水酸化物"]],
+["AlCl3","AlCl<sub>3</sub>","塩化アルミニウム","白","無機","水溶液",["アルミニウムを塩酸に溶かすとできる","水溶液は Al³⁺ をふくむ","—"]],
+["AlOH3","Al(OH)<sub>3</sub>","水酸化アルミニウム","白","無機","固体",["白色のゲル状沈殿","過剰の NaOH には溶ける","過剰のアンモニア水には溶けない"]],
 ["CO2","CO<sub>2</sub>","二酸化炭素","無色","無機","気体",["無色・無臭。水に少し溶けて弱い酸性","石灰水を白くにごらせる（CaCO₃ が沈殿）","固体はドライアイス（昇華する）"]],
 ["SO2","SO<sub>2</sub>","二酸化硫黄","無色","無機","気体",["無色・刺激臭の有毒な気体","水に溶けて弱い酸性（亜硫酸）","還元作用による漂白（H₂S に対しては酸化剤）"]],
 ["HCl","HCl","塩化水素","無色","無機","気体",["無色・刺激臭。水溶液は塩酸（強酸）","NH₃ と触れると NH₄Cl の白煙","NaCl ＋ 濃硫酸の加熱で発生"]],
@@ -1062,7 +1079,7 @@ const PROD = [
 ["CuSO45","CuSO<sub>4</sub>·5H<sub>2</sub>O","硫酸銅(Ⅱ)五水和物","青","無機","固体",["青色の結晶","加熱すると水和水を失い白色に","青色は [Cu(H₂O)₄]²⁺ による"]],
 ["CuOH2","Cu(OH)<sub>2</sub>","水酸化銅(Ⅱ)","青白","無機","固体",["青白色の沈殿","Cu²⁺ に NaOH 水溶液で生じる","加熱すると黒色の CuO になる"]],
 ["Na2SO4","Na<sub>2</sub>SO<sub>4</sub>","硫酸ナトリウム","白","無機","固体",["中和でできる正塩","水溶液は中性","十水和物は芒硝（ぼうしょう）"]],
-["CuNH3","[Cu(NH<sub>3</sub>)<sub>4</sub>](OH)<sub>2</sub>","テトラアンミン銅(Ⅱ)","深青","無機","水溶液",["深青色の錯イオン [Cu(NH₃)₄]²⁺","Cu(OH)₂ に過剰のアンモニア水で溶ける","正方形の錯イオン（シュバイツァー試薬）"]],
+["CuNH3","[Cu(NH<sub>3</sub>)<sub>4</sub>](OH)<sub>2</sub>","テトラアンミン銅(Ⅱ)","深青","錯イオン","水溶液",["深青色の錯イオン [Cu(NH₃)₄]²⁺","Cu(OH)₂ に過剰のアンモニア水で溶ける","正方形の錯イオン（シュバイツァー試薬）"]],
 ["CaC2","CaC<sub>2</sub>","炭化カルシウム","灰","無機","固体",["カーバイド。灰色の固体","CaO と C を強熱してつくる","水を加えるとアセチレンが発生"]],
 ["Br2","Br<sub>2</sub>","臭素","赤褐","無機","液体",["常温で液体の唯一の非金属単体","赤褐色・刺激臭","不飽和結合に付加して脱色する（臭素水）"]],
 ["I2","I<sub>2</sub>","ヨウ素","黒紫","無機","固体",["黒紫色の固体。昇華しやすい（気体は紫）","デンプンと反応して青紫色","水に溶けにくいが KI 水溶液には溶ける"]],
@@ -1117,6 +1134,21 @@ const RECIPES = [
 [{Cl2:1,KBr:2},{KCl:2,Br2:1},"酸化力 Cl₂ ＞ Br₂","aq"], [{Cl2:1,KI:2},{KCl:2,I2:1},"酸化力 Cl₂ ＞ I₂","aq"],
 [{Br2:1,KI:2},{KBr:2,I2:1},"酸化力 Br₂ ＞ I₂","aq"],
 [{NH3:4,O2:5,Pt:1},{NO:4,H2O:6,Pt:1},"オストワルト法①（NH₃ の酸化）","heat"],
+[{AgNO3:2,NH3:2,H2O:1},{Ag2O:1,NH4NO3:2},"Ag⁺ に少量のアンモニア水 → 褐色沈殿","aq,ppt"],
+[{Ag2O:1,NH3:4,H2O:1},{AgNH3OH:2},"沈殿が過剰のアンモニア水に溶ける","aq,-ppt"],
+[{AgCl:1,NH3:2},{AgNH3Cl:1},"AgCl はアンモニア水に溶ける","aq,-ppt"],
+[{AgBr:1,Na2S2O3:2},{NaAgS2O3:1,NaBr:1},"チオ硫酸ナトリウムに溶ける（写真の定着）","aq,-ppt"],
+[{ZnCl2:1,NaOH:2},{ZnOH2:1,NaCl:2},"Zn²⁺ に少量の NaOH → 白色沈殿","aq,ppt"],
+[{ZnOH2:1,NaOH:2},{Na2ZnOH4:1},"沈殿が過剰の NaOH に溶ける（両性）","aq,-ppt"],
+[{ZnOH2:1,NH3:4},{ZnNH3:1},"沈殿が過剰のアンモニア水に溶ける","aq,-ppt"],
+[{Zn:1,NaOH:2,H2O:2},{Na2ZnOH4:1,H2:1},"亜鉛は強塩基にも溶ける","aq"],
+[{Al:2,HCl:6},{AlCl3:2,H2:3},"アルミニウムを塩酸に","aq"],
+[{AlCl3:1,NaOH:3},{AlOH3:1,NaCl:3},"Al³⁺ に少量の NaOH → 白色沈殿","aq,ppt"],
+[{AlCl3:1,NH3:3,H2O:3},{AlOH3:1,NH4Cl:3},"Al³⁺ にアンモニア水 → 白色沈殿（過剰でも溶けない）","aq,ppt"],
+[{AlOH3:1,NaOH:1},{NaAlOH4:1},"沈殿が過剰の NaOH に溶ける（両性）","aq,-ppt"],
+[{Al:2,NaOH:2,H2O:6},{NaAlOH4:2,H2:3},"アルミニウムは強塩基にも溶ける","aq"],
+[{K4FeCN6:1,FeCl3:1},{PB:1,KCl:3},"Fe³⁺ の検出（濃青色沈殿）","aq,ppt"],
+[{K3FeCN6:1,FeCl2:1},{PB:1,KCl:2},"Fe²⁺ の検出（濃青色沈殿）","aq,ppt"],
 ].map(([inp, out, hint, cond], i) => ({cond, id:"r" + (i + 1), inp, out, hint}))
 .filter(r => r.cond !== "off");   // off：使わなくなったレシピ（id がずれないよう行は残す）
 const LAB_BADGES = [
@@ -1132,8 +1164,10 @@ test:p => p.made.CuO && p.made.CuSO4 && p.made.CuSO45 && p.made.CuOH2 && p.made.
 {id:"soda",    e:"🧂", nm:"ソーダの化学",   tx:"NaHCO₃ と Na₂CO₃ を合成", test:p => p.made.NaHCO3 && p.made.Na2CO3},
 {id:"nox",     e:"🟤", nm:"窒素酸化物",     tx:"NO と NO₂ を合成",   test:p => p.made.NO && p.made.NO2},
 {id:"carbide", e:"⚡", nm:"電気炉の主",     tx:"炭化カルシウムを合成", test:p => p.made.CaC2},
+{id:"complex", e:"💠", nm:"錯イオンコレクター", tx:"錯イオンをすべて合成", test:p => PROD.filter(x => x.cat === "錯イオン").every(x => p.made[x.k])},
+{id:"amphot",  e:"⚖️", nm:"両性元素",       tx:"[Zn(OH)₄]²⁻ と [Al(OH)₄]⁻ を合成", test:p => p.made.Na2ZnOH4 && p.made.NaAlOH4},
 ];
-const LAB_TABS = ["無機", "有機"];
+const LAB_TABS = ["無機", "錯イオン", "有機"];
 const STARTER = {H2:6, O2:6, C:4, N2:2, S:2, Cl2:2, Fe:2, Cu:2, H2O:4};
 return {id:"inorg", name:"無機", em:"🧪", APP, CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES,
 POOL_FROM: typeof POOL_FROM === "undefined" ? [] : POOL_FROM};
@@ -1408,6 +1442,7 @@ const MATS = [
 ["CO","CO","一酸化炭素","無色","R","気体",["無色・無臭で有毒","メタノールと反応させて酢酸を工業的につくる","還元剤としてはたらく"]],
 ["CaOAc2","(CH<sub>3</sub>COO)<sub>2</sub>Ca","酢酸カルシウム","白","SR","固体",["酢酸のカルシウム塩","乾留（空気を断って加熱）するとアセトン","アセトンの実験室での製法"]],
 ].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
+MATS.find(m => m.k === "Ac2O").tab = "脂肪族";   // 素材だが合成もできる（レシピ帳のタブ）
 const PROD = [
 ["C2H4","C<sub>2</sub>H<sub>4</sub>","エチレン","無色","脂肪族","気体",["二重結合をもつアルケン → 付加反応","臭素水を脱色する","植物ホルモン。ポリエチレンの原料"]],
 ["C2H6","C<sub>2</sub>H<sub>6</sub>","エタン","無色","脂肪族","気体",["単結合のみのアルカン","付加はせず、光で置換反応","天然ガスにふくまれる"]],
@@ -1473,10 +1508,11 @@ const PROD = [
 ["Cr2SO43","Cr<sub>2</sub>(SO<sub>4</sub>)<sub>3</sub>","硫酸クロム(Ⅲ)","緑","その他","水溶液",["二クロム酸イオン（橙赤）が還元されてできる","Cr³⁺ は緑色","—"]],
 ["K2SO4","K<sub>2</sub>SO<sub>4</sub>","硫酸カリウム","白","その他","固体",["酸化の反応で出てくる塩","—","—"]],
 ["CaCO3","CaCO<sub>3</sub>","炭酸カルシウム","白","その他","固体",["酢酸カルシウムの乾留で出てくる","石灰石の主成分","—"]],
+["Na2SO4","Na<sub>2</sub>SO<sub>4</sub>","硫酸ナトリウム","白","その他","固体",["弱酸の遊離で出てくる塩","—","—"]],
 ].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info: info.filter(t => t !== "—")}));
 const RECIPES = [
 [{C2H2:1,H2:1},{C2H4:1},"三重結合に H₂ が1分子付加","cat:Pt・Ni"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加","heat,press,cat"],
-[{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"お酒がすっぱくなる"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
+[{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"酢酸発酵（お酒がすっぱくなる）"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
 [{CH3COOH:1,C2H5OH:1,H2SO4:1},{EtOAc:1,H2O:1,H2SO4:1},"エステル化（濃硫酸は触媒）","heat"], [{C2H2:1,H2O:1},{CH3CHO:1},"アセチレンに水を付加","cat:HgSO₄"],
 [{CH3OH:2,O2:1},{HCHO:2,H2O:2},"メタノールの酸化","heat,cat"], [{C2H2:1,HCl:1},{C2H3Cl:1},"三重結合に HCl が付加","cat"],
 [{C2H4:1,Br2:1},{C2H4Br2:1},"臭素水の脱色"], [{C2H5OH:2,Na:2},{C2H5ONa:2,H2:1},"アルコールとナトリウム"],
@@ -1521,6 +1557,11 @@ const RECIPES = [
 [{BzONa:1,HCl:1},{BzOH:1,NaCl:1},"強酸で弱酸を遊離"], [{BzOH:1,NaOH:1},{BzONa:1,H2O:1},"安息香酸の中和"],
 [{C6H6:1,Br2:1,Fe:1},{PhBr:1,HBr:1,Fe:1},"Fe 触媒で置換"],
 [{Tol:1,HNO3:3,H2SO4:1},{TNT:1,H2O:3,H2SO4:1},"トルエンのニトロ化（混酸）","heat"],
+[{C2H5OH:2,O2:1},{CH3CHO:2,H2O:2},"酸化してアルデヒドに（第一級アルコール）","heat,cat"],
+[{CH3CHO:1,H2:1},{C2H5OH:1},"アルデヒドを還元","cat"],
+[{CH3COOH:2},{Ac2O:1,H2O:1},"2分子から水がとれる（脱水剤で縮合）"],
+[{PhCl:1,H2O:1},{PhOH:1,HCl:1},"過熱水蒸気と反応","heat"],
+[{SalNa:2,H2SO4:1},{Sal:2,Na2SO4:1},"硫酸で弱酸を遊離"],
 ].map(([inp, out, hint, cond], i) => ({cond, id:"o" + (i + 1), inp, out, hint}))
 .filter(r => r.cond !== "off");   // off：使わなくなったレシピ（id がずれないよう行は残す）
 const LAB_TABS = ["脂肪族", "芳香族"];
@@ -1931,7 +1972,7 @@ ITEM = FIELD.item; POOL = FIELD.pool;
 }
 const sideHTML = o => Object.entries(o).map(([k, n]) => `${n > 1 ? `<b style="color:var(--pink)">${n}</b>` : ""}${ITEM[k].fm}`).join(" ＋ ");
 const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
-const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]); return (o.find(x => !x.mat) || o[0]).cat; };
+const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]), it = o.find(x => !x.mat) || o[0]; return LAB_TABS.includes(it.cat) ? it.cat : it.tab || LAB_TABS[0]; };
 const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
 const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
@@ -1960,7 +2001,7 @@ m.innerHTML = `<div class="box">${detailHTML(k)}<button class="btn sub" id="dOk"
 document.body.appendChild(m); m.querySelector("#dOk").onclick = () => m.remove();
 }
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
-const HELP = {drop:.1, login:.05};
+const HELP = {drop:.1, login:.1};
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
 const loginCoins = streak => 120 + Math.min(streak, 7) * 20;   // ログインボーナスのコイン（連続日数で増える）

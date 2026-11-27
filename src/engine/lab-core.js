@@ -26,7 +26,8 @@ function setField(id) {
 
 const sideHTML = o => Object.entries(o).map(([k, n]) => `${n > 1 ? `<b style="color:var(--pink)">${n}</b>` : ""}${ITEM[k].fm}`).join(" ＋ ");
 const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
-const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]); return (o.find(x => !x.mat) || o[0]).cat; };
+// レシピ帳のタブ：主な生成物の分類（素材しかできないレシピは、その素材の tab）
+const recCat = r => { const o = Object.keys(r.out).map(k => ITEM[k]), it = o.find(x => !x.mat) || o[0]; return LAB_TABS.includes(it.cat) ? it.cat : it.tab || LAB_TABS[0]; };
 
 // --- ガチャ設定（たくさん引けるように）。素材は今の分野のもの（高分子は無機・有機の素材も出る）
 const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 50, PER_PULL = 5;
@@ -65,7 +66,7 @@ function showDetail(k) {
 // 実際のペースは tools/sim_collect.js で確かめられる。
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
 // ガチャ（コイン）でも素材が集まるので、おたすけの量は少なめにかける（tools/sim_collect.js で調整した値）
-const HELP = {drop:.1, login:.05};
+const HELP = {drop:.1, login:.1};
 // クリア1回のコイン（スコアとランクで決まる）。単元が増えたらここで調整する
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
