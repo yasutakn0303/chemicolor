@@ -14,6 +14,7 @@ FIELDS.forEach(f => {
   f.pool = [...f.MATS, ...f.POOL_FROM.flatMap(id => FIELD_OF[id].MATS).filter(m => !own.has(m.k) && own.add(m.k))];
   f.matSet = new Set(f.pool.map(m => m.k));
   f.item = Object.fromEntries([...f.pool, ...f.PROD].map(x => [x.k, x]));
+  f.ssr = f.PROD.filter(x => x.r === "SSR");   // ガチャの SSR は「経路の終わりの物質」
   f.used = new Set(f.RECIPES.flatMap(r => [...Object.keys(r.inp), ...Object.keys(r.out)]));
   f.used.forEach(k => { if (!f.item[k]) f.item[k] = ALL_ITEM[k]; });
 });
@@ -23,7 +24,8 @@ const rarAtLeast = (r, x) => RARS.indexOf(r) >= RARS.indexOf(x);   // 例：rarA
 FIELDS.forEach(f => {
   const memo = {}, prodBy = k => f.RECIPES.find(r => r.out[k] && !r.inp[k]);
   const itemRank = (k, d) => f.matSet.has(k) ? RARS.indexOf(f.item[k].r || "N") : (r => r && d < 8 ? rank(r, d + 1) : 0)(prodBy(k));
-  const rank = (r, d = 0) => memo[r.id] ?? (memo[r.id] = Math.max(0, ...Object.keys(r.inp).map(k => itemRank(k, d))));
+  const rank = (r, d = 0) => memo[r.id] ?? (memo[r.id] = Object.keys(r.out).some(k => !r.inp[k] && f.item[k].r === "SSR") ? 3
+    : Math.min(2, Math.max(0, ...Object.keys(r.inp).map(k => itemRank(k, d)))));
   f.RECIPES.forEach(r => r.rar = RARS[rank(r)]);
 });
 function setField(id) {
@@ -50,7 +52,9 @@ const mainItem = r => r._main, recCat = r => r._cat;
 const RATE = {N:.70, R:.22, SR:.07, SSR:.01}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
   const x = Math.random(), r = forceR || (x < RATE.SSR ? "SSR" : x < RATE.SSR + RATE.SR ? "SR" : x < RATE.SSR + RATE.SR + RATE.R ? "R" : "N");
-  const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
+  // SSR は経路の終わりの物質（高分子のようにラボのない分野は、ラボのある分野の SSR から）
+  const pool = r === "SSR" ? (F.ssr.length ? F.ssr : F.POOL_FROM.flatMap(id => FIELD_OF[id].ssr)) : F.pool.filter(s => s.r === r);
+  return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
 }
 function ensureInv(p, F = FIELD) {
   if (!p.inv) { p.inv = {}; p.made = {}; p.recipes = {}; p.coins = (p.coins || 0) + 300; p.started = {}; }
@@ -82,8 +86,8 @@ function showDetail(k) {
 // 配る枚数はデータから自動で計算するので、レシピや単元を増やしても目安は変わらない。
 // 実際のペースは tools/sim_collect.js で確かめられる。
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
-// おたすけ素材：クリアは S ランクのときだけ（SSR など出にくい素材の助け。遊ぶだけなら約1周でコンプ）。ログインだけでも 3〜5 週でそろうように、ログインで配る（tools/sim_collect.js で調整した値）
-const HELP = {drop:.05, login:.2};
+// おたすけ素材：クリアでは配らない（drop を 0 より大きくすると S ランクのときだけ配る。遊ぶだけなら約1周でコンプ）。ログインだけでも 3〜5 週でそろうように、ログインで配る（tools/sim_collect.js で調整した値）
+const HELP = {drop:0, login:.2};
 // クリア1回のコイン（スコアとランクで決まる）。単元が増えたらここで調整する
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
@@ -126,7 +130,7 @@ function giveNeeded(p, F, n) {
 function dropMats(r) {
   const p = P(); ensureInv(p); const n = {S:8, A:5, B:3}[r], got = [];
   for (let i = 0; i < n; i++) { const m = pull(); p.inv[m.k] = (p.inv[m.k] || 0) + 1; got.push(m); }
-  if (r !== "S") return {got, help: []};
+  if (r !== "S" || !HELP.drop) return {got, help: []};
   const HF = helpField(p, FIELD), h = dropHelp(FIELD.hasLab ? FIELD : HF);
   const help = giveNeeded(p, HF, h);
   return {got, help};

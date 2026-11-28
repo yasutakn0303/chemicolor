@@ -1141,10 +1141,10 @@ const MATS = [
 ["KBr","KBr","臭化カリウム","白","SR","固体",["白色の結晶。水によく溶ける","Cl₂ を通すと Br₂ が遊離（酸化力 Cl₂ ＞ Br₂）","Ag⁺ と淡黄色の AgBr を沈殿"]],
 ["KI","KI","ヨウ化カリウム","白","SR","固体",["白色の結晶。水によく溶ける","Cl₂・Br₂ で I₂ が遊離（I⁻ は酸化されやすい）","Ag⁺ と黄色の AgI を沈殿"]],
 ["Al","Al","アルミニウム","銀白","R","固体",["両性金属：酸にも強塩基にも溶ける","濃硝酸には不動態","軽くてさびにくい"]],
-["Na2S2O3","Na<sub>2</sub>S<sub>2</sub>O<sub>3</sub>","チオ硫酸ナトリウム","白","SSR","固体",["ハイポ","AgBr などを錯イオンにして溶かす（写真の定着）","還元剤としてもはたらく"]],
-["K4FeCN6","K<sub>4</sub>[Fe(CN)<sub>6</sub>]","ヘキサシアニド鉄(Ⅱ)酸カリウム","淡黄","SSR","固体",["黄血塩。黄色の結晶","Fe³⁺ と濃青色沈殿","Fe³⁺ の検出に使う"]],
-["K3FeCN6","K<sub>3</sub>[Fe(CN)<sub>6</sub>]","ヘキサシアニド鉄(Ⅲ)酸カリウム","赤","SSR","固体",["赤血塩。暗赤色の結晶","Fe²⁺ と濃青色沈殿","Fe²⁺ の検出に使う"]],
-["Au","Au","金","黄","SSR","固体",["イオン化傾向が最も小さい金属のなかま","濃硝酸・濃塩酸には溶けない","王水（濃硝酸：濃塩酸＝1：3）には溶ける"]],
+["Na2S2O3","Na<sub>2</sub>S<sub>2</sub>O<sub>3</sub>","チオ硫酸ナトリウム","白","SR","固体",["ハイポ","AgBr などを錯イオンにして溶かす（写真の定着）","還元剤としてもはたらく"]],
+["K4FeCN6","K<sub>4</sub>[Fe(CN)<sub>6</sub>]","ヘキサシアニド鉄(Ⅱ)酸カリウム","淡黄","SR","固体",["黄血塩。黄色の結晶","Fe³⁺ と濃青色沈殿","Fe³⁺ の検出に使う"]],
+["K3FeCN6","K<sub>3</sub>[Fe(CN)<sub>6</sub>]","ヘキサシアニド鉄(Ⅲ)酸カリウム","赤","SR","固体",["赤血塩。暗赤色の結晶","Fe²⁺ と濃青色沈殿","Fe²⁺ の検出に使う"]],
+["Au","Au","金","黄","SR","固体",["イオン化傾向が最も小さい金属のなかま","濃硝酸・濃塩酸には溶けない","王水（濃硝酸：濃塩酸＝1：3）には溶ける"]],
 ].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
 const PROD = [
 ["AgNH3OH","[Ag(NH<sub>3</sub>)<sub>2</sub>]OH","ジアンミン銀(Ⅰ)（水酸化物）","無色","錯イオン","水溶液",["錯イオン [Ag(NH₃)₂]⁺（直線形）","Ag₂O が過剰のアンモニア水に溶けてできる","アンモニア性硝酸銀（銀鏡反応に使う）"]],
@@ -1206,6 +1206,7 @@ const PROD = [
 ["KNO3","KNO<sub>3</sub>","硝酸カリウム","白","無機","固体",["沈殿の反応で水溶液に残る塩","水によく溶ける","黒色火薬の原料。炎色反応は赤紫"]],
 ["KCl","KCl","塩化カリウム","白","無機","固体",["白色の結晶","ハロゲンの遊離で生じる","炎色反応は赤紫色"]],
 ].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info}));
+["CuNH3", "AgNH3Cl", "NaAgS2O3", "HAuCl4"].forEach(k => PROD.find(x => x.k === k).r = "SSR");
 const RECIPES = [
 [{C:1,O2:1},{CO2:1},"炭素が燃える"], [{S:1,O2:1},{SO2:1},"硫黄が燃える"], [{H2:1,Cl2:1},{HCl:2},"光を当てると爆発的に反応"],
 [{N2:1,H2:3,Fe3O4:1},{NH3:2,Fe3O4:1},"ハーバー・ボッシュ法","heat,press"], [{FeS:1,HCl:2},{FeCl2:1,H2S:1},"硫化鉄(Ⅱ)に希塩酸（弱酸の遊離）","aq"], [{H2:2,O2:1},{H2O:2},"水素が燃える"],
@@ -1543,13 +1544,13 @@ const MATS = [
 ["K2Cr2O7","K<sub>2</sub>Cr<sub>2</sub>O<sub>7</sub>","二クロム酸カリウム","橙赤","R","固体",["硫酸酸性で強い酸化剤","第一級アルコール → アルデヒド","第二級アルコール → ケトン（Cr³⁺ の緑色になる）"]],
 ["C6H12O6","C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>","グルコース","白","R","固体",["ブドウ糖。単糖類","酵母のはたらきでアルコール発酵","還元性あり（銀鏡反応・フェーリング液）"]],
 ["CO","CO","一酸化炭素","無色","R","気体",["無色・無臭で有毒","メタノールと反応させて酢酸を工業的につくる","還元剤としてはたらく"]],
-["CaOAc2","(CH<sub>3</sub>COO)<sub>2</sub>Ca","酢酸カルシウム","白","SSR","固体",["酢酸のカルシウム塩","乾留（空気を断って加熱）するとアセトン","アセトンの実験室での製法"]],
+["CaOAc2","(CH<sub>3</sub>COO)<sub>2</sub>Ca","酢酸カルシウム","白","SR","固体",["酢酸のカルシウム塩","乾留（空気を断って加熱）するとアセトン","アセトンの実験室での製法"]],
 ["I2","I<sub>2</sub>","ヨウ素","黒紫","R","固体",["NaOH と一緒にヨードホルム反応に使う","CH₃CO- や CH₃CH(OH)- をもつ物質で黄色沈殿","デンプンで青紫色（ヨウ素デンプン反応）"]],
 ["CaC2","CaC<sub>2</sub>","炭化カルシウム","灰","R","固体",["カーバイド","水を加えるとアセチレンが発生","アセチレンの実験室での製法"]],
-["AgNH3OH","[Ag(NH<sub>3</sub>)<sub>2</sub>]OH","アンモニア性硝酸銀","無色","SSR","水溶液",["銀鏡反応の試薬（[Ag(NH₃)₂]⁺）","アルデヒドで還元されて銀が析出","還元性の検出"]],
+["AgNH3OH","[Ag(NH<sub>3</sub>)<sub>2</sub>]OH","アンモニア性硝酸銀","無色","R","水溶液",["銀鏡反応の試薬（[Ag(NH₃)₂]⁺）","アルデヒドで還元されて銀が析出","還元性の検出"]],
 ["CuSO4","CuSO<sub>4</sub>","硫酸銅(Ⅱ)","白","R","固体",["フェーリング液の成分（Cu²⁺）","アルデヒドで還元されて Cu₂O の赤色沈殿","NaOH と一緒に使う"]],
-["Fat","(C<sub>17</sub>H<sub>35</sub>COO)<sub>3</sub>C<sub>3</sub>H<sub>5</sub>","油脂（ステアリン酸のトリグリセリド）","白","SSR","固体",["グリセリンと高級脂肪酸のエステル","NaOH でけん化 → セッケン ＋ グリセリン","飽和脂肪酸が多いと常温で固体（脂肪）"]],
-["Naph","C<sub>10</sub>H<sub>8</sub>","ナフタレン","白","SSR","固体",["ベンゼン環が2つ縮合した芳香族","昇華性がある（防虫剤）","V₂O₅ を触媒に酸化 → 無水フタル酸"]],
+["Fat","(C<sub>17</sub>H<sub>35</sub>COO)<sub>3</sub>C<sub>3</sub>H<sub>5</sub>","油脂（ステアリン酸のトリグリセリド）","白","SR","固体",["グリセリンと高級脂肪酸のエステル","NaOH でけん化 → セッケン ＋ グリセリン","飽和脂肪酸が多いと常温で固体（脂肪）"]],
+["Naph","C<sub>10</sub>H<sub>8</sub>","ナフタレン","白","SR","固体",["ベンゼン環が2つ縮合した芳香族","昇華性がある（防虫剤）","V₂O₅ を触媒に酸化 → 無水フタル酸"]],
 ].map(([k, fm, nm, c, r, st, info]) => ({k, fm, nm, c, r, st, info, cat:"素材", mat:1}));
 [["Ac2O", "脂肪族"], ["CH3OH", "脂肪族"], ["CO", "脂肪族"], ["C2H2", "脂肪族"]].forEach(([k, t]) => MATS.find(m => m.k === k).tab = t);
 const PROD = [
@@ -1637,6 +1638,7 @@ const PROD = [
 ["PhOAc","CH<sub>3</sub>COOC<sub>6</sub>H<sub>5</sub>","酢酸フェニル","無色","芳香族","液体",["フェノールのアセチル化でできるエステル","フェノールは酸と直接エステルをつくりにくい","無水酢酸を使う"]],
 ].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info: info.filter(t => t !== "—")}));
 [["Ag", "脂肪族"], ["Cu2O", "脂肪族"]].forEach(([k, t]) => PROD.find(m => m.k === k).tab = t);
+["Azo", "Aspirin", "MeSal", "Picric"].forEach(k => PROD.find(x => x.k === k).r = "SSR");
 const RECIPES = [
 [{C2H2:1,H2:1},{C2H4:1},"三重結合に H₂ が1分子付加","cat:Pt・Ni"], [{C2H4:1,H2:1},{C2H6:1},"二重結合に付加","cat:Pt・Ni"], [{C2H4:1,H2O:1},{C2H5OH:1},"エチレンに水を付加","heat,press,cat"],
 [{C2H5OH:1,O2:1},{CH3COOH:1,H2O:1},"酢酸発酵（お酒がすっぱくなる）"], [{CH3CHO:2,O2:1},{CH3COOH:2},"アルデヒドの酸化"],
@@ -2109,6 +2111,7 @@ const own = new Set(f.MATS.map(m => m.k));
 f.pool = [...f.MATS, ...f.POOL_FROM.flatMap(id => FIELD_OF[id].MATS).filter(m => !own.has(m.k) && own.add(m.k))];
 f.matSet = new Set(f.pool.map(m => m.k));
 f.item = Object.fromEntries([...f.pool, ...f.PROD].map(x => [x.k, x]));
+f.ssr = f.PROD.filter(x => x.r === "SSR");   // ガチャの SSR は「経路の終わりの物質」
 f.used = new Set(f.RECIPES.flatMap(r => [...Object.keys(r.inp), ...Object.keys(r.out)]));
 f.used.forEach(k => { if (!f.item[k]) f.item[k] = ALL_ITEM[k]; });
 });
@@ -2117,7 +2120,8 @@ const rarAtLeast = (r, x) => RARS.indexOf(r) >= RARS.indexOf(x);   // 例：rarA
 FIELDS.forEach(f => {
 const memo = {}, prodBy = k => f.RECIPES.find(r => r.out[k] && !r.inp[k]);
 const itemRank = (k, d) => f.matSet.has(k) ? RARS.indexOf(f.item[k].r || "N") : (r => r && d < 8 ? rank(r, d + 1) : 0)(prodBy(k));
-const rank = (r, d = 0) => memo[r.id] ?? (memo[r.id] = Math.max(0, ...Object.keys(r.inp).map(k => itemRank(k, d))));
+const rank = (r, d = 0) => memo[r.id] ?? (memo[r.id] = Object.keys(r.out).some(k => !r.inp[k] && f.item[k].r === "SSR") ? 3
+: Math.min(2, Math.max(0, ...Object.keys(r.inp).map(k => itemRank(k, d)))));
 f.RECIPES.forEach(r => r.rar = RARS[rank(r)]);
 });
 function setField(id) {
@@ -2138,7 +2142,8 @@ const mainItem = r => r._main, recCat = r => r._cat;
 const RATE = {N:.70, R:.22, SR:.07, SSR:.01}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
 const x = Math.random(), r = forceR || (x < RATE.SSR ? "SSR" : x < RATE.SSR + RATE.SR ? "SR" : x < RATE.SSR + RATE.SR + RATE.R ? "R" : "N");
-const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
+const pool = r === "SSR" ? (F.ssr.length ? F.ssr : F.POOL_FROM.flatMap(id => FIELD_OF[id].ssr)) : F.pool.filter(s => s.r === r);
+return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
 }
 function ensureInv(p, F = FIELD) {
 if (!p.inv) { p.inv = {}; p.made = {}; p.recipes = {}; p.coins = (p.coins || 0) + 300; p.started = {}; }
@@ -2163,7 +2168,7 @@ m.innerHTML = `<div class="box">${detailHTML(k)}<button class="btn sub" id="dOk"
 document.body.appendChild(m); m.querySelector("#dOk").onclick = () => m.remove();
 }
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
-const HELP = {drop:.05, login:.2};
+const HELP = {drop:0, login:.2};
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
 const loginCoins = streak => 120 + Math.min(streak, 7) * 20;   // ログインボーナスのコイン（連続日数で増える）
@@ -2201,7 +2206,7 @@ return got.map(k => F.item[k]);
 function dropMats(r) {
 const p = P(); ensureInv(p); const n = {S:8, A:5, B:3}[r], got = [];
 for (let i = 0; i < n; i++) { const m = pull(); p.inv[m.k] = (p.inv[m.k] || 0) + 1; got.push(m); }
-if (r !== "S") return {got, help: []};
+if (r !== "S" || !HELP.drop) return {got, help: []};
 const HF = helpField(p, FIELD), h = dropHelp(FIELD.hasLab ? FIELD : HF);
 const help = giveNeeded(p, HF, h);
 return {got, help};
@@ -2975,7 +2980,7 @@ ${labFieldTabs(p, "gfd")}
 <div class="gacha"><div class="machine" id="cap">🫧</div></div>
 <div class="coin" style="margin-bottom:6px">所持 🪙 <span id="cn">${p.coins}</span></div>
 <div style="display:flex;gap:8px"><button class="btn" id="p1">1回（🪙${GACHA_COST}）</button><button class="btn" id="p10" style="background:var(--lav);box-shadow:0 5px 0 #2557c9">10連（🪙${GACHA_COST * 10}）</button></div>
-<div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 7%・<b style="color:#d4a017">SSR 1%</b>　／　10連はSR以上 1枚確定！</div>
+<div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 7%・<b style="color:#d4a017">SSR 1%</b>（合成経路の終わりの物質がいきなり出る！）　／　10連はSR以上 1枚確定！</div>
 <button class="btn sub" id="lb">⚗️ 合成ラボへ</button>
 <button class="btn sub" id="bk">メニューへ</button></div>`;
 $("bk").onclick = toMenu; $("lb").onclick = () => lab();
@@ -2988,7 +2993,7 @@ p.coins -= GACHA_COST * n; upd(); $("p1").disabled = $("p10").disabled = true;
 const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
 if (n >= 10 && !got.some(m => rarAtLeast(m.r, "SR"))) got[got.length - 1] = pull("SR");
 got.sort((a, b) => RARS.indexOf(b.r) - RARS.indexOf(a.r));   // レアの高い順（SSR → SR → R → N）に出す
-got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1);
+got.forEach(m => { p.inv[m.k] = (p.inv[m.k] || 0) + 1; if (m.r === "SSR") p.made[m.k] = (p.made[m.k] || 0) + 1; });   // SSR の物質は図鑑にも入る
 p.pulls = (p.pulls || 0) + n; p.srGot = (p.srGot || 0) + got.filter(m => rarAtLeast(m.r, "SR")).length; p.ssrGot = (p.ssrGot || 0) + got.filter(m => m.r === "SSR").length;
 const b = autoBadges(); saveS();
 await gachaFx(got); upd(); badgeToast(b);
@@ -3017,7 +3022,7 @@ async function superFx(fx, got, wait) {
 const ssr = got.filter(m => m.r === "SSR").length, n = got.filter(m => m.r === "SR").length + ssr;
 fx.classList.remove("go"); fx.classList.add("super"); if (ssr) fx.classList.add("ssr");
 fx.innerHTML = ssr ? `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srring r2"></div><div class="srbig ssrbig">SSR!!!</div>
-<div class="srsub">超激レア素材${ssr > 1 ? ` ×${ssr}` : ""} 確定！！</div></div><div class="fx-skip">タップでスキップ</div>`
+<div class="srsub">超激レア物質${ssr > 1 ? ` ×${ssr}` : ""} 確定！！</div></div><div class="fx-skip">タップでスキップ</div>`
 : `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srbig">SUPER<br>RARE!!</div>
 <div class="srsub">SR 素材${n > 1 ? ` ×${n}` : ""} 確定！</div></div><div class="fx-skip">タップでスキップ</div>`;
 if (ssr) bell([523, 659, 784, 1046, 784, 1046, 1318, 1568, 2093, 2637], .09, .06);

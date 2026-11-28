@@ -404,7 +404,7 @@ function gacha() {
     <div class="gacha"><div class="machine" id="cap">🫧</div></div>
     <div class="coin" style="margin-bottom:6px">所持 🪙 <span id="cn">${p.coins}</span></div>
     <div style="display:flex;gap:8px"><button class="btn" id="p1">1回（🪙${GACHA_COST}）</button><button class="btn" id="p10" style="background:var(--lav);box-shadow:0 5px 0 #2557c9">10連（🪙${GACHA_COST * 10}）</button></div>
-    <div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 7%・<b style="color:#d4a017">SSR 1%</b>　／　10連はSR以上 1枚確定！</div>
+    <div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 7%・<b style="color:#d4a017">SSR 1%</b>（合成経路の終わりの物質がいきなり出る！）　／　10連はSR以上 1枚確定！</div>
     <button class="btn sub" id="lb">⚗️ 合成ラボへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
   $("bk").onclick = toMenu; $("lb").onclick = () => lab();
@@ -417,7 +417,7 @@ function gacha() {
     const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
     if (n >= 10 && !got.some(m => rarAtLeast(m.r, "SR"))) got[got.length - 1] = pull("SR");
     got.sort((a, b) => RARS.indexOf(b.r) - RARS.indexOf(a.r));   // レアの高い順（SSR → SR → R → N）に出す
-    got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1);
+    got.forEach(m => { p.inv[m.k] = (p.inv[m.k] || 0) + 1; if (m.r === "SSR") p.made[m.k] = (p.made[m.k] || 0) + 1; });   // SSR の物質は図鑑にも入る
     p.pulls = (p.pulls || 0) + n; p.srGot = (p.srGot || 0) + got.filter(m => rarAtLeast(m.r, "SR")).length; p.ssrGot = (p.ssrGot || 0) + got.filter(m => m.r === "SSR").length;
     const b = autoBadges(); saveS();
     await gachaFx(got); upd(); badgeToast(b);
@@ -449,7 +449,7 @@ async function superFx(fx, got, wait) {
   fx.classList.remove("go"); fx.classList.add("super"); if (ssr) fx.classList.add("ssr");
   // SSR はさらに特別：虹色の背景・「SSR!!!」・長めのファンファーレ
   fx.innerHTML = ssr ? `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srring r2"></div><div class="srbig ssrbig">SSR!!!</div>
-    <div class="srsub">超激レア素材${ssr > 1 ? ` ×${ssr}` : ""} 確定！！</div></div><div class="fx-skip">タップでスキップ</div>`
+    <div class="srsub">超激レア物質${ssr > 1 ? ` ×${ssr}` : ""} 確定！！</div></div><div class="fx-skip">タップでスキップ</div>`
     : `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srbig">SUPER<br>RARE!!</div>
     <div class="srsub">SR 素材${n > 1 ? ` ×${n}` : ""} 確定！</div></div><div class="fx-skip">タップでスキップ</div>`;
   if (ssr) bell([523, 659, 784, 1046, 784, 1046, 1318, 1568, 2093, 2637], .09, .06);
