@@ -57,7 +57,7 @@ function playRun(p, F) {
   const x = Math.random(), r = x < .3 ? "S" : x < .8 ? "A" : "B";
   p.coins += L.runCoins(1800, r);
   for (let i = 0; i < {S:8, A:5, B:3}[r]; i++) { const m = L.pull(null, F); p.inv[m.k] = (p.inv[m.k] || 0) + 1; }
-  const HF = L.helpField(p, F), h = L.dropHelp(F.hasLab ? F : HF); L.giveNeeded(p, HF, r === "B" ? Math.ceil(h / 2) : h);
+  const HF = L.helpField(p, F), h = L.dropHelp(F.hasLab ? F : HF); L.giveNeeded(p, HF, r === "S" ? h : 0);
   gacha(p, F); craftAll(p);
 }
 function login(p, day) {

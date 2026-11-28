@@ -404,7 +404,7 @@ function gacha() {
     <div class="gacha"><div class="machine" id="cap">🫧</div></div>
     <div class="coin" style="margin-bottom:6px">所持 🪙 <span id="cn">${p.coins}</span></div>
     <div style="display:flex;gap:8px"><button class="btn" id="p1">1回（🪙${GACHA_COST}）</button><button class="btn" id="p10" style="background:var(--lav);box-shadow:0 5px 0 #2557c9">10連（🪙${GACHA_COST * 10}）</button></div>
-    <div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 8%　／　10連はSR 1枚以上確定！</div>
+    <div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 7%・<b style="color:#d4a017">SSR 1%</b>　／　10連はSR以上 1枚確定！</div>
     <button class="btn sub" id="lb">⚗️ 合成ラボへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
   $("bk").onclick = toMenu; $("lb").onclick = () => lab();
@@ -415,10 +415,10 @@ function gacha() {
     if (!can(n)) return;
     p.coins -= GACHA_COST * n; upd(); $("p1").disabled = $("p10").disabled = true;
     const got = []; for (let i = 0; i < PER_PULL * n; i++) got.push(pull());
-    if (n >= 10 && !got.some(m => m.r === "SR")) got[got.length - 1] = pull("SR");
-    got.sort((a, b) => "NRS".indexOf(b.r[0]) - "NRS".indexOf(a.r[0]));   // レアの高い順（SR → R → N）に出す
+    if (n >= 10 && !got.some(m => rarAtLeast(m.r, "SR"))) got[got.length - 1] = pull("SR");
+    got.sort((a, b) => RARS.indexOf(b.r) - RARS.indexOf(a.r));   // レアの高い順（SSR → SR → R → N）に出す
     got.forEach(m => p.inv[m.k] = (p.inv[m.k] || 0) + 1);
-    p.pulls = (p.pulls || 0) + n; p.srGot = (p.srGot || 0) + got.filter(m => m.r === "SR").length;
+    p.pulls = (p.pulls || 0) + n; p.srGot = (p.srGot || 0) + got.filter(m => rarAtLeast(m.r, "SR")).length; p.ssrGot = (p.ssrGot || 0) + got.filter(m => m.r === "SSR").length;
     const b = autoBadges(); saveS();
     await gachaFx(got); upd(); badgeToast(b);
   };
@@ -445,17 +445,21 @@ const GACHA_FX = [
 ];
 // SR が出るときの「スーパー演出」（カードの前に入る）
 async function superFx(fx, got, wait) {
-  const n = got.filter(m => m.r === "SR").length;
-  fx.classList.remove("go"); fx.classList.add("super");
-  fx.innerHTML = `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srbig">SUPER<br>RARE!!</div>
+  const ssr = got.filter(m => m.r === "SSR").length, n = got.filter(m => m.r === "SR").length + ssr;
+  fx.classList.remove("go"); fx.classList.add("super"); if (ssr) fx.classList.add("ssr");
+  // SSR はさらに特別：虹色の背景・「SSR!!!」・長めのファンファーレ
+  fx.innerHTML = ssr ? `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srring r2"></div><div class="srbig ssrbig">SSR!!!</div>
+    <div class="srsub">超激レア素材${ssr > 1 ? ` ×${ssr}` : ""} 確定！！</div></div><div class="fx-skip">タップでスキップ</div>`
+    : `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srbig">SUPER<br>RARE!!</div>
     <div class="srsub">SR 素材${n > 1 ? ` ×${n}` : ""} 確定！</div></div><div class="fx-skip">タップでスキップ</div>`;
+  if (ssr) bell([523, 659, 784, 1046, 784, 1046, 1318, 1568, 2093, 2637], .09, .06);
   bell([523, 659, 784, 1046, 1318, 1568, 2093], .07, .05);
   for (let i = 0; i < 4; i++) setTimeout(() => burst(fx.querySelector(".srx") || fx), 150 + i * 220);
-  await wait(1500);
-  fx.classList.remove("super");
+  await wait(ssr ? 2200 : 1500);
+  fx.classList.remove("super", "ssr");
 }
 async function gachaFx(got) {
-  const sr = got.some(m => m.r === "SR"), rr = got.some(m => m.r === "R");
+  const sr = got.some(m => rarAtLeast(m.r, "SR")), rr = got.some(m => m.r === "R"), ssr = got.some(m => m.r === "SSR");
   const fx = document.createElement("div"); fx.className = "fx " + (sr ? "gold" : rr ? "blue" : "");
   // 演出は3パターンからランダム：カプセル・フラスコ・原子
   const pat = GACHA_FX[Math.floor(Math.random() * GACHA_FX.length)];
@@ -468,7 +472,7 @@ async function gachaFx(got) {
   if (sr && !skip) await superFx(fx, got, wait);
   fx.innerHTML = `<div class="flashw"></div><div class="fxgrid" style="grid-template-columns:repeat(${got.length > 5 ? 5 : got.length},1fr)">${got.map((m, i) =>
     `<div class="fc ${m.r}" style="animation-delay:${skip ? 0 : i * (got.length > 10 ? 60 : 160)}ms">${itemCard(m.k)}</div>`).join("")}</div>
-    <div class="fxt">${sr ? "✨ SR ゲット！ ✨" : "素材ゲット！"}</div><button class="btn" id="fxOk" style="max-width:260px">OK</button>`;
+    <div class="fxt">${ssr ? "🌈 SSR ゲット！！ 🌈" : sr ? "✨ SR ゲット！ ✨" : "素材ゲット！"}</div><button class="btn" id="fxOk" style="max-width:260px">OK</button>`;
   sr ? bell([1046, 1318, 1568, 2093, 2637], .08) : SE.ok();
   if (sr) for (let i = 0; i < 3; i++) setTimeout(() => burst(fx.querySelector(".fxgrid")), i * 300);
   await new Promise(r => fx.querySelector("#fxOk").onclick = e => { e.stopPropagation(); fx.remove(); r(); });
@@ -506,9 +510,6 @@ function lab(msg = "") {
   const mats = owned.filter(k => ITEM[k].mat), prods = owned.filter(k => !ITEM[k].mat);
   const found = RECIPES.filter(r => p.recipes[r.id]).length;
   const sel = Object.keys(slot);
-  const slotHTML = sel.length
-    ? sel.map(k => `<button class="slot" data-k="${k}">${ITEM[k].fm}<small>${ITEM[k].nm}</small></button>`).join(`<span class="plus">＋</span>`)
-    : `<span style="color:var(--sub);font-size:13px">使う素材をタップして選ぼう（係数は考えなくてOK）<br>例：N₂ と H₂ と 触媒を選ぶ → アンモニア</span>`;
   if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
   // 同じ物質の作り方はとなりに並べる（物質が最初に出てくる順）
   const list = RECIPES.filter(r => recCat(r) === recTab && (recRar === "all" || r.rar === recRar)), first = {};
@@ -518,7 +519,7 @@ function lab(msg = "") {
   stage.innerHTML = `<div class="panel wide">
     <h2 class="pop">⚗️ 合成ラボ</h2>
     ${labFieldTabs(p, "lfd")}
-    <div class="flask">${slotHTML}</div>
+    <div class="flask" id="flask">${slotHTML()}</div>
     <div style="display:flex;gap:8px"><button class="btn" id="mix" ${sel.length ? "" : "disabled style='opacity:.5'"}>合成する！</button><button class="btn sub" id="clr" style="flex:none;width:96px;white-space:nowrap">クリア</button></div>
     <div id="lmsg" class="lmsg">${msg}</div>
     <div class="sec">もっている素材・物質 <small>（タップで選ぶ／ⓘで解説）</small></div>
@@ -545,9 +546,9 @@ function lab(msg = "") {
     const k = c.dataset.k;
     if (e.target.closest(".inf")) return showDetail(k);
     slot[k] ? delete slot[k] : slot[k] = 1; bell([880], .05, .04);
-    const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y;
+    refreshSlot();
   });
-  stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { delete slot[b.dataset.k]; lab(); });
+  refreshSlot();
   stage.querySelectorAll("[data-lf]").forEach(b => b.onclick = () => { labFilter = b.dataset.lf; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
   stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
   stage.querySelectorAll("[data-rr]").forEach(b => b.onclick = () => { recRar = b.dataset.rr; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
@@ -561,6 +562,17 @@ function lab(msg = "") {
   $("bk").onclick = toMenu; $("gc").onclick = () => { slot = {}; gacha(); };
   $("mix").onclick = () => mix();
   $("tdbg").onclick = teacherTools;
+}
+// 材料の欄（フラスコ）と、選んだカードの印・「合成する！」ボタンだけを更新する
+const slotHTML = () => { const sel = Object.keys(slot); return sel.length
+  ? sel.map(k => `<button class="slot" data-k="${k}">${ITEM[k].fm}<small>${ITEM[k].nm}</small></button>`).join(`<span class="plus">＋</span>`)
+  : `<span style="color:var(--sub);font-size:13px">使う素材をタップして選ぼう（係数は考えなくてOK）<br>例：N₂ と H₂ と 触媒を選ぶ → アンモニア</span>`; };
+function refreshSlot() {
+  const f = $("flask"); if (!f) return;
+  f.innerHTML = slotHTML();
+  f.querySelectorAll(".slot").forEach(b => b.onclick = () => { delete slot[b.dataset.k]; refreshSlot(); });
+  stage.querySelectorAll(".stk .st[data-k]").forEach(c => c.classList.toggle("sel", !!slot[c.dataset.k]));
+  const m = $("mix"), on = Object.keys(slot).length > 0; m.disabled = !on; m.style.opacity = on ? 1 : .5;
 }
 // ---- 先生用：合成ラボの確認（先生用コードを入れたプレイヤーだけ、素材を10個ずつにできる）
 async function teacherTools() {
@@ -610,7 +622,7 @@ async function teacherTools() {
 // ---- レシピ帳：小さな正方形のタイル（発見済みは生成物の色、未発見は「？」）
 const mainOf = mainItem;
 // 同じ物質をつくるレシピ（作り方が2つ以上ある物質は、タイルに ①② の番号をつける）
-const routesOf = r => { const k = mainOf(r).k; return RECIPES.filter(x => mainOf(x).k === k); };
+const routesOf = r => r._routes;
 const NUM = "①②③④⑤⑥⑦⑧⑨";
 function recipeTile(p, r) {
   const it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r);

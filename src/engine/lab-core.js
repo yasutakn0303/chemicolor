@@ -18,7 +18,8 @@ FIELDS.forEach(f => {
   f.used.forEach(k => { if (!f.item[k]) f.item[k] = ALL_ITEM[k]; });
 });
 // レシピのレア度：使う素材のいちばん高いレア度（途中の物質は、その作り方までさかのぼる）。N・R・SR
-const RARS = ["N", "R", "SR"], RAR_STAR = {N: "★", R: "★★", SR: "★★★"}, FIND_BONUS = {N: 50, R: 100, SR: 200};
+const RARS = ["N", "R", "SR", "SSR"], RAR_STAR = {N: "★", R: "★★", SR: "★★★", SSR: "★★★★"}, FIND_BONUS = {N: 50, R: 100, SR: 200, SSR: 400};
+const rarAtLeast = (r, x) => RARS.indexOf(r) >= RARS.indexOf(x);   // 例：rarAtLeast(m.r, "SR") … SR か SSR
 FIELDS.forEach(f => {
   const memo = {}, prodBy = k => f.RECIPES.find(r => r.out[k] && !r.inp[k]);
   const itemRank = (k, d) => f.matSet.has(k) ? RARS.indexOf(f.item[k].r || "N") : (r => r && d < 8 ? rank(r, d + 1) : 0)(prodBy(k));
@@ -36,14 +37,19 @@ const sideHTML = o => Object.entries(o).map(([k, n]) => `${n > 1 ? `<b style="co
 const eqHTML = r => `${sideHTML(r.inp)} → ${sideHTML(r.out)}`;
 // レシピ帳のタブ：主な生成物の分類（素材しかできないレシピは、その素材の tab）
 // 主な生成物：触媒を除き、レシピ帳のタブに出せるもの（分類がタブにある・tab がある）を先に
-const mainItem = r => { const o = Object.keys(r.out).filter(k => !r.inp[k]).map(k => ITEM[k]), inTab = x => LAB_TABS.includes(x.cat) || x.tab;
-  return o.find(inTab) || o.find(x => !x.mat) || o[0] || ITEM[Object.keys(r.out)[0]]; };
-const recCat = r => { const it = mainItem(r); return LAB_TABS.includes(it.cat) ? it.cat : it.tab || LAB_TABS[0]; };
+// （分野ごとに最初に1回だけ計算して r._main・r._cat・r._routes に覚えておく。レシピ帳を開くたびに計算しない）
+function calcMain(f, r) { const I = f.item, o = Object.keys(r.out).filter(k => !r.inp[k]).map(k => I[k]), inTab = x => f.LAB_TABS.includes(x.cat) || x.tab;
+  return o.find(inTab) || o.find(x => !x.mat) || o[0] || I[Object.keys(r.out)[0]]; }
+FIELDS.forEach(f => {
+  f.RECIPES.forEach(r => { r._main = calcMain(f, r); r._cat = f.LAB_TABS.includes(r._main.cat) ? r._main.cat : r._main.tab || f.LAB_TABS[0]; });
+  const by = {}; f.RECIPES.forEach(r => (by[r._main.k] = by[r._main.k] || []).push(r)); f.RECIPES.forEach(r => r._routes = by[r._main.k]);
+});
+const mainItem = r => r._main, recCat = r => r._cat;
 
 // --- ガチャ設定（たくさん引けるように）。素材は今の分野のもの（高分子は無機・有機の素材も出る）
-const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 50, PER_PULL = 5;
+const RATE = {N:.70, R:.22, SR:.07, SSR:.01}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
-  const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
+  const x = Math.random(), r = forceR || (x < RATE.SSR ? "SSR" : x < RATE.SSR + RATE.SR ? "SR" : x < RATE.SSR + RATE.SR + RATE.R ? "R" : "N");
   const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
 }
 function ensureInv(p, F = FIELD) {
@@ -76,8 +82,8 @@ function showDetail(k) {
 // 配る枚数はデータから自動で計算するので、レシピや単元を増やしても目安は変わらない。
 // 実際のペースは tools/sim_collect.js で確かめられる。
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
-// おたすけ素材：クリアでは配らない（遊ぶだけなら約1周でコンプ）。ログインだけでも 3〜5 週でそろうように、ログインで配る（tools/sim_collect.js で調整した値）
-const HELP = {drop:0, login:.2};
+// おたすけ素材：クリアは S ランクのときだけ（SSR など出にくい素材の助け。遊ぶだけなら約1周でコンプ）。ログインだけでも 3〜5 週でそろうように、ログインで配る（tools/sim_collect.js で調整した値）
+const HELP = {drop:.05, login:.2};
 // クリア1回のコイン（スコアとランクで決まる）。単元が増えたらここで調整する
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
@@ -120,7 +126,8 @@ function giveNeeded(p, F, n) {
 function dropMats(r) {
   const p = P(); ensureInv(p); const n = {S:8, A:5, B:3}[r], got = [];
   for (let i = 0; i < n; i++) { const m = pull(); p.inv[m.k] = (p.inv[m.k] || 0) + 1; got.push(m); }
+  if (r !== "S") return {got, help: []};
   const HF = helpField(p, FIELD), h = dropHelp(FIELD.hasLab ? FIELD : HF);
-  const help = giveNeeded(p, HF, r === "B" ? Math.ceil(h / 2) : h);
+  const help = giveNeeded(p, HF, h);
   return {got, help};
 }

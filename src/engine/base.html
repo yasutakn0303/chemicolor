@@ -16,7 +16,7 @@ body{font-family:"Zen Maru Gothic",system-ui,sans-serif;color:var(--ink);
 .pop{font-family:"Mochiy Pop One","Zen Maru Gothic",sans-serif;font-weight:400}
 #tint{position:fixed;inset:0;opacity:0;transition:opacity .5s;z-index:0}
 #deco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-#deco span{position:absolute;bottom:-40px;opacity:.55;animation:float linear infinite}
+#deco span{position:absolute;bottom:-40px;opacity:.55;animation:float linear infinite;will-change:transform}
 @keyframes float{to{transform:translateY(-115vh) rotate(200deg)}}
 #app{position:relative;z-index:1;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
   padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 14px)}
@@ -218,7 +218,7 @@ const SE = {ok:()=>bell([1046,1318,1568]), ng:()=>bell([392,330],.14,.06), lv:()
 (function deco() {
   const items = ["★","●","▲","✦","■","◆"], cols = ["#ff6b5b","#3d7cff","#18b6a4","#ffc93c"];
   let h = "";
-  for (let i = 0; i < 16; i++) h += `<span style="left:${Math.random()*100}%;font-size:${14+Math.random()*22}px;color:${cols[i%4]};animation-duration:${12+Math.random()*14}s;animation-delay:${-Math.random()*20}s">${items[i%6]}</span>`;
+  for (let i = 0; i < 12; i++) h += `<span style="left:${Math.random()*100}%;font-size:${14+Math.random()*22}px;color:${cols[i%4]};animation-duration:${12+Math.random()*14}s;animation-delay:${-Math.random()*20}s">${items[i%6]}</span>`;
   $("deco").innerHTML = h;
 })();
 

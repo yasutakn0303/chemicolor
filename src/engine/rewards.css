@@ -282,3 +282,15 @@
   text-shadow:0 0 12px #ffe28a,0 4px 0 #ff6b5b,0 8px 0 #2a1638;animation:szoom .6s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes szoom{0%{transform:scale(3);opacity:0}100%{transform:none;opacity:1}}
 .srsub{position:relative;margin-top:14px;font-weight:900;font-size:20px;color:#ffe28a;text-shadow:0 2px 0 #0008;animation:szoom .6s .3s cubic-bezier(.2,1.6,.4,1) both}
+/* SSR（超激レア） */
+.st.SSR{background:linear-gradient(135deg,#ffd6e8,#fff3b0,#c9f7e4,#cfe3ff,#e7d4ff)}
+.st.SSR .rr{color:#d4a017;font-weight:900}
+.fc.SSR .st{box-shadow:0 0 0 3px #fff,0 0 0 6px #ff5bd1,0 0 24px #ffe28a;animation:shine 1s ease-in-out infinite alternate}
+.rrar.SSR,.rpill.SSR{background:linear-gradient(90deg,#ff5b5b,#ffc93c,#3dc8ff,#8b6cff);color:#fff}
+.rt.rar-SSR{border-color:#ff5bd1}.rt.ok.rar-SSR{box-shadow:0 0 0 2px #ff5bd1,0 0 12px #ffe28a}
+.rars button.SSR{border-color:#ff5bd1}
+.fx.ssr{background:#12082a}
+.fx.ssr::before{background:repeating-conic-gradient(#ff5bd133 0 6deg,#3dc8ff33 6deg 12deg,#ffc93c33 12deg 18deg)}
+.srring.r2{animation-delay:.45s;border-color:#ffe28a}
+.ssrbig{font-size:84px;background:linear-gradient(90deg,#ff5b5b,#ffc93c,#6fe36f,#3dc8ff,#8b6cff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  -webkit-text-stroke:2px #fff}
