@@ -203,3 +203,94 @@
   display:flex;align-items:center;justify-content:center;font-family:Quicksand,sans-serif;font-size:15px}
 .fx.gold .gspin b{background:#ffe28a55;border-color:#ffe28a}
 .fx.go .gring{transform:scale(.15);opacity:0}.fx.go .gatom{transform:scale(1.8);opacity:0;transition:all .45s ease-in}
+/* 合成ラボ・ガチャ共通の「無機｜有機」タブ */
+.ltabs{display:flex;gap:6px;margin:2px 0 10px}
+.ltabs button{flex:1;border:2px solid #c9d6ea;background:#fff;border-radius:14px;font:inherit;font-weight:900;font-size:15px;padding:8px 4px;cursor:pointer;color:var(--ink);line-height:1.2}
+.ltabs button small{display:block;font-size:10px;color:var(--sub);font-family:Quicksand,sans-serif}
+.ltabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}.ltabs button.on small{color:#cfe0ff}
+.nv small{display:block;font-size:9px;color:var(--sub);font-weight:700}
+/* 素材リスト：検索・たたむ・小さく表示 */
+.lsearch{display:flex;gap:6px;margin-bottom:8px}.lsearch .inp{flex:1;margin:0;font-size:15px;padding:8px 12px}
+.lmini{flex:none;border:2px solid #c9d6ea;background:#fff;border-radius:12px;font:inherit;font-weight:900;font-size:12px;padding:0 10px;cursor:pointer;color:var(--ink)}
+.tog{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:#f3f7fd;border-radius:10px;padding:8px 10px;cursor:pointer;font:inherit;font-weight:900;font-size:13px;color:var(--ink)}
+.tog span{font-size:11px;color:var(--sub)}
+.lsec > .stk{display:none;margin-top:6px}.lsec.open > .stk{display:grid}
+.stk.big.mini{grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:5px}
+.stk.big.mini .st{min-height:52px;padding:5px 2px 4px;font-size:9px}
+.stk.big.mini .st .f{font-size:13px;margin-top:6px}.stk.big.mini .st svg{display:none}
+.stk.big.mini .st .nmx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stk .st[hidden]{display:none}
+/* レシピのレア度 */
+.rt .rrar{position:absolute;bottom:3px;right:4px;font:900 9px Quicksand,sans-serif;padding:0 4px;border-radius:6px;color:#fff}
+.rrar.R{background:#3d7cff}.rrar.SR{background:linear-gradient(135deg,#ffb300,#ff6b5b)}
+.rt.rar-R{border-color:#9cc0ff}.rt.rar-SR{border-color:#ffc93c}
+.rt.ok.rar-SR{box-shadow:0 0 0 2px #ffc93c,0 0 10px #ffe28a}.rt.ok.rar-R{box-shadow:0 0 0 2px #9cc0ff}
+.rpill{display:inline-block;font:900 11px Quicksand,sans-serif;padding:1px 8px;border-radius:999px;background:#eef1f6;color:var(--sub)}
+.rpill.R{background:#3d7cff;color:#fff}.rpill.SR{background:linear-gradient(135deg,#ffb300,#ff6b5b);color:#fff}
+.rars button.R{border-color:#9cc0ff}.rars button.SR{border-color:#ffc93c}
+/* ガチャ演出（追加の10パターン） */
+.gpat{position:relative;width:240px;height:220px;display:flex;align-items:center;justify-content:center;transition:transform .45s ease-in,opacity .45s ease-in}
+.fx.go .gpat{transform:scale(1.7);opacity:0}
+.gpat > *{filter:drop-shadow(0 0 16px #fff8)}.fx.gold .gpat > *{filter:drop-shadow(0 0 28px #ffe28a)}
+.gburn .gob{font-size:90px;position:relative;top:-24px}.gburn .gfl{position:absolute;bottom:18px;font-size:64px;animation:gfl .15s ease-in-out infinite alternate;transform-origin:50% 100%}
+@keyframes gfl{from{transform:scaleY(.85) scaleX(1.05)}to{transform:scaleY(1.2) scaleX(.9)}}
+.fx.gold .gburn .gfl{filter:hue-rotate(20deg) brightness(1.4) drop-shadow(0 0 24px #ffe28a)}
+.gzap .gbolt{font-size:110px;animation:gzap .3s steps(2) infinite}.gzap .b2{position:absolute;font-size:60px;left:24px;top:20px;animation-delay:.15s}
+@keyframes gzap{0%{opacity:1;transform:rotate(-6deg)}50%{opacity:.15;transform:rotate(6deg)}}
+.gflash{position:fixed;inset:0;background:#fff;opacity:0;animation:gflash .6s steps(2) infinite;pointer-events:none;filter:none!important}
+@keyframes gflash{50%{opacity:.18}}
+/* 炎色反応：炎のうしろの光の色が Li 赤 → Na 黄 → K 赤紫 → Cu 青緑 → Ca 橙赤 と変わる（filter は重いので使わない） */
+.gglow{position:absolute;width:170px;height:170px;border-radius:50%;opacity:.85;animation:gglow 2s linear infinite;filter:none!important}
+@keyframes gglow{0%{background:radial-gradient(#ff3b3b,#ff3b3b00 70%)}20%{background:radial-gradient(#ffd23f,#ffd23f00 70%)}40%{background:radial-gradient(#c56bff,#c56bff00 70%)}
+  60%{background:radial-gradient(#2fe0b4,#2fe0b400 70%)}80%{background:radial-gradient(#ff7a2f,#ff7a2f00 70%)}100%{background:radial-gradient(#ff3b3b,#ff3b3b00 70%)}}
+.fx.gold .gglow{animation:none;background:radial-gradient(#ffe28a,#ffe28a00 70%)}
+.gfire{position:relative;font-size:120px;animation:gfl .2s ease-in-out infinite alternate;transform-origin:50% 100%}
+.gcr{font-size:40px;animation:ggrow 1.2s ease-out forwards}
+@keyframes ggrow{0%{transform:scale(.4) rotate(-30deg)}70%{transform:scale(2.6) rotate(10deg)}100%{transform:scale(2.4) rotate(0)}}
+.gbeak{width:120px;height:140px;border:5px solid #ffffffcc;border-top:0;border-radius:0 0 18px 18px;position:relative;overflow:hidden;background:#ffffff14}
+.gbeak i{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#7fd4ff,#3d7cff);animation:gfill 1.2s ease-out forwards}
+.fx.gold .gbeak i{background:linear-gradient(#fff3a8,#ffb300)}
+@keyframes gfill{to{height:78%}}
+.gms{font-size:96px;position:absolute;bottom:6px;right:30px}
+.glens{position:absolute;top:6px;left:24px;width:120px;height:120px;border-radius:50%;border:5px solid #ffffffcc;background:#ffffff1c;animation:glens 1s ease-in-out infinite alternate;overflow:hidden}
+.glens b{position:absolute;font-size:22px;color:#fff;animation:gtw .6s ease-in-out infinite alternate}.glens b:nth-child(1){left:22px;top:30px}.glens b:nth-child(2){left:66px;top:56px;animation-delay:.2s}.glens b:nth-child(3){left:40px;top:80px;animation-delay:.4s}
+.fx.gold .glens b{color:#ffe28a}
+@keyframes glens{to{transform:scale(1.12)}}@keyframes gtw{to{opacity:.2;transform:scale(.6)}}
+.gspin2{font-size:120px;animation:gcen 1.4s cubic-bezier(.5,0,.2,1) infinite}
+@keyframes gcen{to{transform:rotate(1080deg)}}
+.gwin{width:110px;height:110px;border-radius:18px;border:5px solid #fff;background:#ffffff22;overflow:hidden;position:relative}
+.greel{display:flex;flex-direction:column;animation:greel .9s linear infinite}
+.greel b{height:110px;display:flex;align-items:center;justify-content:center;font:700 54px Quicksand,sans-serif;color:#fff;flex:none}
+.fx.gold .greel b{color:#ffe28a}
+@keyframes greel{to{transform:translateY(-1760px)}}
+.gfw i{position:absolute;bottom:0;font-size:56px;font-style:normal;animation:gfw 1s ease-out infinite}
+@keyframes gfw{0%{transform:translateY(0) scale(.3);opacity:0}40%{opacity:1}70%{transform:translateY(-150px) scale(1.4);opacity:1}100%{transform:translateY(-160px) scale(1.8);opacity:0}}
+.gtit .gdr{position:absolute;top:0;font-size:34px;font-style:normal;animation:gdrop .5s ease-in infinite}
+@keyframes gdrop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(90px);opacity:0}}
+.gfk{position:absolute;bottom:10px;width:120px;height:110px;clip-path:polygon(38% 0,62% 0,62% 30%,100% 100%,0 100%,38% 30%);background:#ffffff33;animation:gpink 1.3s ease-in forwards}
+.fx.gold .gfk{animation-name:ggold}
+@keyframes gpink{70%{background:#ffffff33}100%{background:#ff4fa3}}@keyframes ggold{70%{background:#ffffff33}100%{background:#ffc93c}}
+/* SR のスーパー演出 */
+.fx.super{background:#1a0f2e;animation:sshake .5s linear 2}
+@keyframes sshake{0%,100%{transform:none}20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,-3px)}80%{transform:translate(4px,4px)}}
+.fx.super::before{background:repeating-conic-gradient(#ffe28a33 0 6deg,#0000 6deg 12deg);animation-duration:3s}
+.srx{position:relative;width:100%;height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.srrays{position:absolute;width:360px;height:360px;border-radius:50%;background:conic-gradient(#ff5b5b,#ffc93c,#6fe36f,#3dc8ff,#8b6cff,#ff5bd1,#ff5b5b);opacity:.55;animation:spin 2s linear infinite;box-shadow:0 0 60px 30px #ffe28a55}
+.srring{position:absolute;width:220px;height:220px;border-radius:50%;border:6px solid #fff;animation:sring .9s ease-out infinite}
+@keyframes sring{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.srbig{position:relative;font:900 56px/1 Quicksand,sans-serif;text-align:center;color:#fff;letter-spacing:2px;
+  text-shadow:0 0 12px #ffe28a,0 4px 0 #ff6b5b,0 8px 0 #2a1638;animation:szoom .6s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes szoom{0%{transform:scale(3);opacity:0}100%{transform:none;opacity:1}}
+.srsub{position:relative;margin-top:14px;font-weight:900;font-size:20px;color:#ffe28a;text-shadow:0 2px 0 #0008;animation:szoom .6s .3s cubic-bezier(.2,1.6,.4,1) both}
+/* SSR（超激レア） */
+.st.SSR{background:linear-gradient(135deg,#ffd6e8,#fff3b0,#c9f7e4,#cfe3ff,#e7d4ff)}
+.st.SSR .rr{color:#d4a017;font-weight:900}
+.fc.SSR .st{box-shadow:0 0 0 3px #fff,0 0 0 6px #ff5bd1,0 0 24px #ffe28a;animation:shine 1s ease-in-out infinite alternate}
+.rrar.SSR,.rpill.SSR{background:linear-gradient(90deg,#ff5b5b,#ffc93c,#3dc8ff,#8b6cff);color:#fff}
+.rt.rar-SSR{border-color:#ff5bd1}.rt.ok.rar-SSR{box-shadow:0 0 0 2px #ff5bd1,0 0 12px #ffe28a}
+.rars button.SSR{border-color:#ff5bd1}
+.fx.ssr{background:#12082a}
+.fx.ssr::before{background:repeating-conic-gradient(#ff5bd133 0 6deg,#3dc8ff33 6deg 12deg,#ffc93c33 12deg 18deg)}
+.srring.r2{animation-delay:.45s;border-color:#ffe28a}
+.ssrbig{font-size:84px;background:linear-gradient(90deg,#ff5b5b,#ffc93c,#6fe36f,#3dc8ff,#8b6cff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  -webkit-text-stroke:2px #fff}

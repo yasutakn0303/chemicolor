@@ -131,6 +131,8 @@ const PROD = [
  ["PhOAc","CH<sub>3</sub>COOC<sub>6</sub>H<sub>5</sub>","酢酸フェニル","無色","芳香族","液体",["フェノールのアセチル化でできるエステル","フェノールは酸と直接エステルをつくりにくい","無水酢酸を使う"]],
 ].map(([k, fm, nm, c, cat, st, info]) => ({k, fm, nm, c, cat, st, info: info.filter(t => t !== "—")}));
 [["Ag", "脂肪族"], ["Cu2O", "脂肪族"]].forEach(([k, t]) => PROD.find(m => m.k === k).tab = t);
+// SSR：合成経路のいちばん終わりの物質（これ以上ほかの物質の材料にならない）。ガチャでもごくまれ（1%）に出る
+["Azo", "Aspirin", "MeSal", "Picric"].forEach(k => PROD.find(x => x.k === k).r = "SSR");
 
 // [材料, できるもの（主生成物を先に）, ヒント]　触媒は「入れて出てくる」ので変化しないことがわかる
 const RECIPES = [
