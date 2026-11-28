@@ -33,7 +33,7 @@ const mainItem = r => { const o = Object.keys(r.out).filter(k => !r.inp[k]).map(
 const recCat = r => { const it = mainItem(r); return LAB_TABS.includes(it.cat) ? it.cat : it.tab || LAB_TABS[0]; };
 
 // --- ガチャ設定（たくさん引けるように）。素材は今の分野のもの（高分子は無機・有機の素材も出る）
-const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 150, PER_PULL = 5;
+const RATE = {N:.70, R:.22, SR:.08}, GACHA_COST = 50, PER_PULL = 5;
 function pull(forceR, F = FIELD) {
   const x = Math.random(), r = forceR || (x < RATE.SR ? "SR" : x < RATE.SR + RATE.R ? "R" : "N");
   const pool = F.pool.filter(s => s.r === r); return pool.length ? pool[Math.random() * pool.length | 0] : F.pool[Math.random() * F.pool.length | 0];
@@ -68,8 +68,8 @@ function showDetail(k) {
 // 配る枚数はデータから自動で計算するので、レシピや単元を増やしても目安は変わらない。
 // 実際のペースは tools/sim_collect.js で確かめられる。
 const GOAL_LAPS = 4, GOAL_DAYS = 28;
-// おたすけ素材：クリアでは配らない（遊ぶだけなら約2.5周でコンプ）。ログインだけでも 3〜5 週でそろうように、ログインで配る（tools/sim_collect.js で調整した値）
-const HELP = {drop:0, login:.35};
+// おたすけ素材：クリアでは配らない（遊ぶだけなら約1周でコンプ）。ログインだけでも 3〜5 週でそろうように、ログインで配る（tools/sim_collect.js で調整した値）
+const HELP = {drop:0, login:.2};
 // クリア1回のコイン（スコアとランクで決まる）。単元が増えたらここで調整する
 const RUN_COIN = 4;
 const runCoins = (pts, r) => Math.round(pts / RUN_COIN) + {S:150, A:80, B:30}[r];
