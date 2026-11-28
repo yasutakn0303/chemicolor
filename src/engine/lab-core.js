@@ -17,6 +17,14 @@ FIELDS.forEach(f => {
   f.used = new Set(f.RECIPES.flatMap(r => [...Object.keys(r.inp), ...Object.keys(r.out)]));
   f.used.forEach(k => { if (!f.item[k]) f.item[k] = ALL_ITEM[k]; });
 });
+// レシピのレア度：使う素材のいちばん高いレア度（途中の物質は、その作り方までさかのぼる）。N・R・SR
+const RARS = ["N", "R", "SR"], RAR_STAR = {N: "★", R: "★★", SR: "★★★"}, FIND_BONUS = {N: 50, R: 100, SR: 200};
+FIELDS.forEach(f => {
+  const memo = {}, prodBy = k => f.RECIPES.find(r => r.out[k] && !r.inp[k]);
+  const itemRank = (k, d) => f.matSet.has(k) ? RARS.indexOf(f.item[k].r || "N") : (r => r && d < 8 ? rank(r, d + 1) : 0)(prodBy(k));
+  const rank = (r, d = 0) => memo[r.id] ?? (memo[r.id] = Math.max(0, ...Object.keys(r.inp).map(k => itemRank(k, d))));
+  f.RECIPES.forEach(r => r.rar = RARS[rank(r)]);
+});
 function setField(id) {
   FIELD = FIELD_OF[id] || FIELDS[0];
   ({CH, METH, MATS, PROD, RECIPES, LAB_TABS, STARTER, LAB_BADGES} = FIELD);

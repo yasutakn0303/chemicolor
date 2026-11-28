@@ -27,7 +27,14 @@ const P = () => S.players[S.cur];
   saveS();
 })();
 // --- 分野（#org などの URL で指定できる。前回の分野を覚えておく）
-setField(FIELD_OF[location.hash.slice(1)] ? location.hash.slice(1) : S.field);
+if (FIELD_OF[location.hash.slice(1)]) S.field = location.hash.slice(1);
+setField(S.field);
+// 合成ラボ・ガチャは「無機・有機」共通のページ。開いている分野（ラボの分野）はメニューの分野とは別に覚える
+const labFieldId = () => FIELD.hasLab ? FIELD.id : FIELD_OF[S.labField] && FIELD_OF[S.labField].hasLab ? S.labField : LAB_FIELDS[0].id;
+const toLabField = () => { const id = labFieldId(); if (FIELD.id !== id) setField(id); S.labField = id; };
+const toMenu = () => { slot = {}; setField(S.field); menu(); };
+// ラボ・ガチャの上の「無機｜有機」タブ
+const labFieldTabs = (p, key) => `<div class="ltabs">${LAB_FIELDS.map(f => `<button data-${key}="${f.id}" class="${f === FIELD ? "on" : ""}">${f.em} ${f.name}<small>${fieldDone(p, f)}/${f.RECIPES.length}</small></button>`).join("")}</div>`;
 
 // --- 合言葉（4けた）。この端末に保存するのはハッシュだけ
 const pinHash = (name, pin) => { let h = 2166136261; for (const c of `chemicolor|${name}|${pin}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); };
@@ -215,6 +222,7 @@ startSwipe = function (ch) { pts = 0; runMax = 0; const r = _startSwipe(ch); hud
 const _menu = menu;
 menu = function () {
   if (playLocked()) return;
+  if (FIELD.id !== S.field && FIELD_OF[S.field]) setField(S.field);   // ラボで分野を切り替えたあとは、メニューの分野にもどす
   if (!S.cur || !S.players[S.cur]) return nameEntry();
   _menu();
   ensureInv(P());
@@ -229,10 +237,10 @@ menu = function () {
       <div class="coin">🪙 ${p.coins}</div></div>`);
   stage.querySelector(".chs").insertAdjacentHTML("afterend", `<div class="navs">
       <button class="nv" id="nRank"><span class="e">🏆</span>ランキング</button>
-      <button class="nv" id="nGacha" ${FIELD.hasLab ? "" : "hidden"}><span class="e">🎁</span>素材ガチャ</button>
-      <button class="nv" id="nLab" ${FIELD.hasLab ? "" : "hidden"}><span class="e">⚗️</span>合成ラボ</button>
+      <button class="nv" id="nGacha"><span class="e">🎁</span>素材ガチャ</button>
+      <button class="nv" id="nLab"><span class="e">⚗️</span>合成ラボ<small>無機・有機</small></button>
       <button class="nv" id="nMy"><span class="e">🎖️</span>${FIELD.hasLab ? "バッジ・図鑑" : "バッジ"}</button></div>
-    ${FIELD.hasLab ? "" : `<div class="note" style="margin-top:8px">🧬 高分子はクイズだけ。クリアすると無機・有機の素材がもらえるよ</div>`}`);
+    ${FIELD.hasLab ? "" : `<div class="note" style="margin-top:8px">🧬 高分子はクイズだけ。クリアすると無機・有機の素材がもらえるよ（合成ラボは無機・有機）</div>`}`);
   stage.querySelectorAll(".ftabs button").forEach(b => b.onclick = () => { setField(b.dataset.f); S.field = FIELD.id; saveS(); slot = {}; recTab = null; menu(); });
   $("nRank").onclick = () => ranking(cur && CH.includes(cur) ? cur.id : "total"); $("nGacha").onclick = gacha; $("nMy").onclick = () => mypage(); $("nLab").onclick = () => lab();
   stage.querySelectorAll(".cc").forEach(b => { const c = CH[+b.dataset.i], s = p.best[c.id]; if (s) { b.querySelector(".best")?.remove(); b.insertAdjacentHTML("afterbegin", `<span class="best">${s.toLocaleString()}pt</span>`); } });
@@ -385,12 +393,13 @@ function ranking(tab, mode = "local") {
 // ================= 素材ガチャ（演出つき） =================
 function gacha() {
   if (playLocked()) return;
-  if (!FIELD.hasLab) return menu();
+  toLabField();
   run++; $("hdr").style.display = "none";
   const p = P(); ensureInv(p);
   const can = n => p.coins >= GACHA_COST * n;
   stage.innerHTML = `<div class="panel" style="text-align:center">
-    <h2 class="pop">🎁 素材ガチャ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
+    <h2 class="pop">🎁 素材ガチャ</h2>
+    ${labFieldTabs(p, "gfd")}
     <div style="font-size:13px;color:var(--sub);font-weight:700">1回で素材カードが${PER_PULL}枚！ ${FIELD.POOL_FROM.length ? "無機・有機の素材も出るよ" : `${FIELD.name}の素材が出るよ`}</div>
     <div class="gacha"><div class="machine" id="cap">🫧</div></div>
     <div class="coin" style="margin-bottom:6px">所持 🪙 <span id="cn">${p.coins}</span></div>
@@ -398,7 +407,8 @@ function gacha() {
     <div style="font-size:11px;color:var(--sub);margin-top:8px">1枚ごとの確率：N 70%・R 22%・SR 8%　／　10連はSR 1枚以上確定！</div>
     <button class="btn sub" id="lb">⚗️ 合成ラボへ</button>
     <button class="btn sub" id="bk">メニューへ</button></div>`;
-  $("bk").onclick = menu; $("lb").onclick = () => lab();
+  $("bk").onclick = toMenu; $("lb").onclick = () => lab();
+  stage.querySelectorAll("[data-gfd]").forEach(b => b.onclick = () => { setField(b.dataset.gfd); S.labField = FIELD.id; saveS(); gacha(); });
   const upd = () => { $("cn").textContent = p.coins; [["p1", 1], ["p10", 10]].forEach(([id, n]) => { $(id).disabled = !can(n); $(id).style.opacity = can(n) ? 1 : .5; }); };
   upd();
   const go = async n => {
@@ -420,7 +430,30 @@ const GACHA_FX = [
     tx:"試験管で調合中…", sr:"…！？ 液が金色に光っている！", se:[440, 494, 523, 587, 659]},
   {html:`<div class="gstage"><div class="gring"><div class="gspin">${["H", "C", "N", "O", "S", "Cl", "Na", "Fe"].map((e, i) => `<b style="transform:rotate(${i * 45}deg) translate(88px) rotate(${-i * 45}deg)">${e}</b>`).join("")}</div></div><div class="gatom">⚛️</div></div>`,
     tx:"元素が集まってくる…", sr:"…！？ 元素がかがやいている！", se:[659, 587, 523, 587, 659, 784]},
+  // ---- 追加の10パターン
+  {html:`<div class="gpat gburn"><div class="gfl">🔥</div><div class="gob">⚗️</div></div>`, tx:"バーナーで加熱中…", sr:"…！？ 炎が金色になった！", se:[392, 440, 494, 523, 587]},
+  {html:`<div class="gpat gzap"><i class="gflash"></i><div class="gbolt">⚡</div><div class="gbolt b2">⚡</div></div>`, tx:"放電中…", sr:"…！？ 大放電！！", se:[880, 660, 990, 700, 1046]},
+  {html:`<div class="gpat gflame"><div class="gglow"></div><div class="gfire">🔥</div></div>`, tx:"炎色反応で色が変わる…", sr:"…！？ 見たことのない色！", se:[523, 659, 587, 698, 784]},
+  {html:`<div class="gpat gcry"><div class="gcr">💎</div></div>`, tx:"結晶が育っている…", sr:"…！？ 巨大な結晶ができた！", se:[784, 880, 988, 1046, 1175]},
+  {html:`<div class="gpat gbk"><div class="gbeak"><i></i></div></div>`, tx:"ビーカーに注いでいる…", sr:"…！？ 液が金色にかがやいている！", se:[330, 392, 440, 523, 659]},
+  {html:`<div class="gpat gmic"><div class="glens"><b>✦</b><b>✧</b><b>✦</b></div><div class="gms">🔬</div></div>`, tx:"顕微鏡でのぞいてみると…", sr:"…！？ キラキラした粒が見える！", se:[587, 659, 587, 784, 880]},
+  {html:`<div class="gpat gcen"><div class="gspin2">🌀</div></div>`, tx:"遠心分離中…", sr:"…！？ 回転が止まらない！", se:[262, 330, 392, 523, 659, 784]},
+  {html:`<div class="gpat gslot"><div class="gwin"><div class="greel">${["H", "He", "Li", "C", "N", "O", "Na", "Mg", "Al", "S", "Cl", "K", "Ca", "Fe", "Cu", "Ag", "H"].map(e => `<b>${e}</b>`).join("")}</div></div></div>`,
+    tx:"元素スロット回転中…", sr:"…！？ 金色の元素がそろった！", se:[523, 523, 659, 659, 784]},
+  {html:`<div class="gpat gfw">${[0, 1, 2, 3].map(i => `<i style="left:${15 + i * 22}%;animation-delay:${i * .25}s">🎆</i>`).join("")}</div>`, tx:"花火（炎色反応）が上がる…", sr:"…！？ 夜空が金色に！", se:[392, 523, 659, 784, 1046]},
+  {html:`<div class="gpat gtit"><i class="gdr">💧</i><div class="gfk"></div></div>`, tx:"指示薬に1滴ずつ…", sr:"…！？ 色が一気に変わった！", se:[659, 659, 659, 880]},
 ];
+// SR が出るときの「スーパー演出」（カードの前に入る）
+async function superFx(fx, got, wait) {
+  const n = got.filter(m => m.r === "SR").length;
+  fx.classList.remove("go"); fx.classList.add("super");
+  fx.innerHTML = `<div class="srx"><div class="srrays"></div><div class="srring"></div><div class="srbig">SUPER<br>RARE!!</div>
+    <div class="srsub">SR 素材${n > 1 ? ` ×${n}` : ""} 確定！</div></div><div class="fx-skip">タップでスキップ</div>`;
+  bell([523, 659, 784, 1046, 1318, 1568, 2093], .07, .05);
+  for (let i = 0; i < 4; i++) setTimeout(() => burst(fx.querySelector(".srx") || fx), 150 + i * 220);
+  await wait(1500);
+  fx.classList.remove("super");
+}
 async function gachaFx(got) {
   const sr = got.some(m => m.r === "SR"), rr = got.some(m => m.r === "R");
   const fx = document.createElement("div"); fx.className = "fx " + (sr ? "gold" : rr ? "blue" : "");
@@ -432,6 +465,7 @@ async function gachaFx(got) {
   const wait = async ms => { const t = performance.now(); while (!skip && performance.now() - t < ms) await sleep(30); };
   bell(pat.se, .1, .04); await wait(sr ? 1100 : 800);
   fx.classList.add("go"); if (!skip) bell([392, 523, 659, 784], .08, .04); await wait(sr ? 700 : 450);
+  if (sr && !skip) await superFx(fx, got, wait);
   fx.innerHTML = `<div class="flashw"></div><div class="fxgrid" style="grid-template-columns:repeat(${got.length > 5 ? 5 : got.length},1fr)">${got.map((m, i) =>
     `<div class="fc ${m.r}" style="animation-delay:${skip ? 0 : i * (got.length > 10 ? 60 : 160)}ms">${itemCard(m.k)}</div>`).join("")}</div>
     <div class="fxt">${sr ? "✨ SR ゲット！ ✨" : "素材ゲット！"}</div><button class="btn" id="fxOk" style="max-width:260px">OK</button>`;
@@ -443,7 +477,19 @@ async function gachaFx(got) {
 // ================= 合成ラボ =================
 // 材料は「何を使うか」だけをタップで選ぶ（係数は選ばなくてよい）。必要な枚数はレシピの係数どおりに自動で使う。
 // 工業的製法など触媒が必要なレシピは、触媒（ガチャで出る）も選ばないと反応しない。
-let slot = {}, recTab = null, labFilter = "all";
+let slot = {}, recTab = null, labFilter = "all", recRar = "all", labQ = "";
+// 素材リストの見た目（たたむ・小さく表示）はプレイヤーごとに覚える
+const labUI = p => p.labUI || (p.labUI = {mat: 1, prod: 1, mini: 0});
+// 検索：ひらがな・カタカナ・大文字小文字を区別しない（例：「えたのーる」「c2h5oh」）
+const kana = t => t.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+const normQ = t => kana(String(t).replace(/<[^>]+>/g, "").replace(/[₀-₉]/g, c => "0123456789"[c.charCodeAt(0) - 0x2080])).toLowerCase().replace(/\s/g, "");
+function applyLabSearch() {
+  const q = normQ(labQ);
+  stage.querySelectorAll(".stk .st[data-k]").forEach(c => { const it = ITEM[c.dataset.k]; c.hidden = !!q && !normQ(it.nm + it.fm + it.k).includes(q); });
+  stage.querySelectorAll(".lsec").forEach(sec => { const any = [...sec.querySelectorAll(".st[data-k]")].some(c => !c.hidden);
+    sec.classList.toggle("open", !!q ? any : sec.dataset.open === "1"); sec.hidden = !!q && !any; });
+  const none = $("lnone"); if (none) none.hidden = !q || [...stage.querySelectorAll(".stk .st[data-k]")].some(c => !c.hidden);
+}
 const canMake = (p, r) => Object.entries(r.inp).every(([k, n]) => (p.inv[k] || 0) >= n);
 const keysOf = o => Object.keys(o).sort().join("+");
 const isCat = (r, k) => r.inp[k] && r.out[k];                 // 両辺にある＝触媒
@@ -451,9 +497,9 @@ const needText = r => Object.entries(r.inp).map(([k, n]) => `${ITEM[k].fm} ×${n
 const LAB_FILTERS = [["all", "すべて"], ["気体", "気体"], ["液体", "液体"], ["水溶液", "水溶液"], ["固体", "固体"], ["cat", "触媒"]];
 function lab(msg = "") {
   if (playLocked()) return;
-  if (!FIELD.hasLab) return menu();
+  toLabField();
   run++; $("hdr").style.display = "none"; $("tint").style.opacity = 0;
-  const p = P(); ensureInv(p);
+  const p = P(); ensureInv(p); const ui = labUI(p);
   const catKeys = new Set(RECIPES.flatMap(r => Object.keys(r.inp).filter(k => isCat(r, k))));
   const pass = k => labFilter === "all" || (labFilter === "cat" ? catKeys.has(k) : ITEM[k].st === labFilter && !catKeys.has(k));
   const owned = Object.keys(ITEM).filter(k => (p.inv[k] || 0) > 0 && FIELD.used.has(k) && pass(k));
@@ -465,25 +511,32 @@ function lab(msg = "") {
     : `<span style="color:var(--sub);font-size:13px">使う素材をタップして選ぼう（係数は考えなくてOK）<br>例：N₂ と H₂ と 触媒を選ぶ → アンモニア</span>`;
   if (!LAB_TABS.includes(recTab)) recTab = LAB_TABS[0];
   // 同じ物質の作り方はとなりに並べる（物質が最初に出てくる順）
-  const list = RECIPES.filter(r => recCat(r) === recTab), first = {};
+  const list = RECIPES.filter(r => recCat(r) === recTab && (recRar === "all" || r.rar === recRar)), first = {};
   list.forEach((r, i) => { const k = mainOf(r).k; if (!(k in first)) first[k] = i; });
   list.sort((a, b) => first[mainOf(a).k] - first[mainOf(b).k] || RECIPES.indexOf(a) - RECIPES.indexOf(b));
-  const cards = ks => `<div class="stk big">${ks.map(k => itemCard(k, p.inv[k], `data-k="${k}" role="button"`, true).replace('class="st', `class="st ${slot[k] ? "sel" : ""}`)).join("")}</div>`;
+  const cards = ks => `<div class="stk big ${ui.mini ? "mini" : ""}">${ks.map(k => itemCard(k, p.inv[k], `data-k="${k}" role="button"`, true).replace('class="st', `class="st ${slot[k] ? "sel" : ""}`)).join("")}</div>`;
   stage.innerHTML = `<div class="panel wide">
-    <h2 class="pop">⚗️ 合成ラボ <small style="font-size:14px">${FIELD.em}${FIELD.name}</small></h2>
+    <h2 class="pop">⚗️ 合成ラボ</h2>
+    ${labFieldTabs(p, "lfd")}
     <div class="flask">${slotHTML}</div>
     <div style="display:flex;gap:8px"><button class="btn" id="mix" ${sel.length ? "" : "disabled style='opacity:.5'"}>合成する！</button><button class="btn sub" id="clr" style="flex:none;width:96px;white-space:nowrap">クリア</button></div>
     <div id="lmsg" class="lmsg">${msg}</div>
     <div class="sec">もっている素材・物質 <small>（タップで選ぶ／ⓘで解説）</small></div>
+    <div class="lsearch"><input class="inp" id="lq" type="search" placeholder="🔍 さがす（名前・化学式）" value="${esc(labQ)}" autocomplete="off">
+      <button class="lmini" id="lmini">${ui.mini ? "🔍 大きく" : "▦ 小さく"}</button></div>
     <div class="tabs">${LAB_FILTERS.map(([f, t]) => `<button data-lf="${f}" class="${labFilter === f ? "on" : ""}">${t}</button>`).join("")}</div>
     ${!owned.length ? `<div class="empty">この種類の素材はありません</div>` : ""}
-    ${mats.length ? `<div class="sub3">🎁 ガチャの素材</div>${cards(mats)}` : ""}
-    ${prods.length ? `<div class="sub3">⚗️ つくった物質</div>${cards(prods)}` : ""}
+    <div class="empty" id="lnone" hidden>見つかりません</div>
+    ${[["mat", "🎁 ガチャの素材", mats], ["prod", "⚗️ つくった物質", prods]].filter(x => x[2].length).map(([id, t, ks]) =>
+      `<div class="lsec ${ui[id] ? "open" : ""}" data-open="${ui[id] ? 1 : 0}"><button class="sub3 tog" data-tg="${id}">${t}（${ks.length}）<span>${ui[id] ? "▲ たたむ" : "▼ ひらく"}</span></button>${cards(ks)}</div>`).join("")}
     <div class="sec">レシピ帳　${found}/${RECIPES.length}</div>
     <div class="rbar"><i style="width:${found / RECIPES.length * 100}%"></i></div>
     <div class="tabs">${LAB_TABS.map(t => `<button data-rt="${t}" class="${recTab === t ? "on" : ""}">${t} ${RECIPES.filter(r => recCat(r) === t && p.recipes[r.id]).length}/${RECIPES.filter(r => recCat(r) === t).length}</button>`).join("")}</div>
+    <div class="tabs rars">${["all", ...RARS].map(x => { const L = RECIPES.filter(r => recCat(r) === recTab && (x === "all" || r.rar === x));
+      return `<button data-rr="${x}" class="${recRar === x ? "on" : ""} ${x}">${x === "all" ? "すべて" : `${RAR_STAR[x]} ${x}`} ${L.filter(r => p.recipes[r.id]).length}/${L.length}</button>`; }).join("")}</div>
     <div class="rgrid">${list.map(r => recipeTile(p, r)).join("")}</div>
-    <div style="font-size:11px;color:var(--sub);margin-top:4px">タイルをタップ → 反応式・ヒント　／　▶ ＝ 今の材料で作れる　💡 ＝ ヒントを見た</div>
+    ${!list.length ? `<div class="empty">このレア度のレシピはありません</div>` : ""}
+    <div style="font-size:11px;color:var(--sub);margin-top:4px">タイルをタップ → 反応式・ヒント　／　▶ ＝ 今の材料で作れる　💡 ＝ ヒントを見た　／　R・SR ＝ レア素材を使うレシピ（発見ボーナスが多い）</div>
     <button class="btn sub" id="gc">🎁 素材ガチャへ</button>
     <button class="btn sub" id="bk">メニューへ</button>
     <div style="text-align:center;margin-top:10px"><button id="tdbg" class="tdbg">🔧 先生用${p.teacher ? "（確認モード）" : ""}</button></div></div>`;
@@ -497,9 +550,15 @@ function lab(msg = "") {
   stage.querySelectorAll(".slot").forEach(b => b.onclick = () => { delete slot[b.dataset.k]; lab(); });
   stage.querySelectorAll("[data-lf]").forEach(b => b.onclick = () => { labFilter = b.dataset.lf; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
   stage.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { recTab = b.dataset.rt; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
+  stage.querySelectorAll("[data-rr]").forEach(b => b.onclick = () => { recRar = b.dataset.rr; const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
+  stage.querySelectorAll("[data-lfd]").forEach(b => b.onclick = () => { setField(b.dataset.lfd); S.labField = FIELD.id; saveS(); slot = {}; recTab = null; labQ = ""; lab(); });
+  stage.querySelectorAll("[data-tg]").forEach(b => b.onclick = () => { ui[b.dataset.tg] = ui[b.dataset.tg] ? 0 : 1; saveS(); const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; });
+  $("lmini").onclick = () => { ui.mini = ui.mini ? 0 : 1; saveS(); const y = stage.querySelector(".panel").scrollTop; lab(); stage.querySelector(".panel").scrollTop = y; };
+  $("lq").oninput = e => { labQ = e.target.value; applyLabSearch(); };
+  applyLabSearch();
   stage.querySelectorAll(".rt[data-r]").forEach(b => b.onclick = () => recipeCard(RECIPES.find(x => x.id === b.dataset.r)));
   $("clr").onclick = () => { slot = {}; lab(); };
-  $("bk").onclick = () => { slot = {}; menu(); }; $("gc").onclick = () => { slot = {}; gacha(); };
+  $("bk").onclick = toMenu; $("gc").onclick = () => { slot = {}; gacha(); };
   $("mix").onclick = () => mix();
   $("tdbg").onclick = teacherTools;
 }
@@ -556,16 +615,17 @@ const NUM = "①②③④⑤⑥⑦⑧⑨";
 function recipeTile(p, r) {
   const it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r);
   const rs = routesOf(r), no = rs.length > 1 ? `<span class="rn">${NUM[rs.indexOf(r)] || ""}</span>` : "";
+  const rar = r.rar !== "N" ? `<span class="rrar ${r.rar}">${r.rar}</span>` : "";
   return done
-    ? `<button class="rt ok" data-r="${r.id}" style="--bg:${HEX[it.c] && !["白", "無色"].includes(it.c) ? pastel(it.c) : "#eef6ff"}">${no}${can ? `<span class="go">▶</span>` : ""}${drop(it.c, 16)}<b>${it.fm}</b><small>${it.nm}</small></button>`
-    : `<button class="rt ${hinted ? "hinted" : ""}" data-r="${r.id}">${no}${hinted ? `<span class="go">💡</span>` : ""}<span class="q">？</span><small>${it.nm}</small></button>`;
+    ? `<button class="rt ok rar-${r.rar}" data-r="${r.id}" style="--bg:${HEX[it.c] && !["白", "無色"].includes(it.c) ? pastel(it.c) : "#eef6ff"}">${no}${rar}${can ? `<span class="go">▶</span>` : ""}${drop(it.c, 16)}<b>${it.fm}</b><small>${it.nm}</small></button>`
+    : `<button class="rt ${hinted ? "hinted" : ""} rar-${r.rar}" data-r="${r.id}">${no}${rar}${hinted ? `<span class="go">💡</span>` : ""}<span class="q">？</span><small>${it.nm}</small></button>`;
 }
 // タイルをタップしたときの小さな画面
 function recipeCard(r) {
   const p = P(), it = mainOf(r), done = p.recipes[r.id], hinted = p.hints && p.hints[r.id], can = canMake(p, r), routes = routesOf(r);
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="box rcard">
-    <div style="font-size:12px;color:var(--sub);font-weight:900">${done ? "✅ 発見ずみ" : hinted ? "💡 ヒントを見たレシピ" : "❓ まだ見つけていないレシピ"}</div>
+    <div style="font-size:12px;color:var(--sub);font-weight:900">${done ? "✅ 発見ずみ" : hinted ? "💡 ヒントを見たレシピ" : "❓ まだ見つけていないレシピ"}　<span class="rpill ${r.rar}">${RAR_STAR[r.rar]} ${r.rar} レシピ</span></div>
     <div class="pop" style="font-size:20px;margin:4px 0">${it.nm}</div>
     ${done ? `<div class="eqbig">${eqHTML(r)}</div>`
       : hinted ? `<div class="eqbig">${Object.keys(r.inp).map(k => ITEM[k].fm).join(" ＋ ")} → ${it.fm}</div>`
@@ -631,7 +691,8 @@ async function mix(fixed) {
   Object.entries(r.out).forEach(([k, n]) => { p.inv[k] = (p.inv[k] || 0) + n; p.made[k] = (p.made[k] || 0) + n; });
   const first = !p.recipes[r.id]; p.recipes[r.id] = today();
   p.crafts = (p.crafts || 0) + 1; if (first && !(p.hints && p.hints[r.id])) p.selfFound = (p.selfFound || 0) + 1;
-  if (first) { p.coins += 50; p.earned += 50; }
+  const fb = FIND_BONUS[r.rar];   // はじめての発見ボーナス：レア度が高いほど多い
+  if (first) { p.coins += fb; p.earned += fb; }
   const ids = ["craft1"]; if (PROD.filter(x => p.made[x.k]).length >= 10) ids.push("craft10");
   if (RECIPES.every(x => p.recipes[x.id])) ids.push("craftAll");
   LAB_BADGES.forEach(b => { if (b.test(p, r)) ids.push(b.id); });
@@ -647,7 +708,8 @@ async function mix(fixed) {
     <div style="font-size:12px;color:var(--sub);font-weight:700">使ったカード：${needText(r)}${cats.length ? `（${cats.map(k => ITEM[k].fm).join("・")} は触媒なので戻ってくる）` : ""}</div>
     <div class="flipin">${detailHTML(main)}</div>
     ${prods.slice(1).map(k => `<div class="sub2">＋ ${ITEM[k].nm}（${ITEM[k].c}）もできた</div>`).join("")}
-    ${first ? `<div class="bonus">はじめての発見ボーナス 🪙+50</div>` : ""}
+    <div><span class="rpill ${r.rar}">${RAR_STAR[r.rar]} ${r.rar} レシピ</span></div>
+    ${first ? `<div class="bonus">はじめての発見ボーナス 🪙+${fb}${r.rar !== "N" ? `（${r.rar}）` : ""}</div>` : ""}
     ${b.length ? `<div class="bonus">🎖️ バッジ「${b.map(x => x.nm).join("」「")}」ゲット！</div>` : ""}
     <div style="display:flex;gap:8px">${again ? `<button class="btn" id="mAgain" style="font-size:15px;white-space:nowrap">もう一度つくる</button>` : ""}<button class="btn ${again ? "sub" : ""}" id="mOk" style="font-size:15px;white-space:nowrap">ラボにもどる</button></div></div>`;
   document.body.appendChild(m);
